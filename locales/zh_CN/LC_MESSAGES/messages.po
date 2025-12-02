@@ -1,0 +1,187 @@
+# Chinese (Simplified, China) translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-12-02 15:30+0800\n"
+"PO-Revision-Date: 2025-12-02 15:22+0800\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_Hans_CN\n"
+"Language-Team: zh_Hans_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: storage/local_storage.py:31
+#, python-brace-format
+msgid "LocalStorage 初始化，根目录: {}"
+msgstr "LocalStorage 初始化，根目录: {}"
+
+#: storage/local_storage.py:42
+#, python-brace-format
+msgid "路径解析失败: {}"
+msgstr "路径解析失败: {}"
+
+#: storage/local_storage.py:45
+#, python-brace-format
+msgid "路径安全检查失败，路径超出根目录: {}"
+msgstr "路径安全检查失败，路径超出根目录: {}"
+
+#: storage/local_storage.py:66
+#, python-brace-format
+msgid "没有权限写入文件到 {}"
+msgstr "没有权限写入文件到 {}"
+
+#: storage/local_storage.py:68
+#, python-brace-format
+msgid "无法写入文件到 {}"
+msgstr "无法写入文件到 {}"
+
+#: storage/local_storage.py:76
+#, python-brace-format
+msgid "本地源文件不存在或是一个目录: {}"
+msgstr "本地源文件不存在或是一个目录: {}"
+
+#: storage/local_storage.py:87 storage/local_storage.py:97
+#, python-brace-format
+msgid "文件不存在，无法下载: {}"
+msgstr "文件不存在，无法下载: {}"
+
+#: storage/local_storage.py:89 storage/local_storage.py:99
+#, python-brace-format
+msgid "路径指向一个目录: {}"
+msgstr "路径指向一个目录: {}"
+
+#: storage/local_storage.py:113
+#, python-brace-format
+msgid "文件不存在，无法删除: {}"
+msgstr "文件不存在，无法删除: {}"
+
+#: storage/local_storage.py:115
+#, python-brace-format
+msgid "路径指向一个目录，请使用 delete_directory: {}"
+msgstr "路径指向一个目录，请使用 delete_directory: {}"
+
+#: storage/local_storage.py:120
+#, python-brace-format
+msgid "没有权限删除文件: {}"
+msgstr "没有权限删除文件: {}"
+
+#: storage/local_storage.py:126
+#, python-brace-format
+msgid "目录不存在: {}"
+msgstr "目录不存在: {}"
+
+#: storage/local_storage.py:128 storage/local_storage.py:177
+#, python-brace-format
+msgid "路径指向文件，不是目录: {}"
+msgstr "路径指向文件，不是目录: {}"
+
+#: storage/local_storage.py:153
+#, python-brace-format
+msgid "没有权限读取目录: {}"
+msgstr "没有权限读取目录: {}"
+
+#: storage/local_storage.py:155
+#, python-brace-format
+msgid "读取目录失败: {}"
+msgstr "读取目录失败: {}"
+
+#: storage/local_storage.py:164
+#, python-brace-format
+msgid "路径已被一个文件占用: {}"
+msgstr "路径已被一个文件占用: {}"
+
+#: storage/local_storage.py:169
+#, python-brace-format
+msgid "没有权限创建目录: {}"
+msgstr "没有权限创建目录: {}"
+
+#: storage/local_storage.py:175
+#, python-brace-format
+msgid "目录不存在，无法删除: {}"
+msgstr "目录不存在，无法删除: {}"
+
+#: storage/local_storage.py:184
+#, python-brace-format
+msgid "删除目录失败: {}"
+msgstr "删除目录失败: {}"
+
+#: storage/local_storage.py:191
+#, python-brace-format
+msgid "源文件/目录不存在: {}"
+msgstr "源文件/目录不存在: {}"
+
+#: storage/local_storage.py:200
+#, python-brace-format
+msgid "移动操作权限不足: {} -> {}"
+msgstr "移动操作权限不足: {} -> {}"
+
+#: storage/local_storage.py:202
+#, python-brace-format
+msgid "移动操作失败: {}"
+msgstr "移动操作失败: {}"
+
+#: storage/local_storage.py:210
+#, python-brace-format
+msgid "源文件不存在或是一个目录: {}"
+msgstr "源文件不存在或是一个目录: {}"
+
+#: storage/local_storage.py:218
+#, python-brace-format
+msgid "复制操作权限不足: {} -> {}"
+msgstr "复制操作权限不足: {} -> {}"
+
+#: storage/local_storage.py:220
+#, python-brace-format
+msgid "复制操作失败: {}"
+msgstr "复制操作失败: {}"
+
+#: storage/local_storage.py:226
+#, python-brace-format
+msgid "文件或目录不存在: {}"
+msgstr "文件或目录不存在: {}"
+
+#: storage/manager.py:35
+#, python-brace-format
+msgid "对象 {} 未实现 StorageBackend 接口。"
+msgstr "对象 {} 未实现 StorageBackend 接口。"
+
+#: storage/manager.py:38
+#, python-brace-format
+msgid "存储后端 '{}' 已经存在。"
+msgstr "存储后端 '{}' 已经存在。"
+
+#: storage/manager.py:41
+#, python-brace-format
+msgid "存储后端 '{}' 已注册。"
+msgstr "存储后端 '{}' 已注册。"
+
+#: storage/manager.py:53
+#, python-brace-format
+msgid "当前存储已切换为 '{}'。"
+msgstr "当前存储已切换为 '{}'。"
+
+#: storage/manager.py:55
+#, python-brace-format
+msgid "存储后端 '{}' 未注册。"
+msgstr "存储后端 '{}' 未注册。"
+
+#: storage/manager.py:60
+msgid "当前存储后端未设置或找不到。请先调用 set_current_backend()。"
+msgstr "当前存储后端未设置或找不到。请先调用 set_current_backend()。"
+
+#: ui/pages/browser.py:32
+msgid "文件"
+msgstr "文件"
+
+#: ui/pages/browser.py:33
+msgid "大小"
+msgstr "大小"
+
