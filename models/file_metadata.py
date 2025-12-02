@@ -13,7 +13,7 @@ class FileMetadata:
         type_: Literal["file", "dir", "link"],
         size: int = 0,
         created_at: Optional[float] = None,
-        num_children: int = 0
+        num_children: int = 0,
     ):
         self.name: str = name
         self.path: str = path
@@ -44,18 +44,14 @@ class Symlink(FileMetadata):
         # 目标路径
         target_path: str,
         size: int = 0,
-        created_at: Optional[float] = None
+        created_at: Optional[float] = None,
     ):
         super().__init__(
-            name=name,
-            path=path,
-            type_="link",
-            size=size,
-            created_at=created_at
+            name=name, path=path, type_="link", size=size, created_at=created_at
         )
         self.target_path: str = target_path
 
     def __repr__(self) -> str:
         """目标路径信息"""
-        base_repr = super().__repr__().rstrip(')')
+        base_repr = super().__repr__().rstrip(")")
         return f"{base_repr}, target_path='{self.target_path}')"

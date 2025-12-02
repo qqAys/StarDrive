@@ -1,12 +1,14 @@
 from typing import Dict, Optional, BinaryIO, Generator
 
 from models.file_metadata import FileMetadata
+from utils import logger, _
 from .base import StorageBackend
 from .local_storage import LocalStorage
 
 
 class BackendNotFoundError(Exception):
     """存储后端未找到的异常。"""
+
     pass
 
 
@@ -31,13 +33,17 @@ class StorageManager:
         :param backend_instance: 实现了 StorageBackend 接口的实例。
         """
         if not isinstance(backend_instance, StorageBackend):
-            raise TypeError(f"对象 {backend_instance.__class__.__name__} 未实现 StorageBackend 接口。")
+            raise TypeError(
+                _("对象 {} 未实现 StorageBackend 接口。").format(
+                    backend_instance.__class__.__name__
+                )
+            )
 
         if name in self._backends:
-            raise ValueError(f"存储后端 '{name}' 已经存在。")
+            raise ValueError(_("存储后端 '{}' 已经存在。").format(name))
 
         self._backends[name] = backend_instance
-        print(f"存储后端 '{name}' 已注册。")
+        logger.info(_("存储后端 '{}' 已注册。").format(name))
 
     def list_backends(self) -> list[str]:
         """返回已注册的所有存储后端名称。"""
@@ -49,14 +55,19 @@ class StorageManager:
         """
         if name in self._backends:
             self._current_backend_name = name
-            print(f"当前存储已切换为 '{name}'。")
+            logger.info(_("当前存储已切换为 '{}'。").format(name))
         else:
-            raise BackendNotFoundError(f"错误：存储后端 '{name}' 未注册。")
+            raise BackendNotFoundError(_("存储后端 '{}' 未注册。").format(name))
 
     def _get_current_backend(self) -> StorageBackend:
         """获取当前活跃的存储后端实例。失败时抛出 BackendNotFoundError。"""
-        if not self._current_backend_name or self._current_backend_name not in self._backends:
-            raise BackendNotFoundError("当前存储后端未设置或找不到。请先调用 set_current_backend()。")
+        if (
+            not self._current_backend_name
+            or self._current_backend_name not in self._backends
+        ):
+            raise BackendNotFoundError(
+                _("当前存储后端未设置或找不到。请先调用 set_current_backend()。")
+            )
         return self._backends[self._current_backend_name]
 
     # 代理方法
@@ -83,7 +94,9 @@ class StorageManager:
         backend = self._get_current_backend()
         return backend.download_file(remote_path)
 
-    def download_file_with_stream(self, remote_path: str) -> Generator[bytes, None, None]:
+    def download_file_with_stream(
+        self, remote_path: str
+    ) -> Generator[bytes, None, None]:
         """流式下载文件。"""
         backend = self._get_current_backend()
         for chunk in backend.download_file_with_stream(remote_path):
