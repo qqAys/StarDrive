@@ -1,7 +1,7 @@
 [project]
 name = "stardrive"
 version = "0.1.0"
-description = "Start Drive"
+description = "Star Drive"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = []
