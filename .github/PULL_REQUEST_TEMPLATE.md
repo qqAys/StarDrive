@@ -5,9 +5,9 @@
 ## 🚨 检查清单 (Checklist)
 
 
- - [x] 我已阅读并遵循 [行为准则](https://github.com/qqAys/StarDrive/blob/main/CODE_OF_CONDUCT.md)
+ - [x] 我已阅读并遵循 [行为准则](https://github.com/qqAys/StarDrive/blob/main/CODE_OF_CONDUCT.md) (Code of Conduct)
 
- - [x] 我已阅读并遵循 [贡献指南](https://github.com/qqAys/StarDrive/blob/main/CONTRIBUTING.md)
+ - [x] 我已阅读并遵循 [贡献指南](https://github.com/qqAys/StarDrive/blob/main/CONTRIBUTING.md) (Contributing Guide)
 
  - [x] 代码已通过 `uv run black` 格式化
 
