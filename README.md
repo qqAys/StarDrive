@@ -1,8 +1,8 @@
 # StarDrive
 
-StarDrive 是一个基于 [NiceGUI](https://github.com/zauberzeug/nicegui) 库开发的网盘系统，提供多后端存储的文件管理功能。
+StarDrive 是一个基于 [NiceGUI](https://github.com/zauberzeug/nicegui) 库开发的文件管理系统，提供多后端存储的文件管理功能。
 
-StarDrive is a network disk system developed based on the [NiceGUI](https://github.com/zauberzeug/nicegui) library, providing file management capabilities with multiple backend storage options.
+StarDrive is a file management system developed based on the [NiceGUI](https://github.com/zauberzeug/nicegui) library, providing file management capabilities with multiple backend storage options.
 
 > [!WARNING]
 > **本项目仍在开发中，尚未发布任何正式的 Release 版本。**
