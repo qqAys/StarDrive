@@ -1,5 +1,3 @@
-import os
-
 from nicegui import ui, app
 
 import globals
@@ -10,7 +8,6 @@ from ui.pages import login, browser
 
 @app.on_startup
 def on_app_startup():
-
     M = StorageManager()
     M.set_current_backend(LocalStorage.name)
     globals.set_storage_manager(M)
@@ -20,7 +17,6 @@ def on_app_startup():
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    os.environ["NICEGUI_STORAGE_PATH"] = "data/user"
     ui.run(
         host="0.0.0.0",
         port=8080,
