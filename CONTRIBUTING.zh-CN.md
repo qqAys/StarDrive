@@ -35,11 +35,11 @@ StarDrive 是一个基于 [NiceGUI](https://github.com/zauberzeug/nicegui) 库�
 
 如果您在使用 StarDrive 时遇到 Bug 或其他问题，最好的报告方式是在我们的 [GitHub 仓库](https://github.com/qqAys/StarDrive) 中开启一个新的 issue。
 
-1. Bug：请按照 [BUG模版](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_BUG_REPORT_TEMPLATE.md) 填写
+1. Bug：请按照 [BUG模版](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_TEMPLATE/bug_report.md) 填写
 
-2. Feature：请按照 [Feature模版](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_FEATURE_REQUEST_TEMPLATE.md) 填写
+2. Feature：请按照 [Feature模版](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_TEMPLATE/feature_request.md) 填写
 
-3. Question / Support：请按照 [Question模版](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_QUESTION_SUPPORT_TEMPLATE.md) 填写
+3. Question / Support：请按照 [Question模版](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_TEMPLATE/question-or-support.md) 填写
 
 ## 行为准则
 

@@ -33,11 +33,11 @@ This partially inherits the technology stack of NiceGUI:
 
 If you encounter a bug or other issues while using StarDrive, the best way to report it is by opening a new issue in our [GitHub repository](https://github.com/qqAys/StarDrive).
 
-1.  **Bug**: Please follow the [BUG Template](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_BUG_REPORT_TEMPLATE.md)
+1.  **Bug**: Please follow the [BUG Template](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_TEMPLATE/bug_report.md)
 
-2.  **Feature**: Please follow the [Feature Template](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_FEATURE_REQUEST_TEMPLATE.md)
+2.  **Feature**: Please follow the [Feature Template](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_TEMPLATE/feature_request.md)
 
-3.  **Question / Support**: Please follow the [Question Template](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_QUESTION_SUPPORT_TEMPLATE.md)
+3.  **Question / Support**: Please follow the [Question Template](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_TEMPLATE/question-or-support.md)
 
 ## Code of Conduct
 
