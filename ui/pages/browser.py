@@ -1,11 +1,20 @@
 from pathlib import Path
 
-from nicegui import events, ui, APIRouter
+from fastapi.responses import RedirectResponse
+from nicegui import events, ui, APIRouter, app
 
 import globals
 from utils import bytes_to_human_readable, _
 
-router = APIRouter(prefix="/home")
+this_page_routes = "/home"
+
+
+@app.get("/")
+def index():
+    return RedirectResponse(this_page_routes)
+
+
+router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
@@ -24,6 +33,17 @@ def index():
         ]
         grid.update()
 
+    def switch_lang():
+        lang_code = app.storage.user.get("default_lang", "en_US")
+        if lang_code == "en_US":
+            lang_code = "zh_CN"
+        else:
+            lang_code = "en_US"
+        app.storage.user["default_lang"] = lang_code
+        ui.navigate.to(this_page_routes)
+
+    ui.button("切换语言", on_click=switch_lang)
+
     with ui.card().classes("w-full h-screen"):
         grid = ui.aggrid(
             {
@@ -39,7 +59,10 @@ def index():
         update_grid("./")
 
     def handle_double_click(e: events.GenericEventArguments) -> None:
-        path = Path(e.args["data"]["path"])
-        update_grid(path.__str__())
+        try:
+            path = Path(e.args["data"]["path"])
+            update_grid(path.__str__())
+        except Exception as e:
+            ui.notify(str(e), type="negative")
 
     grid.on("cellDoubleClicked", handle_double_click)
