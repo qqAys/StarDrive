@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-12-02 15:30+0800\n"
+"POT-Creation-Date: 2025-12-05 15:13+0800\n"
 "PO-Revision-Date: 2025-12-02 15:22+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_Hans_CN\n"
@@ -18,170 +18,221 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: storage/local_storage.py:31
+#: services/user_service.py:40
+#, python-brace-format
+msgid "管理员已创建，登录邮箱为：{}，密码为：{}"
+msgstr ""
+
+#: services/user_service.py:56
+msgid "密码错误"
+msgstr ""
+
+#: services/user_service.py:60
+msgid "登录失败"
+msgstr ""
+
+#: services/user_service.py:72
+msgid "用户已存在"
+msgstr ""
+
+#: services/user_service.py:97 services/user_service.py:108
+#: services/user_service.py:131 services/user_service.py:145
+#: ui/pages/login.py:20
+msgid "用户不存在"
+msgstr ""
+
+#: services/user_service.py:122
+msgid "密码修改失败"
+msgstr ""
+
+#: storage/local_storage.py:32
 #, python-brace-format
 msgid "LocalStorage 初始化，根目录: {}"
 msgstr "LocalStorage 初始化，根目录: {}"
 
-#: storage/local_storage.py:42
+#: storage/local_storage.py:43
 #, python-brace-format
 msgid "路径解析失败: {}"
 msgstr "路径解析失败: {}"
 
-#: storage/local_storage.py:45
+#: storage/local_storage.py:47
 #, python-brace-format
 msgid "路径安全检查失败，路径超出根目录: {}"
 msgstr "路径安全检查失败，路径超出根目录: {}"
 
-#: storage/local_storage.py:66
+#: storage/local_storage.py:70
 #, python-brace-format
 msgid "没有权限写入文件到 {}"
 msgstr "没有权限写入文件到 {}"
 
-#: storage/local_storage.py:68
+#: storage/local_storage.py:73
 #, python-brace-format
 msgid "无法写入文件到 {}"
 msgstr "无法写入文件到 {}"
 
-#: storage/local_storage.py:76
+#: storage/local_storage.py:82
 #, python-brace-format
 msgid "本地源文件不存在或是一个目录: {}"
 msgstr "本地源文件不存在或是一个目录: {}"
 
-#: storage/local_storage.py:87 storage/local_storage.py:97
+#: storage/local_storage.py:95 storage/local_storage.py:109
 #, python-brace-format
 msgid "文件不存在，无法下载: {}"
 msgstr "文件不存在，无法下载: {}"
 
-#: storage/local_storage.py:89 storage/local_storage.py:99
+#: storage/local_storage.py:99 storage/local_storage.py:113
 #, python-brace-format
 msgid "路径指向一个目录: {}"
 msgstr "路径指向一个目录: {}"
 
-#: storage/local_storage.py:113
+#: storage/local_storage.py:129
 #, python-brace-format
 msgid "文件不存在，无法删除: {}"
 msgstr "文件不存在，无法删除: {}"
 
-#: storage/local_storage.py:115
+#: storage/local_storage.py:133
 #, python-brace-format
 msgid "路径指向一个目录，请使用 delete_directory: {}"
 msgstr "路径指向一个目录，请使用 delete_directory: {}"
 
-#: storage/local_storage.py:120
+#: storage/local_storage.py:140
 #, python-brace-format
 msgid "没有权限删除文件: {}"
 msgstr "没有权限删除文件: {}"
 
-#: storage/local_storage.py:126
+#: storage/local_storage.py:147
 #, python-brace-format
 msgid "目录不存在: {}"
 msgstr "目录不存在: {}"
 
-#: storage/local_storage.py:128 storage/local_storage.py:177
+#: storage/local_storage.py:150 storage/local_storage.py:209
 #, python-brace-format
 msgid "路径指向文件，不是目录: {}"
 msgstr "路径指向文件，不是目录: {}"
 
-#: storage/local_storage.py:153
+#: storage/local_storage.py:177
 #, python-brace-format
 msgid "没有权限读取目录: {}"
 msgstr "没有权限读取目录: {}"
 
-#: storage/local_storage.py:155
+#: storage/local_storage.py:180
 #, python-brace-format
 msgid "读取目录失败: {}"
 msgstr "读取目录失败: {}"
 
-#: storage/local_storage.py:164
+#: storage/local_storage.py:190
 #, python-brace-format
 msgid "路径已被一个文件占用: {}"
 msgstr "路径已被一个文件占用: {}"
 
-#: storage/local_storage.py:169
+#: storage/local_storage.py:197
 #, python-brace-format
 msgid "没有权限创建目录: {}"
 msgstr "没有权限创建目录: {}"
 
-#: storage/local_storage.py:175
+#: storage/local_storage.py:205
 #, python-brace-format
 msgid "目录不存在，无法删除: {}"
 msgstr "目录不存在，无法删除: {}"
 
-#: storage/local_storage.py:184
+#: storage/local_storage.py:217
 #, python-brace-format
 msgid "删除目录失败: {}"
 msgstr "删除目录失败: {}"
 
-#: storage/local_storage.py:191
+#: storage/local_storage.py:224
 #, python-brace-format
 msgid "源文件/目录不存在: {}"
 msgstr "源文件/目录不存在: {}"
 
-#: storage/local_storage.py:200
+#: storage/local_storage.py:234
 #, python-brace-format
 msgid "移动操作权限不足: {} -> {}"
 msgstr "移动操作权限不足: {} -> {}"
 
-#: storage/local_storage.py:202
+#: storage/local_storage.py:237
 #, python-brace-format
 msgid "移动操作失败: {}"
 msgstr "移动操作失败: {}"
 
-#: storage/local_storage.py:210
+#: storage/local_storage.py:246
 #, python-brace-format
 msgid "源文件不存在或是一个目录: {}"
 msgstr "源文件不存在或是一个目录: {}"
 
-#: storage/local_storage.py:218
+#: storage/local_storage.py:256
 #, python-brace-format
 msgid "复制操作权限不足: {} -> {}"
 msgstr "复制操作权限不足: {} -> {}"
 
-#: storage/local_storage.py:220
+#: storage/local_storage.py:259
 #, python-brace-format
 msgid "复制操作失败: {}"
 msgstr "复制操作失败: {}"
 
-#: storage/local_storage.py:226
+#: storage/local_storage.py:266
 #, python-brace-format
 msgid "文件或目录不存在: {}"
 msgstr "文件或目录不存在: {}"
 
-#: storage/manager.py:35
+#: storage/manager.py:37
 #, python-brace-format
 msgid "对象 {} 未实现 StorageBackend 接口。"
 msgstr "对象 {} 未实现 StorageBackend 接口。"
 
-#: storage/manager.py:38
+#: storage/manager.py:43
 #, python-brace-format
 msgid "存储后端 '{}' 已经存在。"
 msgstr "存储后端 '{}' 已经存在。"
 
-#: storage/manager.py:41
+#: storage/manager.py:46
 #, python-brace-format
 msgid "存储后端 '{}' 已注册。"
 msgstr "存储后端 '{}' 已注册。"
 
-#: storage/manager.py:53
+#: storage/manager.py:58
 #, python-brace-format
 msgid "当前存储已切换为 '{}'。"
 msgstr "当前存储已切换为 '{}'。"
 
-#: storage/manager.py:55
+#: storage/manager.py:60
 #, python-brace-format
 msgid "存储后端 '{}' 未注册。"
 msgstr "存储后端 '{}' 未注册。"
 
-#: storage/manager.py:60
+#: storage/manager.py:69
 msgid "当前存储后端未设置或找不到。请先调用 set_current_backend()。"
 msgstr "当前存储后端未设置或找不到。请先调用 set_current_backend()。"
 
-#: ui/pages/browser.py:32
+#: ui/components/header.py:15
+msgid "已退出登录"
+msgstr ""
+
+#: ui/components/header.py:21
+msgid "退出"
+msgstr ""
+
+#: ui/pages/browser.py:56
 msgid "文件"
 msgstr "文件"
 
-#: ui/pages/browser.py:33
+#: ui/pages/browser.py:57
 msgid "大小"
 msgstr "大小"
+
+#: ui/pages/login.py:25
+msgid "登录成功"
+msgstr "登录成功"
+
+#: ui/pages/login.py:40
+msgid "邮箱"
+msgstr "邮箱"
+
+#: ui/pages/login.py:41
+msgid "密码"
+msgstr "密码"
+
+#: ui/pages/login.py:44
+msgid "登录"
+msgstr "登录"
 
