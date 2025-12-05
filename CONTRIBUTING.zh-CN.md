@@ -104,6 +104,11 @@ uv run pytest
     ```shell
     uv run pybabel init -i locales/messages.pot -d locales -l {你的语言代码}
     ```
+   
+    > 如过你已经创建过 `.po` 文件，请使用以下命令**更新** `.po` 文件：
+    > ```shell
+    > uv run pybabel update -i locales/messages.pot -d locales
+    > ```
 
 3. 使用你喜欢的编辑器打开 `.po` 文件，在 `msgstr` 中填写翻译。
 
