@@ -237,3 +237,4 @@ msgstr "Password"
 #: ui/pages/login.py:44
 msgid "登录"
 msgstr "Login"
+
