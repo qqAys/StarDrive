@@ -2,7 +2,7 @@ import shutil
 from pathlib import Path
 from typing import BinaryIO
 
-from models.file_metadata import FileMetadata
+from schemas.file_schema import FileMetadata, DirMetadata
 from utils import logger, _
 from .base import (
     StorageBackend,
@@ -140,7 +140,7 @@ class LocalStorage(StorageBackend):
                 _("没有权限删除文件: {}").format(remote_path)
             ) from e
 
-    def list_files(self, remote_path: str) -> list[FileMetadata]:
+    def list_files(self, remote_path: str) -> list[FileMetadata | DirMetadata]:
         full_path = self._get_full_path(remote_path)
 
         if not full_path.exists():
@@ -163,14 +163,22 @@ class LocalStorage(StorageBackend):
                 stat_info = entry_path.stat()
                 is_dir = entry_path.is_dir()
 
-                metadata = FileMetadata(
-                    name=entry_path.name,
-                    path=entry_remote_path,
-                    type_="dir" if is_dir else "file",
-                    size=0 if is_dir else stat_info.st_size,
-                    created_at=stat_info.st_ctime,
-                    num_children=len(list(entry_path.iterdir())) if is_dir else None,
-                )
+                if is_dir:
+                    metadata = DirMetadata(
+                        name=entry_path.name,
+                        path=entry_remote_path,
+                        size=0,
+                        created_at=stat_info.st_ctime,
+                        num_children=len(list(entry_path.iterdir())),
+                    )
+                else:
+                    metadata = FileMetadata(
+                        name=entry_path.name,
+                        path=entry_remote_path,
+                        size=stat_info.st_size,
+                        created_at=stat_info.st_ctime,
+                    )
+
                 metadata_list.append(metadata)
         except PermissionError as e:
             raise StoragePermissionError(
@@ -258,7 +266,7 @@ class LocalStorage(StorageBackend):
         except Exception as e:
             raise StorageError(_("复制操作失败: {}").format(e)) from e
 
-    def get_file_metadata(self, remote_path: str) -> FileMetadata:
+    def get_file_metadata(self, remote_path: str) -> FileMetadata | DirMetadata:
         full_path = self._get_full_path(remote_path)
 
         if not full_path.exists():
@@ -269,11 +277,18 @@ class LocalStorage(StorageBackend):
         stat_info = full_path.stat()
         is_dir = full_path.is_dir()
 
-        return FileMetadata(
-            name=full_path.name,
-            path=remote_path,
-            type_="dir" if is_dir else "file",
-            size=0 if is_dir else stat_info.st_size,
-            created_at=stat_info.st_ctime,
-            num_children=len(list(full_path.iterdir())) if is_dir else None,
-        )
+        if is_dir:
+            return DirMetadata(
+                name=full_path.name,
+                path=remote_path,
+                size=0,
+                created_at=stat_info.st_ctime,
+                num_children=len(list(full_path.iterdir())),
+            )
+        else:
+            return FileMetadata(
+                name=full_path.name,
+                path=remote_path,
+                size=stat_info.st_size,
+                created_at=stat_info.st_ctime,
+            )

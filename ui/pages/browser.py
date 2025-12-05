@@ -4,6 +4,8 @@ from fastapi.responses import RedirectResponse
 from nicegui import events, ui, APIRouter, app
 
 import globals
+from ui.components.header import Header
+from ui.components.notify import notify
 from utils import bytes_to_human_readable, _
 
 this_page_routes = "/home"
@@ -19,6 +21,9 @@ router = APIRouter(prefix=this_page_routes)
 
 @router.page("/")
 def index():
+
+    Header().render()
+
     multiple = True
     M = globals.get_storage_manager()
 
@@ -63,6 +68,6 @@ def index():
             path = Path(e.args["data"]["path"])
             update_grid(path.__str__())
         except Exception as e:
-            ui.notify(str(e), type="negative")
+            notify.error(str(e))
 
     grid.on("cellDoubleClicked", handle_double_click)

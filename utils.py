@@ -26,7 +26,7 @@ translations = {}
 
 
 def load_translations(
-        localedir=LOCALE_DIR, domain="messages", supported_languages=None
+    localedir=LOCALE_DIR, domain="messages", supported_languages=None
 ):
     """
     加载所有支持语言的 Translation 对象到字典中。
@@ -71,6 +71,7 @@ _ = dynamic_gettext
 
 
 # --- 工具函数 ---
+
 
 def bytes_to_human_readable(num_bytes: int) -> str:
     """
