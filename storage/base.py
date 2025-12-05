@@ -1,15 +1,15 @@
 from abc import ABC, abstractmethod
 from typing import BinaryIO
 
-from models.file_metadata import FileMetadata
+from schemas.file_schema import FileMetadata, DirMetadata
 
 
-# Top-level base class for all storage backends
+# 顶级存储后端基类
 class StorageError(Exception):
     pass
 
 
-# Operation-level exceptions
+# 操作级异常
 class StorageConfigurationError(StorageError):
     pass
 
@@ -22,7 +22,7 @@ class StorageAuthenticationError(StorageError):
     pass
 
 
-# File-system-specific exceptions
+# 文件系统级异常
 class StorageFileError(StorageError):
     pass
 
@@ -75,7 +75,7 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    def list_files(self, remote_path: str) -> list[FileMetadata]:
+    def list_files(self, remote_path: str) -> list[FileMetadata | DirMetadata]:
         pass
 
     @abstractmethod
@@ -95,5 +95,5 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    def get_file_metadata(self, remote_path: str) -> FileMetadata:
+    def get_file_metadata(self, remote_path: str) -> FileMetadata | DirMetadata:
         pass

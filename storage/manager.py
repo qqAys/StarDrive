@@ -1,6 +1,6 @@
 from typing import Dict, Optional, BinaryIO, Generator
 
-from models.file_metadata import FileMetadata
+from schemas.file_schema import FileMetadata, DirMetadata
 from utils import logger, _
 from .base import StorageBackend
 from .local_storage import LocalStorage
@@ -108,7 +108,7 @@ class StorageManager:
         backend.delete_file(remote_path)
         return True
 
-    def list_files(self, remote_path: str) -> list[FileMetadata]:
+    def list_files(self, remote_path: str) -> list[FileMetadata | DirMetadata]:
         """列出目录下的文件元数据。"""
         backend = self._get_current_backend()
         return backend.list_files(remote_path)
@@ -137,7 +137,7 @@ class StorageManager:
         backend.copy_file(src_path, dest_path)
         return True
 
-    def get_file_metadata(self, remote_path: str) -> FileMetadata:
+    def get_file_metadata(self, remote_path: str) -> FileMetadata | DirMetadata:
         """获取单个文件或目录的元数据。"""
         backend = self._get_current_backend()
         return backend.get_file_metadata(remote_path)
