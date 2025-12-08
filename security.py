@@ -10,8 +10,20 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
-unrestricted_page_routes = {"/login/", "/login"}
+# 不需要认证的页面
+unrestricted_page_routes = (
+    # 静态资源
+    "/favicon.ico",
+    "/apple-touch-icon.png",
+    "/favicon-16x16.png",
+    "/favicon-32x32.png",
+    "/android-chrome-192x192.png",
+    "/android-chrome-512x512.png",
+    "/site.webmanifest",
+    # 登录页面
+    "/login/",
+    "/login",
+)
 
 
 @app.add_middleware
