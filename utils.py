@@ -1,14 +1,87 @@
 import gettext
+import json
+import logging
 from logging import getLogger, StreamHandler
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from fastapi.responses import FileResponse
 
 from nicegui import app
 
+from config import settings
+
+app_root = Path(__file__).parent
+data_dir = app_root / "data"
+static_dir = "/static"
+static_path = app_root / "static"
+
 # --- 日志 ---
 
-logger = getLogger("stardrive")
-logger.setLevel("DEBUG")
-logger.addHandler(StreamHandler())
+LOG_MAX_BYTES = 10 * 1024 * 1024  # 10MB
+LOG_BACKUP_COUNT = 5
+LOG_DATE_FMT = "%Y-%m-%d %H:%M:%S"
+
+APP_LOG_PATH = data_dir / "log"
+APP_LOG_PATH.mkdir(parents=True, exist_ok=True)
+
+
+class CustomFormatter(logging.Formatter):
+    """
+    自定义 Formatter，用于处理日志中的占位符。
+    """
+
+    def format(self, record: logging.LogRecord):
+        log_record = {
+            "timestamp": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "file": record.pathname,
+            "line": record.lineno,
+        }
+
+        if record.exc_info:
+            log_record["stack_trace"] = self.formatException(record.exc_info)
+        elif record.exc_text:
+            log_record["stack_trace"] = record.exc_text
+
+        return json.dumps(log_record, ensure_ascii=False)
+
+
+def create_handler(filename: Path, formatter: logging.Formatter) -> RotatingFileHandler:
+    file_handler = RotatingFileHandler(
+        filename,
+        maxBytes=LOG_MAX_BYTES,
+        backupCount=LOG_BACKUP_COUNT,
+        encoding="utf-8",
+    )
+    file_handler.setFormatter(formatter)
+    return file_handler
+
+
+# 创建 Handler
+shared_formatter = CustomFormatter()
+stream_handler = StreamHandler()
+stream_handler.setFormatter(shared_formatter)
+app_file_handler = create_handler(APP_LOG_PATH / "app.log", shared_formatter)
+
+# 获取根 logger
+root_logger = logging.getLogger()
+
+# 移除所有已有的 Handler
+for handler in root_logger.handlers[:]:
+    root_logger.removeHandler(handler)
+
+# 设置级别
+root_logger.setLevel(settings.LOG_LEVEL)
+
+# 添加 Handler
+root_logger.addHandler(stream_handler)
+root_logger.addHandler(app_file_handler)
+
+# APP LOGGER
+logger = getLogger(settings._PROJECT_NAME_CODE)
+
 
 # --- 本地化 ---
 
@@ -82,3 +155,14 @@ def bytes_to_human_readable(num_bytes: int) -> str:
             return f"{num_bytes:.2f} {unit}"
         num_bytes /= 1024.0
     return f"{num_bytes:.2f} YB"
+
+
+def return_file_response(
+    path: str | Path,
+    media_type: str = None,
+    filename: str = None,
+    status_code: int = 200,
+):
+    return FileResponse(
+        path=path, media_type=media_type, filename=filename, status_code=status_code
+    )
