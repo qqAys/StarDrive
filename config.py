@@ -23,7 +23,9 @@ class Config(BaseSettings):
     # 请勿在生产环境打开DEBUG，将可能暴露文件结构
     DEBUG: bool = False
 
+    APP_NAME: str = _PROJECT_NAME
     APP_VERSION: str = None
+    APP_GITHUB_URL: str = "https://github.com/qqAys/StarDrive"
 
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8080
