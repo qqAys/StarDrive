@@ -31,7 +31,7 @@ class UserManager:
 
         self.users = self.storage[ALL_USERS_KEY]
 
-        if len(self.storage[ALL_USERS_KEY]) == 0:
+        if len(self.users) == 0:
             # 初始化管理员
             initial_email = "admin@stardrive.abc"
             initial_password = generate_random_password()
