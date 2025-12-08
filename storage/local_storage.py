@@ -29,7 +29,7 @@ class LocalStorage(StorageBackend):
         # 确保根目录存在
         if not self.root_path.is_dir():
             self.root_path.mkdir(parents=True, exist_ok=True)
-        logger.info(_("LocalStorage 初始化，根目录: {}").format(self.root_path))
+        logger.debug(_("LocalStorage 初始化，根目录: {}").format(self.root_path))
 
     def _get_full_path(self, remote_path: str) -> Path:
         """

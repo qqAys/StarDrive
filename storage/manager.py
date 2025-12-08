@@ -43,7 +43,7 @@ class StorageManager:
             raise ValueError(_("存储后端 '{}' 已经存在。").format(name))
 
         self._backends[name] = backend_instance
-        logger.info(_("存储后端 '{}' 已注册。").format(name))
+        logger.debug(_("存储后端 '{}' 已注册。").format(name))
 
     def list_backends(self) -> list[str]:
         """返回已注册的所有存储后端名称。"""
@@ -55,7 +55,7 @@ class StorageManager:
         """
         if name in self._backends:
             self._current_backend_name = name
-            logger.info(_("当前存储已切换为 '{}'。").format(name))
+            logger.debug(_("当前存储已切换为 '{}'。").format(name))
         else:
             raise BackendNotFoundError(_("存储后端 '{}' 未注册。").format(name))
 
