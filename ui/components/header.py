@@ -18,6 +18,10 @@ class Header:
     <link rel="manifest" href="/site.webmanifest" />"""
         )
 
+        ui.add_head_html(
+            '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />'
+        )
+
     @staticmethod
     def logout():
         app.storage.user.update({"authenticated": False})
