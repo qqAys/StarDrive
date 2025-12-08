@@ -9,13 +9,15 @@
 
  - [x] 我已阅读并遵循 [贡献指南](https://github.com/qqAys/StarDrive/blob/main/CONTRIBUTING.md) (Contributing Guide)
 
- - [x] 代码已通过 `uv run black` 格式化
+ - [x] 代码已通过 `uv run black .` 格式化
 
  - [x] 所有现有测试均通过 (`uv run pytest`)
 
  - [ ] 如果是新功能，我已添加了新的测试来覆盖它
 
  - [ ] 如果是 UI 更改，我已附上屏幕截图
+
+ - [ ] 如果是输出文本，我已使用 `utils` 模块的 `_` 函数进行国际化 (`_("需翻译的内容")`)
 
  - [ ] 如果是文档更改，我已更新了相关的文档
 
@@ -33,6 +35,8 @@
  - [ ] 文档更新 (Documentation)：仅对文档（如 README、指南）进行更改
 
  - [ ] 样式/格式 (Style)：不影响代码运行的更改（如格式化、重命名变量）
+
+ - [ ] 翻译 (Translation)：添加了新的翻译或更新了现有的翻译
 
  - [ ] 测试 (Testing)：添加或修改了测试用例
 
