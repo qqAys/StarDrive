@@ -2,11 +2,7 @@ import random
 import string
 
 import bcrypt
-from fastapi.requests import Request
-from fastapi.responses import RedirectResponse
-from nicegui import app
 from passlib.context import CryptContext
-from starlette.middleware.base import BaseHTTPMiddleware
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -24,23 +20,6 @@ unrestricted_page_routes = (
     "/login/",
     "/login",
 )
-
-
-@app.add_middleware
-class AuthMiddleware(BaseHTTPMiddleware):
-    """
-    中间件，用于处理用户认证
-    如果用户未登录，则跳转到登录页面
-    """
-
-    async def dispatch(self, request: Request, call_next):
-        if not app.storage.user.get("authenticated", False):
-            if (
-                not request.url.path.startswith("/_nicegui")
-                and request.url.path not in unrestricted_page_routes
-            ):
-                return RedirectResponse(f"/login?redirect_to={request.url.path}")
-        return await call_next(request)
 
 
 class HashingManager:
