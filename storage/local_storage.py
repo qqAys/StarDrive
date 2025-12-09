@@ -29,7 +29,9 @@ class LocalStorage(StorageBackend):
         # 确保根目录存在
         if not self.root_path.is_dir():
             self.root_path.mkdir(parents=True, exist_ok=True)
-        logger.debug(_("LocalStorage initialized, root directory: {}").format(self.root_path))
+        logger.debug(
+            _("LocalStorage initialized, root directory: {}").format(self.root_path)
+        )
 
     def _get_full_path(self, remote_path: str) -> Path:
         """
@@ -40,11 +42,15 @@ class LocalStorage(StorageBackend):
         try:
             full_resolved_path = full_path.resolve(strict=False)
         except OSError as e:
-            raise StorageError(_("Path parsing failed: {}").format(remote_path), e) from e
+            raise StorageError(
+                _("Path parsing failed: {}").format(remote_path), e
+            ) from e
 
         if not full_resolved_path.is_relative_to(self.root_path):
             raise StoragePermissionError(
-                _("Path security check failed, path is outside root directory: {}").format(remote_path)
+                _(
+                    "Path security check failed, path is outside root directory: {}"
+                ).format(remote_path)
             )
 
         return full_resolved_path
@@ -70,7 +76,9 @@ class LocalStorage(StorageBackend):
                 _("Permission denied to write file to {}").format(full_path)
             ) from e
         except Exception as e:
-            raise StorageError(_("Could not write file to {}").format(full_path), e) from e
+            raise StorageError(
+                _("Could not write file to {}").format(full_path), e
+            ) from e
 
     def upload_file_from_path(self, local_path: str, remote_path: str):
         local_src_path = Path(local_path)
@@ -79,7 +87,9 @@ class LocalStorage(StorageBackend):
         # 检查本地源文件
         if not local_src_path.is_file():
             raise StorageFileNotFoundError(
-                _("Local source file does not exist or is a directory: {}").format(local_path)
+                _("Local source file does not exist or is a directory: {}").format(
+                    local_path
+                )
             )
 
         # 确保目标父目录存在
@@ -130,7 +140,9 @@ class LocalStorage(StorageBackend):
             )
         if full_path.is_dir():
             raise StorageIsADirectoryError(
-                _("Path points to a directory, please use delete_directory: {}").format(remote_path)
+                _("Path points to a directory, please use delete_directory: {}").format(
+                    remote_path
+                )
             )
 
         try:
@@ -144,7 +156,9 @@ class LocalStorage(StorageBackend):
         full_path = self._get_full_path(remote_path)
 
         if not full_path.exists():
-            raise StorageFileNotFoundError(_("Directory does not exist: {}").format(remote_path))
+            raise StorageFileNotFoundError(
+                _("Directory does not exist: {}").format(remote_path)
+            )
         if not full_path.is_dir():
             raise StorageNotADirectoryError(
                 _("Path points to a file, not a directory: {}").format(remote_path)
@@ -229,7 +243,9 @@ class LocalStorage(StorageBackend):
         dest_full_path = self._get_full_path(dest_path)
 
         if not src_full_path.exists():
-            raise StorageFileNotFoundError(_("Source file/directory does not exist: {}").format(src_path))
+            raise StorageFileNotFoundError(
+                _("Source file/directory does not exist: {}").format(src_path)
+            )
 
         # 确保目标父目录存在
         dest_full_path.parent.mkdir(parents=True, exist_ok=True)
@@ -239,7 +255,9 @@ class LocalStorage(StorageBackend):
             shutil.move(src_full_path, dest_full_path)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("Insufficient permissions for move operation: {} -> {}").format(src_path, dest_path)
+                _("Insufficient permissions for move operation: {} -> {}").format(
+                    src_path, dest_path
+                )
             ) from e
         except Exception as e:
             raise StorageError(_("Move operation failed: {}").format(e)) from e
@@ -261,7 +279,9 @@ class LocalStorage(StorageBackend):
             shutil.copy2(src_full_path, dest_full_path)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("Insufficient permissions for copy operation: {} -> {}").format(src_path, dest_path)
+                _("Insufficient permissions for copy operation: {} -> {}").format(
+                    src_path, dest_path
+                )
             ) from e
         except Exception as e:
             raise StorageError(_("Copy operation failed: {}").format(e)) from e

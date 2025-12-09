@@ -11,7 +11,9 @@ class FileMetadataBase(BaseModel):
     path: str = Field(description=_("Path"))
     type: Literal["file", "dir", "link"] = Field(description=_("File type"))
     size: int = Field(default=0, description=_("File size (bytes)"))
-    created_at: Optional[float] = Field(default=None, description=_("Creation timestamp"))
+    created_at: Optional[float] = Field(
+        default=None, description=_("Creation timestamp")
+    )
 
     class Config:
         extra = "ignore"
@@ -21,7 +23,9 @@ class FileMetadataBase(BaseModel):
 # 目录元数据
 class DirMetadata(FileMetadataBase):
     type: Literal["dir"] = "dir"
-    num_children: int = Field(default=0, description=_("Number of children in the directory"))
+    num_children: int = Field(
+        default=0, description=_("Number of children in the directory")
+    )
 
 
 # 文件元数据

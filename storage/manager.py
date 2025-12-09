@@ -57,7 +57,9 @@ class StorageManager:
             self._current_backend_name = name
             logger.debug(_("Current storage has been switched to '{}'.").format(name))
         else:
-            raise BackendNotFoundError(_("Storage backend '{}' is not registered.").format(name))
+            raise BackendNotFoundError(
+                _("Storage backend '{}' is not registered.").format(name)
+            )
 
     def _get_current_backend(self) -> StorageBackend:
         """获取当前活跃的存储后端实例。失败时抛出 BackendNotFoundError。"""
@@ -66,7 +68,9 @@ class StorageManager:
             or self._current_backend_name not in self._backends
         ):
             raise BackendNotFoundError(
-                _("The current storage backend is not set or cannot be found. Please call set_current_backend() first.")
+                _(
+                    "The current storage backend is not set or cannot be found. Please call set_current_backend() first."
+                )
             )
         return self._backends[self._current_backend_name]
 

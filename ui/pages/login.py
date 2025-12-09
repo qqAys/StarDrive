@@ -42,7 +42,9 @@ def login_page(redirect_to: str = None):
                 with ui.row().classes("text-3xl"):
                     ui.image("/android-chrome-512x512.png").classes("w-8 h-8")
                     ui.label(settings.APP_NAME).classes("text-2xl font-bold")
-                ui.label(_("Welcome to {}").format(settings.APP_NAME)).classes("text-xs")
+                ui.label(_("Welcome to {}").format(settings.APP_NAME)).classes(
+                    "text-xs"
+                )
 
             def try_login():
                 pre_login_user = UserLogin(email=email.value, password=password.value)
