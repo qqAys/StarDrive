@@ -1,5 +1,6 @@
 from nicegui import ui, app
 
+from config import settings
 from ui.components.notify import notify
 from utils import _
 
@@ -7,8 +8,9 @@ from utils import _
 class Header:
 
     def __init__(self):
-        self.header = ui.header
+        ui.colors(primary="#424242")
 
+        # favicon
         ui.add_head_html(
             f"""
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -18,15 +20,20 @@ class Header:
     <link rel="manifest" href="/site.webmanifest" />"""
         )
 
+        # eva-icons
         ui.add_head_html(
             '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />'
         )
+
+        self.header = ui.header
 
     @staticmethod
     def logout():
         app.storage.user.update({"authenticated": False})
         notify.success(_("已退出登录"))
-        ui.timer(3.0, lambda: ui.navigate.to("/login"), once=True)
+        ui.timer(
+            settings.NICEGUI_TIMER_INTERVAL, lambda: ui.navigate.to("/login"), once=True
+        )
 
     def render(self):
         with self.header().classes("items-center p-1 no-wrap"):
