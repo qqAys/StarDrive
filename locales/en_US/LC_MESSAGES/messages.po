@@ -5,11 +5,11 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-12-05 15:13+0800\n"
-"PO-Revision-Date: 2025-12-02 15:21+0800\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Project-Id-Version: 0.1.0\n"
+"Report-Msgid-Bugs-To: me@qqays.xyz\n"
+"POT-Creation-Date: 2025-12-09 14:15+0800\n"
+"PO-Revision-Date: 2025-12-09 14:17+0800\n"
+"Last-Translator: Jinx <me@qqays.xyz>\n"
 "Language: en_US\n"
 "Language-Team: en_US <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -18,223 +18,272 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: services/user_service.py:40
+#: middleware.py:39
 #, python-brace-format
-msgid "管理员已创建，登录邮箱为：{}，密码为：{}"
-msgstr "Admin created, login email: {}, password: {}"
+msgid "Unauthorized access to {}, request_uuid: {}"
+msgstr ""
 
-#: services/user_service.py:56
-msgid "密码错误"
-msgstr "Incorrect password"
+#: schemas/file_schema.py:10
+msgid "File name or Directory name"
+msgstr ""
 
-#: services/user_service.py:60
-msgid "登录失败"
-msgstr "Login failed"
+#: schemas/file_schema.py:11
+msgid "Path"
+msgstr ""
+
+#: schemas/file_schema.py:12
+msgid "File type"
+msgstr ""
+
+#: schemas/file_schema.py:13
+msgid "File size (bytes)"
+msgstr ""
+
+#: schemas/file_schema.py:14
+msgid "Creation timestamp"
+msgstr ""
+
+#: schemas/file_schema.py:24
+msgid "Number of children in the directory"
+msgstr ""
+
+#: schemas/file_schema.py:35
+msgid "Target path of the symbolic link"
+msgstr ""
+
+#: services/user_service.py:46
+#, python-brace-format
+msgid "Administrator account created. Email: {}, Password: {}"
+msgstr ""
 
 #: services/user_service.py:72
-msgid "用户已存在"
-msgstr "User already exists"
+msgid "Invalid password or email"
+msgstr ""
 
-#: services/user_service.py:97 services/user_service.py:108
-#: services/user_service.py:131 services/user_service.py:145
-#: ui/pages/login.py:20
-msgid "用户不存在"
-msgstr "User does not exist"
+#: services/user_service.py:76
+msgid "Login failed"
+msgstr ""
 
-#: services/user_service.py:122
-msgid "密码修改失败"
-msgstr "Failed to modify password"
+#: services/user_service.py:91
+msgid "User already exists"
+msgstr ""
+
+#: services/user_service.py:116 services/user_service.py:127
+#: services/user_service.py:150 services/user_service.py:164
+msgid "User does not exist"
+msgstr ""
+
+#: services/user_service.py:141
+msgid "Password modification failed"
+msgstr ""
 
 #: storage/local_storage.py:32
 #, python-brace-format
-msgid "LocalStorage 初始化，根目录: {}"
-msgstr "LocalStorage initialized, root directory: {}"
+msgid "LocalStorage initialized, root directory: {}"
+msgstr ""
 
 #: storage/local_storage.py:43
 #, python-brace-format
-msgid "路径解析失败: {}"
-msgstr "Path parsing failed: {}"
+msgid "Path parsing failed: {}"
+msgstr ""
 
 #: storage/local_storage.py:47
 #, python-brace-format
-msgid "路径安全检查失败，路径超出根目录: {}"
-msgstr "Path security check failed, path is outside root directory: {}"
+msgid "Path security check failed, path is outside root directory: {}"
+msgstr ""
 
 #: storage/local_storage.py:70
 #, python-brace-format
-msgid "没有权限写入文件到 {}"
-msgstr "Permission denied to write file to {}"
+msgid "Permission denied to write file to {}"
+msgstr ""
 
 #: storage/local_storage.py:73
 #, python-brace-format
-msgid "无法写入文件到 {}"
-msgstr "Could not write file to {}"
+msgid "Could not write file to {}"
+msgstr ""
 
 #: storage/local_storage.py:82
 #, python-brace-format
-msgid "本地源文件不存在或是一个目录: {}"
-msgstr "Local source file does not exist or is a directory: {}"
+msgid "Local source file does not exist or is a directory: {}"
+msgstr ""
 
 #: storage/local_storage.py:95 storage/local_storage.py:109
 #, python-brace-format
-msgid "文件不存在，无法下载: {}"
-msgstr "File does not exist, cannot download: {}"
+msgid "File does not exist, cannot download: {}"
+msgstr ""
 
 #: storage/local_storage.py:99 storage/local_storage.py:113
 #, python-brace-format
-msgid "路径指向一个目录: {}"
-msgstr "Path points to a directory: {}"
+msgid "Path points to a directory: {}"
+msgstr ""
 
 #: storage/local_storage.py:129
 #, python-brace-format
-msgid "文件不存在，无法删除: {}"
-msgstr "File does not exist, cannot delete: {}"
+msgid "File does not exist, cannot delete: {}"
+msgstr ""
 
 #: storage/local_storage.py:133
 #, python-brace-format
-msgid "路径指向一个目录，请使用 delete_directory: {}"
-msgstr "Path points to a directory, please use delete_directory: {}"
+msgid "Path points to a directory, please use delete_directory: {}"
+msgstr ""
 
 #: storage/local_storage.py:140
 #, python-brace-format
-msgid "没有权限删除文件: {}"
-msgstr "Permission denied to delete file: {}"
+msgid "Permission denied to delete file: {}"
+msgstr ""
 
 #: storage/local_storage.py:147
 #, python-brace-format
-msgid "目录不存在: {}"
-msgstr "Directory does not exist: {}"
+msgid "Directory does not exist: {}"
+msgstr ""
 
-#: storage/local_storage.py:150 storage/local_storage.py:209
+#: storage/local_storage.py:150 storage/local_storage.py:217
 #, python-brace-format
-msgid "路径指向文件，不是目录: {}"
-msgstr "Path points to a file, not a directory: {}"
+msgid "Path points to a file, not a directory: {}"
+msgstr ""
 
-#: storage/local_storage.py:177
+#: storage/local_storage.py:185
 #, python-brace-format
-msgid "没有权限读取目录: {}"
-msgstr "Permission denied to read directory: {}"
+msgid "Permission denied to read directory: {}"
+msgstr ""
 
-#: storage/local_storage.py:180
+#: storage/local_storage.py:188
 #, python-brace-format
-msgid "读取目录失败: {}"
-msgstr "Failed to read directory: {}"
+msgid "Failed to read directory: {}"
+msgstr ""
 
-#: storage/local_storage.py:190
+#: storage/local_storage.py:198
 #, python-brace-format
-msgid "路径已被一个文件占用: {}"
-msgstr "Path is already occupied by a file: {}"
-
-#: storage/local_storage.py:197
-#, python-brace-format
-msgid "没有权限创建目录: {}"
-msgstr "Permission denied to create directory: {}"
+msgid "Path is already occupied by a file: {}"
+msgstr ""
 
 #: storage/local_storage.py:205
 #, python-brace-format
-msgid "目录不存在，无法删除: {}"
-msgstr "Directory does not exist, cannot delete: {}"
+msgid "Permission denied to create directory: {}"
+msgstr ""
 
-#: storage/local_storage.py:217
+#: storage/local_storage.py:213
 #, python-brace-format
-msgid "删除目录失败: {}"
-msgstr "Failed to delete directory: {}"
+msgid "Directory does not exist, cannot delete: {}"
+msgstr ""
 
-#: storage/local_storage.py:224
+#: storage/local_storage.py:225
 #, python-brace-format
-msgid "源文件/目录不存在: {}"
-msgstr "Source file/directory does not exist: {}"
+msgid "Failed to delete directory: {}"
+msgstr ""
 
-#: storage/local_storage.py:234
+#: storage/local_storage.py:232
 #, python-brace-format
-msgid "移动操作权限不足: {} -> {}"
-msgstr "Insufficient permissions for move operation: {} -> {}"
+msgid "Source file/directory does not exist: {}"
+msgstr ""
 
-#: storage/local_storage.py:237
+#: storage/local_storage.py:242
 #, python-brace-format
-msgid "移动操作失败: {}"
-msgstr "Move operation failed: {}"
+msgid "Insufficient permissions for move operation: {} -> {}"
+msgstr ""
 
-#: storage/local_storage.py:246
+#: storage/local_storage.py:245
 #, python-brace-format
-msgid "源文件不存在或是一个目录: {}"
-msgstr "Source file does not exist or is a directory: {}"
+msgid "Move operation failed: {}"
+msgstr ""
 
-#: storage/local_storage.py:256
+#: storage/local_storage.py:254
 #, python-brace-format
-msgid "复制操作权限不足: {} -> {}"
-msgstr "Insufficient permissions for copy operation: {} -> {}"
+msgid "Source file does not exist or is a directory: {}"
+msgstr ""
 
-#: storage/local_storage.py:259
+#: storage/local_storage.py:264
 #, python-brace-format
-msgid "复制操作失败: {}"
-msgstr "Copy operation failed: {}"
+msgid "Insufficient permissions for copy operation: {} -> {}"
+msgstr ""
 
-#: storage/local_storage.py:266
+#: storage/local_storage.py:267
 #, python-brace-format
-msgid "文件或目录不存在: {}"
-msgstr "File or directory does not exist: {}"
+msgid "Copy operation failed: {}"
+msgstr ""
+
+#: storage/local_storage.py:274
+#, python-brace-format
+msgid "File or directory does not exist: {}"
+msgstr ""
 
 #: storage/manager.py:37
 #, python-brace-format
-msgid "对象 {} 未实现 StorageBackend 接口。"
-msgstr "Object {} does not implement the StorageBackend interface."
+msgid "Object {} does not implement the StorageBackend interface."
+msgstr ""
 
 #: storage/manager.py:43
 #, python-brace-format
-msgid "存储后端 '{}' 已经存在。"
-msgstr "Storage backend '{}' already exists."
+msgid "Storage backend '{}' already exists."
+msgstr ""
 
 #: storage/manager.py:46
 #, python-brace-format
-msgid "存储后端 '{}' 已注册。"
-msgstr "Storage backend '{}' registered."
+msgid "Storage backend '{}' has been registered."
+msgstr ""
 
 #: storage/manager.py:58
 #, python-brace-format
-msgid "当前存储已切换为 '{}'。"
-msgstr "Current storage switched to '{}'."
+msgid "Current storage has been switched to '{}'."
+msgstr ""
 
 #: storage/manager.py:60
 #, python-brace-format
-msgid "存储后端 '{}' 未注册。"
-msgstr "Storage backend '{}' is not registered."
+msgid "Storage backend '{}' is not registered."
+msgstr ""
 
 #: storage/manager.py:69
-msgid "当前存储后端未设置或找不到。请先调用 set_current_backend()。"
-msgstr ""
-"Current storage backend is not set or found. Please call "
+msgid ""
+"The current storage backend is not set or cannot be found. Please call "
 "set_current_backend() first."
+msgstr ""
 
-#: ui/components/header.py:15
-msgid "已退出登录"
-msgstr "Logged out"
+#: ui/components/header.py:33
+msgid "Logged out"
+msgstr ""
 
-#: ui/components/header.py:21
-msgid "退出"
-msgstr "Logout"
+#: ui/components/header.py:41
+msgid "Logout"
+msgstr ""
 
-#: ui/pages/browser.py:56
-msgid "文件"
-msgstr "File"
+#: ui/pages/browser.py:59
+msgid "File"
+msgstr ""
 
-#: ui/pages/browser.py:57
-msgid "大小"
-msgstr "Size"
+#: ui/pages/browser.py:60
+msgid "Size"
+msgstr ""
 
-#: ui/pages/login.py:25
-msgid "登录成功"
-msgstr "Login successful"
+#: ui/pages/login.py:35
+msgid "Logged in"
+msgstr ""
 
-#: ui/pages/login.py:40
-msgid "邮箱"
-msgstr "Email"
+#: ui/pages/login.py:45
+#, python-brace-format
+msgid "Welcome to {}"
+msgstr ""
 
-#: ui/pages/login.py:41
-msgid "密码"
-msgstr "Password"
+#: ui/pages/login.py:51
+msgid "User not found"
+msgstr ""
 
-#: ui/pages/login.py:44
-msgid "登录"
-msgstr "Login"
+#: ui/pages/login.py:54
+msgid "Login successful"
+msgstr ""
+
+#: ui/pages/login.py:59
+msgid "Email"
+msgstr ""
+
+#: ui/pages/login.py:61
+msgid "Invalid email address"
+msgstr ""
+
+#: ui/pages/login.py:68
+msgid "Password"
+msgstr ""
+
+#: ui/pages/login.py:73
+msgid "Login"
+msgstr ""
 

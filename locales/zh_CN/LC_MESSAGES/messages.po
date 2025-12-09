@@ -5,11 +5,11 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-12-05 15:13+0800\n"
-"PO-Revision-Date: 2025-12-02 15:22+0800\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Project-Id-Version: 0.1.0\n"
+"Report-Msgid-Bugs-To: me@qqays.xyz\n"
+"POT-Creation-Date: 2025-12-09 14:15+0800\n"
+"PO-Revision-Date: 2025-12-09 14:17+0800\n"
+"Last-Translator: Jinx <me@qqays.xyz>\n"
 "Language: zh_Hans_CN\n"
 "Language-Team: zh_Hans_CN <LL@li.org>\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -18,221 +18,271 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: services/user_service.py:40
+#: middleware.py:39
 #, python-brace-format
-msgid "管理员已创建，登录邮箱为：{}，密码为：{}"
-msgstr "管理员已创建，登录邮箱为：{}，密码为：{}"
+msgid "Unauthorized access to {}, request_uuid: {}"
+msgstr "未授权访问 {}，请求UUID：{}"
 
-#: services/user_service.py:56
-msgid "密码错误"
-msgstr "密码错误"
+#: schemas/file_schema.py:10
+msgid "File name or Directory name"
+msgstr "文件名或目录名"
 
-#: services/user_service.py:60
-msgid "登录失败"
-msgstr "登录失败"
+#: schemas/file_schema.py:11
+msgid "Path"
+msgstr "路径"
+
+#: schemas/file_schema.py:12
+msgid "File type"
+msgstr "文件类型"
+
+#: schemas/file_schema.py:13
+msgid "File size (bytes)"
+msgstr "文件大小（字节）"
+
+#: schemas/file_schema.py:14
+msgid "Creation timestamp"
+msgstr "创建时间戳"
+
+#: schemas/file_schema.py:24
+msgid "Number of children in the directory"
+msgstr "目录中的子项数量"
+
+#: schemas/file_schema.py:35
+msgid "Target path of the symbolic link"
+msgstr "符号链接的目标路径"
+
+#: services/user_service.py:46
+#, python-brace-format
+msgid "Administrator account created. Email: {}, Password: {}"
+msgstr "管理员账户已创建。邮箱：{}，密码：{}"
 
 #: services/user_service.py:72
-msgid "用户已存在"
+msgid "Invalid password or email"
+msgstr "密码或邮箱无效"
+
+#: services/user_service.py:76
+msgid "Login failed"
+msgstr "登录失败"
+
+#: services/user_service.py:91
+msgid "User already exists"
 msgstr "用户已存在"
 
-#: services/user_service.py:97 services/user_service.py:108
-#: services/user_service.py:131 services/user_service.py:145
-#: ui/pages/login.py:20
-msgid "用户不存在"
+#: services/user_service.py:116 services/user_service.py:127
+#: services/user_service.py:150 services/user_service.py:164
+msgid "User does not exist"
 msgstr "用户不存在"
 
-#: services/user_service.py:122
-msgid "密码修改失败"
+#: services/user_service.py:141
+msgid "Password modification failed"
 msgstr "密码修改失败"
 
 #: storage/local_storage.py:32
 #, python-brace-format
-msgid "LocalStorage 初始化，根目录: {}"
-msgstr "LocalStorage 初始化，根目录: {}"
+msgid "LocalStorage initialized, root directory: {}"
+msgstr "LocalStorage 已初始化，根目录：{}"
 
 #: storage/local_storage.py:43
 #, python-brace-format
-msgid "路径解析失败: {}"
-msgstr "路径解析失败: {}"
+msgid "Path parsing failed: {}"
+msgstr "路径解析失败：{}"
 
 #: storage/local_storage.py:47
 #, python-brace-format
-msgid "路径安全检查失败，路径超出根目录: {}"
-msgstr "路径安全检查失败，路径超出根目录: {}"
+msgid "Path security check failed, path is outside root directory: {}"
+msgstr "路径安全检查失败，路径超出根目录：{}"
 
 #: storage/local_storage.py:70
 #, python-brace-format
-msgid "没有权限写入文件到 {}"
-msgstr "没有权限写入文件到 {}"
+msgid "Permission denied to write file to {}"
+msgstr "写入文件到 {} 权限不足"
 
 #: storage/local_storage.py:73
 #, python-brace-format
-msgid "无法写入文件到 {}"
-msgstr "无法写入文件到 {}"
+msgid "Could not write file to {}"
+msgstr "无法将文件写入 {}"
 
 #: storage/local_storage.py:82
 #, python-brace-format
-msgid "本地源文件不存在或是一个目录: {}"
-msgstr "本地源文件不存在或是一个目录: {}"
+msgid "Local source file does not exist or is a directory: {}"
+msgstr "本地源文件不存在或是一个目录：{}"
 
 #: storage/local_storage.py:95 storage/local_storage.py:109
 #, python-brace-format
-msgid "文件不存在，无法下载: {}"
-msgstr "文件不存在，无法下载: {}"
+msgid "File does not exist, cannot download: {}"
+msgstr "文件不存在，无法下载：{}"
 
 #: storage/local_storage.py:99 storage/local_storage.py:113
 #, python-brace-format
-msgid "路径指向一个目录: {}"
-msgstr "路径指向一个目录: {}"
+msgid "Path points to a directory: {}"
+msgstr "路径指向一个目录：{}"
 
 #: storage/local_storage.py:129
 #, python-brace-format
-msgid "文件不存在，无法删除: {}"
-msgstr "文件不存在，无法删除: {}"
+msgid "File does not exist, cannot delete: {}"
+msgstr "文件不存在，无法删除：{}"
 
 #: storage/local_storage.py:133
 #, python-brace-format
-msgid "路径指向一个目录，请使用 delete_directory: {}"
-msgstr "路径指向一个目录，请使用 delete_directory: {}"
+msgid "Path points to a directory, please use delete_directory: {}"
+msgstr "路径指向一个目录，请使用 delete_directory：{}"
 
 #: storage/local_storage.py:140
 #, python-brace-format
-msgid "没有权限删除文件: {}"
-msgstr "没有权限删除文件: {}"
+msgid "Permission denied to delete file: {}"
+msgstr "删除文件 {} 权限不足"
 
 #: storage/local_storage.py:147
 #, python-brace-format
-msgid "目录不存在: {}"
-msgstr "目录不存在: {}"
+msgid "Directory does not exist: {}"
+msgstr "目录不存在：{}"
 
-#: storage/local_storage.py:150 storage/local_storage.py:209
+#: storage/local_storage.py:150 storage/local_storage.py:217
 #, python-brace-format
-msgid "路径指向文件，不是目录: {}"
-msgstr "路径指向文件，不是目录: {}"
+msgid "Path points to a file, not a directory: {}"
+msgstr "路径指向一个文件，而不是目录：{}"
 
-#: storage/local_storage.py:177
+#: storage/local_storage.py:185
 #, python-brace-format
-msgid "没有权限读取目录: {}"
-msgstr "没有权限读取目录: {}"
+msgid "Permission denied to read directory: {}"
+msgstr "读取目录 {} 权限不足"
 
-#: storage/local_storage.py:180
+#: storage/local_storage.py:188
 #, python-brace-format
-msgid "读取目录失败: {}"
-msgstr "读取目录失败: {}"
+msgid "Failed to read directory: {}"
+msgstr "读取目录失败：{}"
 
-#: storage/local_storage.py:190
+#: storage/local_storage.py:198
 #, python-brace-format
-msgid "路径已被一个文件占用: {}"
-msgstr "路径已被一个文件占用: {}"
-
-#: storage/local_storage.py:197
-#, python-brace-format
-msgid "没有权限创建目录: {}"
-msgstr "没有权限创建目录: {}"
+msgid "Path is already occupied by a file: {}"
+msgstr "路径已被文件占用：{}"
 
 #: storage/local_storage.py:205
 #, python-brace-format
-msgid "目录不存在，无法删除: {}"
-msgstr "目录不存在，无法删除: {}"
+msgid "Permission denied to create directory: {}"
+msgstr "创建目录 {} 权限不足"
 
-#: storage/local_storage.py:217
+#: storage/local_storage.py:213
 #, python-brace-format
-msgid "删除目录失败: {}"
-msgstr "删除目录失败: {}"
+msgid "Directory does not exist, cannot delete: {}"
+msgstr "目录不存在，无法删除：{}"
 
-#: storage/local_storage.py:224
+#: storage/local_storage.py:225
 #, python-brace-format
-msgid "源文件/目录不存在: {}"
-msgstr "源文件/目录不存在: {}"
+msgid "Failed to delete directory: {}"
+msgstr "删除目录失败：{}"
 
-#: storage/local_storage.py:234
+#: storage/local_storage.py:232
 #, python-brace-format
-msgid "移动操作权限不足: {} -> {}"
-msgstr "移动操作权限不足: {} -> {}"
+msgid "Source file/directory does not exist: {}"
+msgstr "源文件/目录不存在：{}"
 
-#: storage/local_storage.py:237
+#: storage/local_storage.py:242
 #, python-brace-format
-msgid "移动操作失败: {}"
-msgstr "移动操作失败: {}"
+msgid "Insufficient permissions for move operation: {} -> {}"
+msgstr "移动操作权限不足：{} -> {}"
 
-#: storage/local_storage.py:246
+#: storage/local_storage.py:245
 #, python-brace-format
-msgid "源文件不存在或是一个目录: {}"
-msgstr "源文件不存在或是一个目录: {}"
+msgid "Move operation failed: {}"
+msgstr "移动操作失败：{}"
 
-#: storage/local_storage.py:256
+#: storage/local_storage.py:254
 #, python-brace-format
-msgid "复制操作权限不足: {} -> {}"
-msgstr "复制操作权限不足: {} -> {}"
+msgid "Source file does not exist or is a directory: {}"
+msgstr "源文件不存在或是一个目录：{}"
 
-#: storage/local_storage.py:259
+#: storage/local_storage.py:264
 #, python-brace-format
-msgid "复制操作失败: {}"
-msgstr "复制操作失败: {}"
+msgid "Insufficient permissions for copy operation: {} -> {}"
+msgstr "复制操作权限不足：{} -> {}"
 
-#: storage/local_storage.py:266
+#: storage/local_storage.py:267
 #, python-brace-format
-msgid "文件或目录不存在: {}"
-msgstr "文件或目录不存在: {}"
+msgid "Copy operation failed: {}"
+msgstr "复制操作失败：{}"
+
+#: storage/local_storage.py:274
+#, python-brace-format
+msgid "File or directory does not exist: {}"
+msgstr "文件或目录不存在：{}"
 
 #: storage/manager.py:37
 #, python-brace-format
-msgid "对象 {} 未实现 StorageBackend 接口。"
+msgid "Object {} does not implement the StorageBackend interface."
 msgstr "对象 {} 未实现 StorageBackend 接口。"
 
 #: storage/manager.py:43
 #, python-brace-format
-msgid "存储后端 '{}' 已经存在。"
-msgstr "存储后端 '{}' 已经存在。"
+msgid "Storage backend '{}' already exists."
+msgstr "存储后端 '{}' 已存在。"
 
 #: storage/manager.py:46
 #, python-brace-format
-msgid "存储后端 '{}' 已注册。"
+msgid "Storage backend '{}' has been registered."
 msgstr "存储后端 '{}' 已注册。"
 
 #: storage/manager.py:58
 #, python-brace-format
-msgid "当前存储已切换为 '{}'。"
+msgid "Current storage has been switched to '{}'."
 msgstr "当前存储已切换为 '{}'。"
 
 #: storage/manager.py:60
 #, python-brace-format
-msgid "存储后端 '{}' 未注册。"
+msgid "Storage backend '{}' is not registered."
 msgstr "存储后端 '{}' 未注册。"
 
 #: storage/manager.py:69
-msgid "当前存储后端未设置或找不到。请先调用 set_current_backend()。"
+msgid ""
+"The current storage backend is not set or cannot be found. Please call "
+"set_current_backend() first."
 msgstr "当前存储后端未设置或找不到。请先调用 set_current_backend()。"
 
-#: ui/components/header.py:15
-msgid "已退出登录"
-msgstr "已退出登录"
+#: ui/components/header.py:33
+msgid "Logged out"
+msgstr "已登出"
 
-#: ui/components/header.py:21
-msgid "退出"
-msgstr "退出"
+#: ui/components/header.py:41
+msgid "Logout"
+msgstr "登出"
 
-#: ui/pages/browser.py:56
-msgid "文件"
+#: ui/pages/browser.py:59
+msgid "File"
 msgstr "文件"
 
-#: ui/pages/browser.py:57
-msgid "大小"
+#: ui/pages/browser.py:60
+msgid "Size"
 msgstr "大小"
 
-#: ui/pages/login.py:25
-msgid "登录成功"
+#: ui/pages/login.py:35
+msgid "Logged in"
+msgstr "已登录"
+
+#: ui/pages/login.py:45
+#, python-brace-format
+msgid "Welcome to {}"
+msgstr "欢迎使用 {}"
+
+#: ui/pages/login.py:51
+msgid "User not found"
+msgstr "未找到用户"
+
+#: ui/pages/login.py:54
+msgid "Login successful"
 msgstr "登录成功"
 
-#: ui/pages/login.py:40
-msgid "邮箱"
+#: ui/pages/login.py:59
+msgid "Email"
 msgstr "邮箱"
 
-#: ui/pages/login.py:41
-msgid "密码"
+#: ui/pages/login.py:61
+msgid "Invalid email address"
+msgstr "无效的电子邮件地址"
+
+#: ui/pages/login.py:68
+msgid "Password"
 msgstr "密码"
 
-#: ui/pages/login.py:44
-msgid "登录"
+#: ui/pages/login.py:73
+msgid "Login"
 msgstr "登录"
-
