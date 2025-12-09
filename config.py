@@ -32,6 +32,7 @@ class Config(BaseSettings):
 
     APP_TITLE: str = _PROJECT_NAME
     APP_DEFAULT_LANGUAGE: str = "zh-CN"
+    APP_PRIMARY_COLOR: str = "#424242"
 
     STORAGE_SECRET: str = None
     NICEGUI_RECONNECT_TIMEOUT: int = 5
