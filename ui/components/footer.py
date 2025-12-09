@@ -20,4 +20,11 @@ class Footer:
                     )
                     link(settings.APP_GITHUB_URL, text="GitHub", bold=True, _blank=True)
         else:
-            pass
+            with self.footer().classes("p-2"):
+                with ui.row().classes("items-center w-full no-wrap"):
+                    ui.space()
+
+                    ui.label(f"{settings.APP_NAME} v{settings.APP_VERSION}").classes(
+                        "text-grey-5 font-bold"
+                    )
+                    link(settings.APP_GITHUB_URL, text="GitHub", bold=True, _blank=True)
