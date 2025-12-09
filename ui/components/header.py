@@ -53,7 +53,8 @@ class Header:
         ui.page_title(title)
 
         with self.header().classes("items-center p-2 no-wrap"):
-            ui.label("StarDrive").classes("font-bold")
+            with ui.link(target="/home/").classes("text-white no-underline"):
+                ui.label("StarDrive").classes("font-bold")
 
             ui.space()
 
