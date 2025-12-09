@@ -10,7 +10,7 @@ from config import settings
 from middleware import AuthLoggerMiddleware
 from storage.local_storage import LocalStorage
 from storage.manager import StorageManager
-from ui.pages import login, browser
+from ui.pages import login, browser, console
 from ui.pages.error_page import render_404, render_50x
 from utils import return_file_response, logger, static_path
 
@@ -69,6 +69,7 @@ def on_app_startup():
 
     app.include_router(login.router)
     app.include_router(browser.router)
+    app.include_router(console.router)
 
     @ui.page("/{_:path}")
     def not_found_page(request: Request):

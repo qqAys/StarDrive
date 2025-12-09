@@ -32,15 +32,16 @@ class Header:
     @staticmethod
     async def logout():
         confirm = await AskDialog(
-            title=_("Logout"),
-            message=_("Are you sure you want to logout?")
+            title=_("Logout"), message=_("Are you sure you want to logout?")
         ).open()
 
         if confirm:
             app.storage.user.update({"authenticated": False})
             notify.success(_("Logged out"))
             ui.timer(
-                settings.NICEGUI_TIMER_INTERVAL, lambda: ui.navigate.to("/login"), once=True
+                settings.NICEGUI_TIMER_INTERVAL,
+                lambda: ui.navigate.to("/login"),
+                once=True,
             )
 
     def render(self, title=None, *args, **kwargs):
