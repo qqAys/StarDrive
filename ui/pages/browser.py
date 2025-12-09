@@ -25,7 +25,7 @@ router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
-@base_layout(header=True, footer=True)
+@base_layout(header=True, footer=True, args={"title": _("Home")})
 def index():
     multiple = True
     M = globals.get_storage_manager()

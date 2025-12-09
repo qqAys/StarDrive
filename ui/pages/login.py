@@ -22,7 +22,7 @@ router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
-@base_layout(header=False, footer=True, footer_args={"from_login_page": True})
+@base_layout(header=False, footer=True, args={"from_login_page": True})
 def login_page(redirect_to: str = None):
     def redirect():
         ui.timer(

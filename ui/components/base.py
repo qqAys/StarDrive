@@ -41,17 +41,15 @@ class BaseLayout:
         self.footer_component = Footer()
 
     @contextmanager
-    def render(
-        self, header: bool = False, footer: bool = False, footer_args: dict = None
-    ):
+    def render(self, header: bool = False, footer: bool = False, args: dict = None):
 
-        if footer_args is None:
-            footer_args = {}
+        if args is None:
+            args = {}
 
         if header:
-            self.header_component.render()
+            self.header_component.render(**args)
 
         yield
 
         if footer:
-            self.footer_component.render(**footer_args)
+            self.footer_component.render(**args)

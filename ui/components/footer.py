@@ -9,7 +9,7 @@ class Footer:
     def __init__(self):
         self.footer = ui.footer
 
-    def render(self, from_login_page: bool = False):
+    def render(self, from_login_page: bool = False, *args, **kwargs):
         if from_login_page:
             with self.footer().classes("bg-transparent"):
                 with ui.row().classes("items-center w-full no-wrap"):
