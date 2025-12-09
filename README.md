@@ -35,7 +35,7 @@ If you have any questions or need any help, please feel free to contact us.
 
 This project is built upon the foundational work of [nicegui](https://github.com/zauberzeug/nicegui).
 
-> Schindler, F., & Trappe, R. NiceGUI: Web-based user interfaces with Python. The nice way. [Computer software]. https://doi.org/10.5281/zenodo.778551
+> Schindler, F., & Trappe, R. NiceGUI: Web-based user interfaces with Python. The nice way. [Computer software]. https://doi.org/10.5281/zenodo.7785516
 
 ## 许可 (License)
 StarDrive 遵循 [MIT](https://github.com/qqAys/StarDrive/blob/main/LICENSE) 许可，详见项目根目录下的 LICENSE 文件。
