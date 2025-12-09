@@ -31,7 +31,7 @@ class Config(BaseSettings):
     APP_PORT: int = 8080
 
     APP_TITLE: str = _PROJECT_NAME
-    APP_DEFAULT_LANGUAGE: str = "zh-CN"
+    APP_DEFAULT_LANGUAGE: str = "en-US"
     APP_PRIMARY_COLOR: str = "#424242"
 
     STORAGE_SECRET: str = None
