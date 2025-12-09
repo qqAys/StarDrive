@@ -1,13 +1,13 @@
-# Chinese (Simplified, China) translations for PROJECT.
+# Chinese (Simplified, China) translations for .
 # Copyright (C) 2025 ORGANIZATION
-# This file is distributed under the same license as the PROJECT project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+# This file is distributed under the same license as the  project.
+# Jinx <me@qqays.xyz>, 2025.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 0.1.0\n"
+"Project-Id-Version:  0.1.0\n"
 "Report-Msgid-Bugs-To: me@qqays.xyz\n"
-"POT-Creation-Date: 2025-12-09 14:15+0800\n"
+"POT-Creation-Date: 2025-12-09 15:27+0800\n"
 "PO-Revision-Date: 2025-12-09 14:17+0800\n"
 "Last-Translator: Jinx <me@qqays.xyz>\n"
 "Language: zh_Hans_CN\n"
@@ -39,15 +39,15 @@ msgstr "文件类型"
 msgid "File size (bytes)"
 msgstr "文件大小（字节）"
 
-#: schemas/file_schema.py:14
+#: schemas/file_schema.py:15
 msgid "Creation timestamp"
 msgstr "创建时间戳"
 
-#: schemas/file_schema.py:24
+#: schemas/file_schema.py:27
 msgid "Number of children in the directory"
 msgstr "目录中的子项数量"
 
-#: schemas/file_schema.py:35
+#: schemas/file_schema.py:39
 msgid "Target path of the symbolic link"
 msgstr "符号链接的目标路径"
 
@@ -77,132 +77,132 @@ msgstr "用户不存在"
 msgid "Password modification failed"
 msgstr "密码修改失败"
 
-#: storage/local_storage.py:32
+#: storage/local_storage.py:33
 #, python-brace-format
 msgid "LocalStorage initialized, root directory: {}"
 msgstr "LocalStorage 已初始化，根目录：{}"
 
-#: storage/local_storage.py:43
+#: storage/local_storage.py:46
 #, python-brace-format
 msgid "Path parsing failed: {}"
 msgstr "路径解析失败：{}"
 
-#: storage/local_storage.py:47
+#: storage/local_storage.py:52
 #, python-brace-format
 msgid "Path security check failed, path is outside root directory: {}"
 msgstr "路径安全检查失败，路径超出根目录：{}"
 
-#: storage/local_storage.py:70
+#: storage/local_storage.py:76
 #, python-brace-format
 msgid "Permission denied to write file to {}"
 msgstr "写入文件到 {} 权限不足"
 
-#: storage/local_storage.py:73
+#: storage/local_storage.py:80
 #, python-brace-format
 msgid "Could not write file to {}"
 msgstr "无法将文件写入 {}"
 
-#: storage/local_storage.py:82
+#: storage/local_storage.py:90
 #, python-brace-format
 msgid "Local source file does not exist or is a directory: {}"
 msgstr "本地源文件不存在或是一个目录：{}"
 
-#: storage/local_storage.py:95 storage/local_storage.py:109
+#: storage/local_storage.py:105 storage/local_storage.py:119
 #, python-brace-format
 msgid "File does not exist, cannot download: {}"
 msgstr "文件不存在，无法下载：{}"
 
-#: storage/local_storage.py:99 storage/local_storage.py:113
+#: storage/local_storage.py:109 storage/local_storage.py:123
 #, python-brace-format
 msgid "Path points to a directory: {}"
 msgstr "路径指向一个目录：{}"
 
-#: storage/local_storage.py:129
+#: storage/local_storage.py:139
 #, python-brace-format
 msgid "File does not exist, cannot delete: {}"
 msgstr "文件不存在，无法删除：{}"
 
-#: storage/local_storage.py:133
+#: storage/local_storage.py:143
 #, python-brace-format
 msgid "Path points to a directory, please use delete_directory: {}"
 msgstr "路径指向一个目录，请使用 delete_directory：{}"
 
-#: storage/local_storage.py:140
+#: storage/local_storage.py:152
 #, python-brace-format
 msgid "Permission denied to delete file: {}"
 msgstr "删除文件 {} 权限不足"
 
-#: storage/local_storage.py:147
+#: storage/local_storage.py:160
 #, python-brace-format
 msgid "Directory does not exist: {}"
 msgstr "目录不存在：{}"
 
-#: storage/local_storage.py:150 storage/local_storage.py:217
+#: storage/local_storage.py:164 storage/local_storage.py:231
 #, python-brace-format
 msgid "Path points to a file, not a directory: {}"
 msgstr "路径指向一个文件，而不是目录：{}"
 
-#: storage/local_storage.py:185
+#: storage/local_storage.py:199
 #, python-brace-format
 msgid "Permission denied to read directory: {}"
 msgstr "读取目录 {} 权限不足"
 
-#: storage/local_storage.py:188
+#: storage/local_storage.py:202
 #, python-brace-format
 msgid "Failed to read directory: {}"
 msgstr "读取目录失败：{}"
 
-#: storage/local_storage.py:198
+#: storage/local_storage.py:212
 #, python-brace-format
 msgid "Path is already occupied by a file: {}"
 msgstr "路径已被文件占用：{}"
 
-#: storage/local_storage.py:205
+#: storage/local_storage.py:219
 #, python-brace-format
 msgid "Permission denied to create directory: {}"
 msgstr "创建目录 {} 权限不足"
 
-#: storage/local_storage.py:213
+#: storage/local_storage.py:227
 #, python-brace-format
 msgid "Directory does not exist, cannot delete: {}"
 msgstr "目录不存在，无法删除：{}"
 
-#: storage/local_storage.py:225
+#: storage/local_storage.py:239
 #, python-brace-format
 msgid "Failed to delete directory: {}"
 msgstr "删除目录失败：{}"
 
-#: storage/local_storage.py:232
+#: storage/local_storage.py:247
 #, python-brace-format
 msgid "Source file/directory does not exist: {}"
 msgstr "源文件/目录不存在：{}"
 
-#: storage/local_storage.py:242
+#: storage/local_storage.py:258
 #, python-brace-format
 msgid "Insufficient permissions for move operation: {} -> {}"
 msgstr "移动操作权限不足：{} -> {}"
 
-#: storage/local_storage.py:245
+#: storage/local_storage.py:263
 #, python-brace-format
 msgid "Move operation failed: {}"
 msgstr "移动操作失败：{}"
 
-#: storage/local_storage.py:254
+#: storage/local_storage.py:272
 #, python-brace-format
 msgid "Source file does not exist or is a directory: {}"
 msgstr "源文件不存在或是一个目录：{}"
 
-#: storage/local_storage.py:264
+#: storage/local_storage.py:282
 #, python-brace-format
 msgid "Insufficient permissions for copy operation: {} -> {}"
 msgstr "复制操作权限不足：{} -> {}"
 
-#: storage/local_storage.py:267
+#: storage/local_storage.py:287
 #, python-brace-format
 msgid "Copy operation failed: {}"
 msgstr "复制操作失败：{}"
 
-#: storage/local_storage.py:274
+#: storage/local_storage.py:294
 #, python-brace-format
 msgid "File or directory does not exist: {}"
 msgstr "文件或目录不存在：{}"
@@ -227,12 +227,12 @@ msgstr "存储后端 '{}' 已注册。"
 msgid "Current storage has been switched to '{}'."
 msgstr "当前存储已切换为 '{}'。"
 
-#: storage/manager.py:60
+#: storage/manager.py:61
 #, python-brace-format
 msgid "Storage backend '{}' is not registered."
 msgstr "存储后端 '{}' 未注册。"
 
-#: storage/manager.py:69
+#: storage/manager.py:72
 msgid ""
 "The current storage backend is not set or cannot be found. Please call "
 "set_current_backend() first."
@@ -242,9 +242,13 @@ msgstr "当前存储后端未设置或找不到。请先调用 set_current_backe
 msgid "Logged out"
 msgstr "已登出"
 
-#: ui/components/header.py:41
+#: ui/components/header.py:48
 msgid "Logout"
 msgstr "登出"
+
+#: ui/pages/browser.py:28 ui/pages/error_page.py:25
+msgid "Home"
+msgstr "首页"
 
 #: ui/pages/browser.py:59
 msgid "File"
@@ -253,6 +257,46 @@ msgstr "文件"
 #: ui/pages/browser.py:60
 msgid "Size"
 msgstr "大小"
+
+#: ui/pages/error_page.py:9
+#, fuzzy
+msgid "Page not found"
+msgstr "未找到用户"
+
+#: ui/pages/error_page.py:19
+#, python-brace-format
+msgid "You have reached a place where there is no one, but you are still in {}. 🧐"
+msgstr "你来到了无人区，但你仍然在 {}。 🧐"
+
+#: ui/pages/error_page.py:22 ui/pages/error_page.py:48
+#, python-brace-format
+msgid "request_uuid = `{}`"
+msgstr "请求UUID = `{}`"
+
+#: ui/pages/error_page.py:24 ui/pages/error_page.py:59
+msgid "Back"
+msgstr "返回"
+
+#: ui/pages/error_page.py:37
+msgid "# 500 - Server internal error"
+msgstr "# 500 - 服务器内部错误"
+
+#: ui/pages/error_page.py:39
+#, python-brace-format
+msgid "A problem {} couldn't handle occurred, great job. 😅"
+msgstr "发生了一个 {} 无法处理的问题，干得漂亮。 😅"
+
+#: ui/pages/error_page.py:52
+msgid ""
+"Please report this issue by opening a new issue on our GitHub repository."
+" ⬇️"
+msgstr ""
+"请通过在 GitHub 上打开一个新的 issue 来报告此错误。"
+" ⬇️"
+
+#: ui/pages/error_page.py:61
+msgid "Report"
+msgstr "报告"
 
 #: ui/pages/login.py:35
 msgid "Logged in"
@@ -263,26 +307,27 @@ msgstr "已登录"
 msgid "Welcome to {}"
 msgstr "欢迎使用 {}"
 
-#: ui/pages/login.py:51
+#: ui/pages/login.py:53
 msgid "User not found"
 msgstr "未找到用户"
 
-#: ui/pages/login.py:54
+#: ui/pages/login.py:56
 msgid "Login successful"
 msgstr "登录成功"
 
-#: ui/pages/login.py:59
+#: ui/pages/login.py:61
 msgid "Email"
 msgstr "邮箱"
 
-#: ui/pages/login.py:61
+#: ui/pages/login.py:63
 msgid "Invalid email address"
 msgstr "无效的电子邮件地址"
 
-#: ui/pages/login.py:68
+#: ui/pages/login.py:70
 msgid "Password"
 msgstr "密码"
 
-#: ui/pages/login.py:73
+#: ui/pages/login.py:75
 msgid "Login"
 msgstr "登录"
+
