@@ -5,6 +5,7 @@ from uuid import uuid4
 from fastapi.requests import Request
 from nicegui import ui, app
 
+import globals
 from config import settings
 from middleware import AuthLoggerMiddleware
 from storage.local_storage import LocalStorage
@@ -85,8 +86,6 @@ def on_app_startup():
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    import globals
-
     ui.run(
         storage_secret=settings.STORAGE_SECRET,
         host=settings.APP_HOST,

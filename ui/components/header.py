@@ -1,6 +1,7 @@
 from nicegui import ui, app
 
 from config import settings
+from ui.components.fake_button import fake_button
 from ui.components.notify import notify
 from utils import _
 
@@ -43,6 +44,9 @@ class Header:
 
         ui.page_title(title)
 
-        with self.header().classes("items-center p-1 no-wrap"):
-            ui.label("StarDrive")
-            ui.button(_("Logout"), on_click=self.logout)
+        with self.header().classes("items-center p-2 no-wrap"):
+            ui.label("StarDrive").classes("font-bold")
+
+            ui.space()
+
+            fake_button(_("Logout"), icon="logout", on_click=self.logout)
