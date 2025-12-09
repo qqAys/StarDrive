@@ -1,11 +1,12 @@
 import gettext
 import json
 import logging
+import re
 from logging import getLogger, StreamHandler
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from fastapi.responses import FileResponse
 
+from fastapi.responses import FileResponse
 from nicegui import app
 
 from config import settings
@@ -81,7 +82,6 @@ root_logger.addHandler(app_file_handler)
 
 # APP LOGGER
 logger = getLogger(settings._PROJECT_NAME_CODE)
-
 
 # --- 本地化 ---
 
@@ -166,3 +166,15 @@ def return_file_response(
     return FileResponse(
         path=path, media_type=media_type, filename=filename, status_code=status_code
     )
+
+
+EMAIL_REGEX = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+
+
+def is_valid_email(email):
+    """
+    判断邮箱格式是否有效
+    """
+    if re.fullmatch(EMAIL_REGEX, email):
+        return True
+    return False

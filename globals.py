@@ -1,8 +1,6 @@
-from pathlib import Path
 from typing import Optional
 
 from storage.manager import StorageManager
-
 
 storage_manager_instance: Optional[StorageManager] = None
 
