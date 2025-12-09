@@ -1,12 +1,40 @@
+import traceback
 from pathlib import Path
+from uuid import uuid4
 
+from fastapi.requests import Request
 from nicegui import ui, app
 
 from config import settings
+from middleware import AuthLoggerMiddleware
 from storage.local_storage import LocalStorage
 from storage.manager import StorageManager
 from ui.pages import login, browser
+from ui.pages.error_page import render_404, render_50x
 from utils import return_file_response, logger, static_path
+
+app.add_middleware(AuthLoggerMiddleware)
+
+
+@ui.page("/test_raise_error")
+def test_raise_error():
+    raise Exception("500 TEST")
+
+
+@app.on_page_exception
+def timeout_error_page(exception: Exception) -> None:
+    request_uuid = uuid4()
+    error_traceback = traceback.format_exc(chain=False)
+
+    logger_text = {
+        "request_uuid": str(request_uuid),
+        "app_storage": app.storage.user,
+        "exception": str(exception),
+        "traceback": error_traceback,
+    }
+    logger.error(logger_text)
+    render_50x(str(request_uuid), str(exception))
+    return
 
 
 @app.on_startup
@@ -40,6 +68,18 @@ def on_app_startup():
 
     app.include_router(login.router)
     app.include_router(browser.router)
+
+    @ui.page("/{_:path}")
+    def not_found_page(request: Request):
+        request_uuid = request.state.request_uuid
+        logger_text = {
+            "request_uuid": str(request_uuid),
+            "path": request.url.path,
+            "app_storage": app.storage.user,
+        }
+        logger.info(logger_text)
+        render_404(request_uuid)
+        return
 
     logger.info(f"App started at http://{settings.APP_HOST}:{settings.APP_PORT}")
 
