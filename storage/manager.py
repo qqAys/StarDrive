@@ -34,16 +34,16 @@ class StorageManager:
         """
         if not isinstance(backend_instance, StorageBackend):
             raise TypeError(
-                _("对象 {} 未实现 StorageBackend 接口。").format(
+                _("Object {} does not implement the StorageBackend interface.").format(
                     backend_instance.__class__.__name__
                 )
             )
 
         if name in self._backends:
-            raise ValueError(_("存储后端 '{}' 已经存在。").format(name))
+            raise ValueError(_("Storage backend '{}' already exists.").format(name))
 
         self._backends[name] = backend_instance
-        logger.debug(_("存储后端 '{}' 已注册。").format(name))
+        logger.debug(_("Storage backend '{}' has been registered.").format(name))
 
     def list_backends(self) -> list[str]:
         """返回已注册的所有存储后端名称。"""
@@ -55,9 +55,9 @@ class StorageManager:
         """
         if name in self._backends:
             self._current_backend_name = name
-            logger.debug(_("当前存储已切换为 '{}'。").format(name))
+            logger.debug(_("Current storage has been switched to '{}'.").format(name))
         else:
-            raise BackendNotFoundError(_("存储后端 '{}' 未注册。").format(name))
+            raise BackendNotFoundError(_("Storage backend '{}' is not registered.").format(name))
 
     def _get_current_backend(self) -> StorageBackend:
         """获取当前活跃的存储后端实例。失败时抛出 BackendNotFoundError。"""
@@ -66,7 +66,7 @@ class StorageManager:
             or self._current_backend_name not in self._backends
         ):
             raise BackendNotFoundError(
-                _("当前存储后端未设置或找不到。请先调用 set_current_backend()。")
+                _("The current storage backend is not set or cannot be found. Please call set_current_backend() first.")
             )
         return self._backends[self._current_backend_name]
 

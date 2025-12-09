@@ -30,7 +30,7 @@ class Header:
     @staticmethod
     def logout():
         app.storage.user.update({"authenticated": False})
-        notify.success(_("已退出登录"))
+        notify.success(_("Logged out"))
         ui.timer(
             settings.NICEGUI_TIMER_INTERVAL, lambda: ui.navigate.to("/login"), once=True
         )
@@ -38,4 +38,4 @@ class Header:
     def render(self):
         with self.header().classes("items-center p-1 no-wrap"):
             ui.label("StarDrive")
-            ui.button(_("退出"), on_click=self.logout)
+            ui.button(_("Logout"), on_click=self.logout)

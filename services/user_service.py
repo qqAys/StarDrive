@@ -43,7 +43,7 @@ class UserManager:
             )
             self.make_superuser(initial_email)
             logger.info(
-                _("管理员已创建，登录邮箱为：{}，密码为：{}").format(
+                _("Administrator account created. Email: {}, Password: {}").format(
                     initial_email, initial_password
                 )
             )
@@ -69,11 +69,11 @@ class UserManager:
             if not HashingManager.verify_password(
                 user_in.password, self.users[user_in.email]["password_hash"]
             ):
-                message = _("密码错误")
+                message = _("Invalid password or email")
                 logger.warning(message)
                 raise ValueError(message)
         except Exception as e:
-            message = _("登录失败")
+            message = _("Login failed")
             logger.error(message)
             raise ValueError(message) from e
 
@@ -88,7 +88,7 @@ class UserManager:
         """
 
         if not bypass_exists_check and self.exists(user_in.email):
-            message = _("用户已存在")
+            message = _("User already exists")
             logger.warning(message)
             raise ValueError(message)
 
@@ -113,7 +113,7 @@ class UserManager:
         获取用户信息
         """
         if not self.exists(email):
-            message = _("用户不存在")
+            message = _("User does not exist")
             logger.warning(message)
             raise ValueError(message)
 
@@ -124,7 +124,7 @@ class UserManager:
         修改用户密码
         """
         if not self.exists(user_in.email):
-            message = _("用户不存在")
+            message = _("User does not exist")
             logger.warning(message)
             raise ValueError(message)
 
@@ -138,7 +138,7 @@ class UserManager:
                 user_in.new_password, self.users[user_in.email]["password_hash"]
             )
         except Exception as e:
-            message = _("密码修改失败")
+            message = _("Password modification failed")
             logger.error(message)
             raise ValueError(message) from e
 
@@ -147,7 +147,7 @@ class UserManager:
         用户状态切换
         """
         if not self.exists(email):
-            message = _("用户不存在")
+            message = _("User does not exist")
             logger.warning(message)
             raise ValueError(message)
 
@@ -161,7 +161,7 @@ class UserManager:
         超级用户权限切换
         """
         if not self.exists(email):
-            message = _("用户不存在")
+            message = _("User does not exist")
             logger.warning(message)
             raise ValueError(message)
 

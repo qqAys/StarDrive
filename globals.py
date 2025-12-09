@@ -10,7 +10,7 @@ def get_storage_manager() -> StorageManager:
     获取 StorageManager 实例。
     """
     if storage_manager_instance is None:
-        raise RuntimeError("StorageManager 尚未初始化。请确保在 app startup 中设置它。")
+        raise RuntimeError("StorageManager is not initialized. Please make sure to set it in app startup.")
     return storage_manager_instance
 
 

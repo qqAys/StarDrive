@@ -29,7 +29,7 @@ class LocalStorage(StorageBackend):
         # 确保根目录存在
         if not self.root_path.is_dir():
             self.root_path.mkdir(parents=True, exist_ok=True)
-        logger.debug(_("LocalStorage 初始化，根目录: {}").format(self.root_path))
+        logger.debug(_("LocalStorage initialized, root directory: {}").format(self.root_path))
 
     def _get_full_path(self, remote_path: str) -> Path:
         """
@@ -40,11 +40,11 @@ class LocalStorage(StorageBackend):
         try:
             full_resolved_path = full_path.resolve(strict=False)
         except OSError as e:
-            raise StorageError(_("路径解析失败: {}").format(remote_path), e) from e
+            raise StorageError(_("Path parsing failed: {}").format(remote_path), e) from e
 
         if not full_resolved_path.is_relative_to(self.root_path):
             raise StoragePermissionError(
-                _("路径安全检查失败，路径超出根目录: {}").format(remote_path)
+                _("Path security check failed, path is outside root directory: {}").format(remote_path)
             )
 
         return full_resolved_path
@@ -67,10 +67,10 @@ class LocalStorage(StorageBackend):
                 shutil.copyfileobj(file_object, dest_file)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("没有权限写入文件到 {}").format(full_path)
+                _("Permission denied to write file to {}").format(full_path)
             ) from e
         except Exception as e:
-            raise StorageError(_("无法写入文件到 {}").format(full_path), e) from e
+            raise StorageError(_("Could not write file to {}").format(full_path), e) from e
 
     def upload_file_from_path(self, local_path: str, remote_path: str):
         local_src_path = Path(local_path)
@@ -79,7 +79,7 @@ class LocalStorage(StorageBackend):
         # 检查本地源文件
         if not local_src_path.is_file():
             raise StorageFileNotFoundError(
-                _("本地源文件不存在或是一个目录: {}").format(local_path)
+                _("Local source file does not exist or is a directory: {}").format(local_path)
             )
 
         # 确保目标父目录存在
@@ -92,11 +92,11 @@ class LocalStorage(StorageBackend):
 
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("文件不存在，无法下载: {}").format(remote_path)
+                _("File does not exist, cannot download: {}").format(remote_path)
             )
         if full_path.is_dir():
             raise StorageIsADirectoryError(
-                _("路径指向一个目录: {}").format(remote_path)
+                _("Path points to a directory: {}").format(remote_path)
             )
 
         return full_path.open("rb").read()
@@ -106,11 +106,11 @@ class LocalStorage(StorageBackend):
 
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("文件不存在，无法下载: {}").format(remote_path)
+                _("File does not exist, cannot download: {}").format(remote_path)
             )
         if full_path.is_dir():
             raise StorageIsADirectoryError(
-                _("路径指向一个目录: {}").format(remote_path)
+                _("Path points to a directory: {}").format(remote_path)
             )
 
         chunk_size = 8192
@@ -126,28 +126,28 @@ class LocalStorage(StorageBackend):
 
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("文件不存在，无法删除: {}").format(remote_path)
+                _("File does not exist, cannot delete: {}").format(remote_path)
             )
         if full_path.is_dir():
             raise StorageIsADirectoryError(
-                _("路径指向一个目录，请使用 delete_directory: {}").format(remote_path)
+                _("Path points to a directory, please use delete_directory: {}").format(remote_path)
             )
 
         try:
             full_path.unlink()
         except PermissionError as e:
             raise StoragePermissionError(
-                _("没有权限删除文件: {}").format(remote_path)
+                _("Permission denied to delete file: {}").format(remote_path)
             ) from e
 
     def list_files(self, remote_path: str) -> list[FileMetadata | DirMetadata]:
         full_path = self._get_full_path(remote_path)
 
         if not full_path.exists():
-            raise StorageFileNotFoundError(_("目录不存在: {}").format(remote_path))
+            raise StorageFileNotFoundError(_("Directory does not exist: {}").format(remote_path))
         if not full_path.is_dir():
             raise StorageNotADirectoryError(
-                _("路径指向文件，不是目录: {}").format(remote_path)
+                _("Path points to a file, not a directory: {}").format(remote_path)
             )
 
         metadata_list = []
@@ -182,10 +182,10 @@ class LocalStorage(StorageBackend):
                 metadata_list.append(metadata)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("没有权限读取目录: {}").format(remote_path)
+                _("Permission denied to read directory: {}").format(remote_path)
             ) from e
         except Exception as e:
-            raise StorageError(_("读取目录失败: {}").format(e)) from e
+            raise StorageError(_("Failed to read directory: {}").format(e)) from e
 
         return metadata_list
 
@@ -195,14 +195,14 @@ class LocalStorage(StorageBackend):
         if full_path.is_file():
             # 路径已被文件占用
             raise StorageFileExistsError(
-                _("路径已被一个文件占用: {}").format(remote_path)
+                _("Path is already occupied by a file: {}").format(remote_path)
             )
 
         try:
             full_path.mkdir(parents=True, exist_ok=True)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("没有权限创建目录: {}").format(remote_path)
+                _("Permission denied to create directory: {}").format(remote_path)
             ) from e
 
     def delete_directory(self, remote_path: str):
@@ -210,11 +210,11 @@ class LocalStorage(StorageBackend):
 
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("目录不存在，无法删除: {}").format(remote_path)
+                _("Directory does not exist, cannot delete: {}").format(remote_path)
             )
         if full_path.is_file():
             raise StorageNotADirectoryError(
-                _("路径指向文件，不是目录: {}").format(remote_path)
+                _("Path points to a file, not a directory: {}").format(remote_path)
             )
 
         # 递归删除目录及其内容
@@ -222,14 +222,14 @@ class LocalStorage(StorageBackend):
             shutil.rmtree(full_path)
         except OSError as e:
             # 捕获权限或其他可能错误
-            raise StorageError(_("删除目录失败: {}").format(e)) from e
+            raise StorageError(_("Failed to delete directory: {}").format(e)) from e
 
     def move_file(self, src_path: str, dest_path: str):
         src_full_path = self._get_full_path(src_path)
         dest_full_path = self._get_full_path(dest_path)
 
         if not src_full_path.exists():
-            raise StorageFileNotFoundError(_("源文件/目录不存在: {}").format(src_path))
+            raise StorageFileNotFoundError(_("Source file/directory does not exist: {}").format(src_path))
 
         # 确保目标父目录存在
         dest_full_path.parent.mkdir(parents=True, exist_ok=True)
@@ -239,10 +239,10 @@ class LocalStorage(StorageBackend):
             shutil.move(src_full_path, dest_full_path)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("移动操作权限不足: {} -> {}").format(src_path, dest_path)
+                _("Insufficient permissions for move operation: {} -> {}").format(src_path, dest_path)
             ) from e
         except Exception as e:
-            raise StorageError(_("移动操作失败: {}").format(e)) from e
+            raise StorageError(_("Move operation failed: {}").format(e)) from e
 
     def copy_file(self, src_path: str, dest_path: str):
         src_full_path = self._get_full_path(src_path)
@@ -251,7 +251,7 @@ class LocalStorage(StorageBackend):
         if not src_full_path.is_file():
             # 复制文件要求源必须是文件
             raise StorageFileNotFoundError(
-                _("源文件不存在或是一个目录: {}").format(src_path)
+                _("Source file does not exist or is a directory: {}").format(src_path)
             )
 
         # 确保目标父目录存在
@@ -261,17 +261,17 @@ class LocalStorage(StorageBackend):
             shutil.copy2(src_full_path, dest_full_path)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("复制操作权限不足: {} -> {}").format(src_path, dest_path)
+                _("Insufficient permissions for copy operation: {} -> {}").format(src_path, dest_path)
             ) from e
         except Exception as e:
-            raise StorageError(_("复制操作失败: {}").format(e)) from e
+            raise StorageError(_("Copy operation failed: {}").format(e)) from e
 
     def get_file_metadata(self, remote_path: str) -> FileMetadata | DirMetadata:
         full_path = self._get_full_path(remote_path)
 
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("文件或目录不存在: {}").format(remote_path)
+                _("File or directory does not exist: {}").format(remote_path)
             )
 
         stat_info = full_path.stat()

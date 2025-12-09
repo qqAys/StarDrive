@@ -1,4 +1,5 @@
-from nicegui import ui, APIRouter
+from nicegui import app, ui, APIRouter
+from starlette.responses import RedirectResponse
 
 from config import settings
 from schemas.user_schema import UserLogin
@@ -11,13 +12,18 @@ this_page_routes = "/login"
 
 user = user_service.UserManager()
 
+
+@app.get(this_page_routes)
+def login_index():
+    return RedirectResponse(this_page_routes + "/")
+
+
 router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
 @base_layout(header=False, footer=True, footer_args={"from_login_page": True})
 def login_page(redirect_to: str = None):
-
     def redirect():
         ui.timer(
             settings.NICEGUI_TIMER_INTERVAL,
@@ -26,44 +32,44 @@ def login_page(redirect_to: str = None):
         )
 
     if user.is_login():
-        notify.success(_("已登录"))
+        notify.success(_("Logged in"))
         redirect()
+        return
 
     with ui.card(align_items="center").classes("absolute-center w-max"):
         with ui.card_section().classes("w-full"):
-
             with ui.column().classes("mb-4"):
                 with ui.row().classes("text-3xl"):
                     ui.image("/android-chrome-512x512.png").classes("w-8 h-8")
                     ui.label(settings.APP_NAME).classes("text-2xl font-bold")
-                ui.label(_("欢迎使用 {}").format(settings.APP_NAME)).classes("text-xs")
+                ui.label(_("Welcome to {}").format(settings.APP_NAME)).classes("text-xs")
 
             def try_login():
                 pre_login_user = UserLogin(email=email.value, password=password.value)
                 login_user = user.login(pre_login_user)
                 if not login_user:
-                    notify.warning(_("用户不存在"))
+                    notify.warning(_("User not found"))
                     return
 
-                notify.success(_("登录成功"))
+                notify.success(_("Login successful"))
                 redirect()
 
             email = (
                 ui.input(
-                    _("邮箱"),
+                    _("Email"),
                     validation=lambda value: (
-                        None if is_valid_email(value) else _("邮箱格式错误")
+                        None if is_valid_email(value) else _("Invalid email address")
                     ),
                 )
                 .on("keyup.enter", try_login)
                 .classes("w-full")
             )
             password = (
-                ui.input(_("密码"), password=True, password_toggle_button=True)
+                ui.input(_("Password"), password=True, password_toggle_button=True)
                 .on("keyup.enter", try_login)
                 .classes("w-full")
             )
 
-            ui.button(_("登录"), on_click=try_login, icon="login").classes(
+            ui.button(_("Login"), on_click=try_login, icon="login").classes(
                 "w-full mt-4"
             )

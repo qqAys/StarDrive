@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse
 from nicegui import events, ui, APIRouter, app
 
 import globals
-from ui.components.header import Header
+from ui.components.base import base_layout
 from ui.components.notify import notify
 from utils import bytes_to_human_readable, _
 
@@ -13,17 +13,20 @@ this_page_routes = "/home"
 
 @app.get("/")
 def index():
-    return RedirectResponse(this_page_routes)
+    return RedirectResponse(this_page_routes + "/")
+
+
+@app.get(this_page_routes)
+def browser_index():
+    return RedirectResponse(this_page_routes + "/")
 
 
 router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
+@base_layout(header=True, footer=True)
 def index():
-
-    Header().render()
-
     multiple = True
     M = globals.get_storage_manager()
 
@@ -53,8 +56,8 @@ def index():
         grid = ui.aggrid(
             {
                 "columnDefs": [
-                    {"field": "name", "headerName": _("文件")},
-                    {"field": "size", "headerName": _("大小")},
+                    {"field": "name", "headerName": _("File")},
+                    {"field": "size", "headerName": _("Size")},
                 ],
                 "rowSelection": {"mode": "multiRow" if multiple else "singleRow"},
             },
