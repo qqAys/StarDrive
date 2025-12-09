@@ -48,6 +48,13 @@ class UserManager:
                 )
             )
 
+    @staticmethod
+    def is_login() -> bool:
+        """
+        检查用户是否已登录
+        """
+        return app.storage.user.get("authenticated", False)
+
     def exists(self, email: EmailStr) -> bool:
         """
         检查用户是否存在
@@ -70,6 +77,7 @@ class UserManager:
             logger.error(message)
             raise ValueError(message) from e
 
+        app.storage.user.update({"username": user_in.email, "authenticated": True})
         return self.get(user_in.email)
 
     def create(

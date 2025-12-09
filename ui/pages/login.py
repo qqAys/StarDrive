@@ -1,4 +1,4 @@
-from nicegui import app, ui, APIRouter
+from nicegui import ui, APIRouter
 
 from config import settings
 from schemas.user_schema import UserLogin
@@ -7,23 +7,31 @@ from ui.components.base import base_layout
 from ui.components.notify import notify
 from utils import _, is_valid_email
 
-U = user_service.UserManager()
+this_page_routes = "/login"
 
-router = APIRouter(prefix="/login")
+user = user_service.UserManager()
+
+router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
 @base_layout(header=False, footer=True, footer_args={"from_login_page": True})
 def login_page(redirect_to: str = None):
 
-    if app.storage.user.get("authenticated", False):
-        if redirect_to:
-            ui.navigate.to(redirect_to)
-        else:
-            ui.navigate.to("/home")
+    def redirect():
+        ui.timer(
+            settings.NICEGUI_TIMER_INTERVAL,
+            lambda: ui.navigate.to(redirect_to if redirect_to else "/home"),
+            once=True,
+        )
+
+    if user.is_login():
+        notify.success(_("已登录"))
+        redirect()
 
     with ui.card(align_items="center").classes("absolute-center w-max"):
         with ui.card_section().classes("w-full"):
+
             with ui.column().classes("mb-4"):
                 with ui.row().classes("text-3xl"):
                     ui.image("/android-chrome-512x512.png").classes("w-8 h-8")
@@ -32,26 +40,13 @@ def login_page(redirect_to: str = None):
 
             def try_login():
                 pre_login_user = UserLogin(email=email.value, password=password.value)
-                login_user = U.login(pre_login_user)
+                login_user = user.login(pre_login_user)
                 if not login_user:
                     notify.warning(_("用户不存在"))
                     return
 
-                app.storage.user.update(
-                    {"username": email.value, "authenticated": True}
-                )
-
                 notify.success(_("登录成功"))
-
-                if redirect_to:
-                    ui.navigate.to(redirect_to)
-                else:
-                    ui.timer(
-                        settings.NICEGUI_TIMER_INTERVAL,
-                        lambda: ui.navigate.to("/home"),
-                        once=True,
-                    )
-                return
+                redirect()
 
             email = (
                 ui.input(
