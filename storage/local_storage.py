@@ -183,6 +183,7 @@ class LocalStorage(StorageBackend):
                         path=entry_remote_path,
                         size=0,
                         created_at=stat_info.st_ctime,
+                        updated_at=stat_info.st_mtime,
                         num_children=len(list(entry_path.iterdir())),
                     )
                 else:
@@ -191,6 +192,7 @@ class LocalStorage(StorageBackend):
                         path=entry_remote_path,
                         size=stat_info.st_size,
                         created_at=stat_info.st_ctime,
+                        updated_at=stat_info.st_mtime,
                     )
 
                 metadata_list.append(metadata)
@@ -303,6 +305,7 @@ class LocalStorage(StorageBackend):
                 path=remote_path,
                 size=0,
                 created_at=stat_info.st_ctime,
+                updated_at=stat_info.st_mtime,
                 num_children=len(list(full_path.iterdir())),
             )
         else:
@@ -311,4 +314,5 @@ class LocalStorage(StorageBackend):
                 path=remote_path,
                 size=stat_info.st_size,
                 created_at=stat_info.st_ctime,
+                updated_at=stat_info.st_mtime,
             )

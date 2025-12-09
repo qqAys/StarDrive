@@ -14,6 +14,9 @@ class FileMetadataBase(BaseModel):
     created_at: Optional[float] = Field(
         default=None, description=_("Creation timestamp")
     )
+    updated_at: Optional[float] = Field(
+        default=None, description=_("Last update timestamp")
+    )
 
     class Config:
         extra = "ignore"

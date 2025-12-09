@@ -6,7 +6,7 @@ from nicegui import events, ui, APIRouter, app
 import globals
 from ui.components.base import base_layout
 from ui.components.notify import notify
-from utils import bytes_to_human_readable, _
+from utils import bytes_to_human_readable, _, timestamp_to_human_readable
 
 this_page_routes = "/home"
 
@@ -36,6 +36,9 @@ def index():
                 "name": f"📁 <strong>{p.name}</strong>" if p.type == "dir" else p.name,
                 "path": p.path,
                 "size": bytes_to_human_readable(p.size) if p.size else "-",
+                "raw_size": p.size if p.size else -1,
+                "created_at": timestamp_to_human_readable(p.created_at) if p.created_at else "-",
+                "updated_at": timestamp_to_human_readable(p.updated_at) if p.updated_at else "-",
             }
             for p in M.list_files(path)
         ]
@@ -56,17 +59,22 @@ def index():
         grid = ui.aggrid(
             {
                 "columnDefs": [
-                    {"field": "name", "headerName": _("File")},
-                    {"field": "size", "headerName": _("Size")},
+                    {"colId": "name", "field": "name", "headerName": _("File"), "type": "text"},
+                    {"field": "size", "headerName": _("Size"), "type": "rightAligned", "maxWidth": 110},
+                    {"field": "raw_size", "hide": True, "sortable": True},
+                    {"field": "created_at", "headerName": _("Created At"), "type": "dateTimeString", "maxWidth": 170},
+                    {"field": "updated_at", "headerName": _("Updated At"), "type": "dateTimeString", "maxWidth": 170},
                 ],
-                "rowSelection": {"mode": "multiRow" if multiple else "singleRow"},
+                # "rowSelection": {"mode": "multiRow" if multiple else "singleRow"},
             },
             html_columns=[0],
+            theme="material",
         ).classes("w-full h-full")
 
         update_grid("./")
 
     def handle_double_click(e: events.GenericEventArguments) -> None:
+        print(e.args)
         try:
             path = Path(e.args["data"]["path"])
             update_grid(path.__str__())
