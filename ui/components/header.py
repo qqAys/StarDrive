@@ -57,4 +57,5 @@ class Header:
 
             ui.space()
 
-            fake_button(_("Logout"), icon="logout", on_click=self.logout)
+            fake_button(_("Console"), icon="dashboard", link="/console")
+            fake_button(_("Logout"), icon="logout", func=self.logout)
