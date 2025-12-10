@@ -2,10 +2,12 @@ from pathlib import Path
 
 from fastapi.responses import RedirectResponse
 from nicegui import events, ui, APIRouter, app
+from nicegui.elements.table import Table
 
 import globals
 from ui.components.base import base_layout
 from ui.components.notify import notify
+from ui.components.table import add_table_controls
 from utils import bytes_to_human_readable, _, timestamp_to_human_readable
 
 this_page_routes = "/home"
@@ -26,23 +28,109 @@ router = APIRouter(prefix=this_page_routes)
 
 @router.page("/")
 @base_layout(header=True, footer=True, args={"title": _("Home")})
-def index():
+async def index():
     multiple = True
     M = globals.get_storage_manager()
 
-    def update_grid(path: str):
-        grid.options["rowData"] = [
+    file_list = []
+    current_path = "."
+
+    @ui.refreshable
+    async def browser() -> Table:
+
+        size_sort_js = """(a, b, rowA, rowB) => {
+            const isDirA = rowA.type === 'dir';
+            const isDirB = rowB.type === 'dir';
+
+            // 目录优先
+            if (isDirA && !isDirB) return -1;
+            if (!isDirA && isDirB) return 1;
+
+            // 按 raw_size 排序
+            return rowA.raw_size - rowB.raw_size;
+        }"""
+
+        columns = [
             {
-                "name": f"📁 <strong>{p.name}</strong>" if p.type == "dir" else p.name,
+                "name": "file",
+                "label": _("File"),
+                "field": "name",
+                "align": "left",
+                "required": True,
+                "sortable": True,
+            },
+            {
+                "name": "size",
+                "label": _("Size"),
+                "field": "size",
+                "align": "right",
+                "required": True,
+                "sortable": True,
+                ":sort": size_sort_js,
+            },
+            {
+                "name": "created_at",
+                "label": _("Created At"),
+                "field": "created_at",
+                "sortable": True,
+            },
+            {
+                "name": "updated_at",
+                "label": _("Updated At"),
+                "field": "updated_at",
+                "sortable": True,
+            },
+        ]
+        browser_table = ui.table(
+            columns=columns,
+            rows=[],
+            row_key="file",
+            title=_("File List"),
+        ).classes("w-full h-full")
+
+        async def back_func():
+            nonlocal file_list, current_path
+            if current_path == ".":
+                notify.warning(_("You are already at the root directory"))
+                return
+            current_path = Path(current_path).parent.__str__()
+            file_list = M.list_files(current_path)
+            await browser.refresh()
+
+        add_table_controls(browser_table, show_path=current_path, back_func=back_func)
+
+        browser_table.rows = [
+            {
+                "name": f"📁 {p.name}" if p.type == "dir" else p.name,
+                "type": p.type,
                 "path": p.path,
                 "size": bytes_to_human_readable(p.size) if p.size else "-",
                 "raw_size": p.size if p.size else -1,
-                "created_at": timestamp_to_human_readable(p.created_at) if p.created_at else "-",
-                "updated_at": timestamp_to_human_readable(p.updated_at) if p.updated_at else "-",
+                "created_at": (
+                    timestamp_to_human_readable(p.created_at) if p.created_at else "-"
+                ),
+                "updated_at": (
+                    timestamp_to_human_readable(p.updated_at) if p.updated_at else "-"
+                ),
             }
-            for p in M.list_files(path)
+            for p in file_list
         ]
-        grid.update()
+
+        async def handle_row_click(e: events.GenericEventArguments):
+            nonlocal file_list, current_path
+            click_event_params, click_row, click_index = e.args
+            target_path = click_row["path"]
+
+            if click_row["type"] == "dir":
+                file_list = M.list_files(target_path)
+                current_path = target_path
+                await browser.refresh()
+            else:
+                ui.download.content(M.download_file(target_path), click_row["name"])
+
+        browser_table.on("row-dblclick", handle_row_click)
+
+        return browser_table
 
     def switch_lang():
         lang_code = app.storage.user.get("default_lang", "en_US")
@@ -55,30 +143,6 @@ def index():
 
     ui.button("切换语言", on_click=switch_lang)
 
-    with ui.card().classes("w-full h-screen"):
-        grid = ui.aggrid(
-            {
-                "columnDefs": [
-                    {"colId": "name", "field": "name", "headerName": _("File"), "type": "text"},
-                    {"field": "size", "headerName": _("Size"), "type": "rightAligned", "maxWidth": 110},
-                    {"field": "raw_size", "hide": True, "sortable": True},
-                    {"field": "created_at", "headerName": _("Created At"), "type": "dateTimeString", "maxWidth": 170},
-                    {"field": "updated_at", "headerName": _("Updated At"), "type": "dateTimeString", "maxWidth": 170},
-                ],
-                # "rowSelection": {"mode": "multiRow" if multiple else "singleRow"},
-            },
-            html_columns=[0],
-            theme="material",
-        ).classes("w-full h-full")
-
-        update_grid("./")
-
-    def handle_double_click(e: events.GenericEventArguments) -> None:
-        print(e.args)
-        try:
-            path = Path(e.args["data"]["path"])
-            update_grid(path.__str__())
-        except Exception as e:
-            notify.error(str(e))
-
-    grid.on("cellDoubleClicked", handle_double_click)
+    await browser()
+    file_list = M.list_files(current_path)
+    await browser.refresh()
