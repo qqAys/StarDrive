@@ -16,7 +16,7 @@ class Dialog:
 
 class AskDialog(Dialog):
 
-    def __init__(self, title: str, message: str):
+    def __init__(self, title: str, message: str = None):
         super().__init__()
         self.title = title
         self.message = message
@@ -26,7 +26,8 @@ class AskDialog(Dialog):
     async def open(self):
         with self.dialog, ui.card():
             ui.label(self.title).classes("text-lg font-bold")
-            ui.label(self.message)
+            if self.message:
+                ui.label(self.message)
 
             with ui.row():
                 ui.button(_("Yes"), on_click=lambda: self.dialog.submit(True))
