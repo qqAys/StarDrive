@@ -32,7 +32,9 @@ class Header:
     @staticmethod
     async def logout():
         confirm = await AskDialog(
-            title=_("Logout"), message=_("Are you sure you want to logout?")
+            title=_("Logout"),
+            message=_("Are you sure you want to logout?"),
+            warning=True,
         ).open()
 
         if confirm:
