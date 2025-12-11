@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional
 
 from nicegui import ui, events
+from nicegui.elements.table import Table
 
 from services.file_service import StorageManager
 from ui.components.dialog import AskDialog
@@ -29,6 +30,10 @@ class FileBrowserTable:
     ):
 
         self.file_service = file_service
+
+        self.browser_table: Optional[Table] = None
+
+        self.is_select_mode = False
 
         self.file_list = []
 
@@ -67,49 +72,90 @@ class FileBrowserTable:
                     "field": "updated_at",
                     "sortable": True,
                 },
-                {
-                    "name": "action",
-                    "label": _("Action"),
-                    "align": "center",
-                },
             ]
-            browser_table = ui.table(
+            self.browser_table = ui.table(
                 columns=columns,
                 rows=[],
-                row_key="file",
+                row_key="name",
                 title=_("File List"),
                 pagination=0,
-                column_defaults={"align": "left"},
+                column_defaults={
+                    "headerClasses": "text-primary",
+                },
             ).classes("w-full h-full")
 
-            browser_table.pagination = {
-                "sortBy": None,
+            self.browser_table.pagination = {
+                "sortBy": "name",
                 "descending": False,
                 "page": 1,
                 "rowsPerPage": 0 if len(self.file_list) < 50 else 15,
             }
 
-            add_table_controls(
-                browser_table, show_path=self.current_path, back_func=self.back_func
-            )
 
-            browser_table.add_slot(
+            with self.browser_table.add_slot("top-left"):
+                with ui.row().classes("items-center gap-4"):
+                    ui.button(icon="arrow_back", on_click=self.back_func).props("flat")
+                    ui.label(self.current_path)
+            with self.browser_table.add_slot("top-right"):
+                with ui.row().classes("items-center gap-4"):
+                    ui.input(_("filter")).bind_value(self.browser_table, "filter").props("clearable dense")
+
+                    async def handle_remove_click(_remove_all: bool = False):
+                        if _remove_all:
+                            table_selected = self.browser_table.rows
+                        else:
+                            table_selected = self.browser_table.selected
+                            if not table_selected:
+                                return
+                        confirm = await AskDialog(
+                            _("Are you sure you want to delete {} items?").format(
+                                len(table_selected)
+                            ),
+                        ).open()
+                        if confirm:
+                            notify.success(
+                                _("{} items removed FAKE").format(len(table_selected))
+                            )
+
+                    def handle_edit_click():
+                        self.browser_table.set_selection("multiple" if self.browser_table.selection is None else None)
+                        self.is_select_mode = not self.is_select_mode
+                        self.browser_table.selected = []
+                        edit_button.props(
+                            "icon=playlist_add_check"
+                            if remove_button.visible is False
+                            else "icon=edit_note"
+                        )
+                        edit_button.text = (
+                            _("Done") if remove_button.visible is False else _("Edit")
+                        )
+                        remove_button.set_enabled(remove_button.visible is True)
+                        remove_button.set_visibility(remove_button.visible is False)
+
+                    remove_button = ui.button(
+                        _("Remove selected"), icon="remove", on_click=handle_remove_click
+                    ).props("flat")
+                    remove_button.set_visibility(False)
+
+                    edit_button = ui.button(
+                        _("Edit"), icon="edit_note", on_click=handle_edit_click
+                    ).props("flat")
+
+                    def toggle_remove_button(e):
+                        if not e.selection:
+                            remove_button.set_enabled(False)
+                        else:
+                            remove_button.set_enabled(True)
+
+                    self.browser_table.on_select(toggle_remove_button)
+
+                    remove_button.set_enabled(False)
+
+            self.browser_table.add_slot(
                 "body-cell-name", '<q-td v-html="props.row.name"></q-td>'
             )
-            browser_table.add_slot(
-                "body-cell-action",
-                f"""
-                <q-td :props="props">
-                    <q-btn flat dense round icon="share" @click="() => $parent.$emit('share', props.row)" />
-                    <q-btn flat dense round icon="delete" @click="() => $parent.$emit('delete', props.row)" />
-                    <q-btn flat dense round icon="download" @click="() => $parent.$emit('download', props.row)" />
-                    <q-btn flat dense round icon="edit_document" @click="() => $parent.$emit('rename', props.row)" />
-                    <q-btn flat dense round icon="drive_file_move" @click="() => $parent.$emit('move', props.row)" />
-                </q-td>
-            """,
-            )
 
-            browser_table.rows = [
+            self.browser_table.rows = [
                 {
                     "name": f"📁 <b>{p.name}</b>" if p.type == "dir" else p.name,
                     "raw_name": p.name,
@@ -131,10 +177,9 @@ class FileBrowserTable:
                 for p in self.file_list
             ]
 
-            browser_table.on("row-dblclick", self.handle_row_double_click)
-            browser_table.on("delete", lambda e: self.handle_action_click("delete", e))
+            self.browser_table.on("row-click", self.handle_row_click)
 
-            return browser_table
+            return self.browser_table
 
         self.refresh_func = browser_content
 
@@ -150,8 +195,11 @@ class FileBrowserTable:
         self.current_path = Path(self.current_path).parent.__str__()
         await self.refresh()
 
-    async def handle_row_double_click(self, e: events.GenericEventArguments):
+    async def handle_row_click(self, e: events.GenericEventArguments):
         click_event_params, click_row, click_index = e.args
+        if self.is_select_mode:
+            self.browser_table.selected.append(click_row)
+            return
         target_path = click_row["path"]
 
         if click_row["type"] == "dir":
@@ -190,80 +238,3 @@ class FileBrowserTable:
                 return
 
         await self.refresh()
-
-
-def add_table_controls(
-    table: ui.table,
-    dialog_pass_func: Callable = lambda _: None,
-    add_remove_controls: bool = False,
-    remove_all: bool = False,
-    show_path: str = ".",
-    back_func: Callable = lambda _: None,
-):
-    with table.add_slot("top-left"):
-        with ui.row().classes("items-center gap-4"):
-            ui.button(icon="arrow_back", on_click=back_func).props("flat")
-            ui.label(show_path)
-
-    with table.add_slot("top-right"):
-        with ui.row().classes("items-center gap-4"):
-            ui.input(_("filter")).bind_value(table, "filter").props("clearable dense")
-
-            if add_remove_controls:
-
-                async def handle_remove_click(_remove_all: bool = False):
-                    if _remove_all:
-                        table_selected = table.rows
-                    else:
-                        table_selected = table.selected
-                        if not table_selected:
-                            return
-                    confirm = await AskDialog(
-                        _("You are going to remove {} records, are you sure?").format(
-                            len(table_selected)
-                        ),
-                    ).open()
-                    if confirm:
-                        dialog_pass_func(table_selected)
-
-                def handle_edit_click():
-                    table.set_selection("multiple" if table.selection is None else None)
-                    table.selected = []
-                    edit_button.props(
-                        "icon=playlist_add_check"
-                        if remove_button.visible is False
-                        else "icon=edit_note"
-                    )
-                    edit_button.text = (
-                        _("Done") if remove_button.visible is False else _("Edit")
-                    )
-                    remove_button.set_enabled(remove_button.visible is True)
-                    remove_button.set_visibility(remove_button.visible is False)
-                    remove_all_button.set_visibility(remove_all_button.visible is False)
-
-                remove_button = ui.button(
-                    _("Remove selected"), icon="remove", on_click=handle_remove_click
-                ).props("flat")
-                remove_button.set_visibility(False)
-
-                if remove_all:
-                    remove_all_button = ui.button(
-                        _("Remove all"),
-                        icon="clear_all",
-                        on_click=lambda: handle_remove_click(_remove_all=True),
-                    ).props("flat")
-                    remove_all_button.set_visibility(False)
-
-                edit_button = ui.button(
-                    _("Edit"), icon="edit_note", on_click=handle_edit_click
-                ).props("flat")
-
-                def toggle_remove_button(e):
-                    if not e.selection:
-                        remove_button.set_enabled(False)
-                    else:
-                        remove_button.set_enabled(True)
-
-                table.on_select(toggle_remove_button)
-
-                remove_button.set_enabled(False)
