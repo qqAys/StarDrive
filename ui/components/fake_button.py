@@ -13,14 +13,31 @@ def fake_button(text: str, icon: str = None, func: Callable[[], Any] = None): ..
 def fake_button(text: str, icon: str = None, link: str = None): ...
 
 
+@overload
+def fake_button(text: str = None, link: str = None): ...
+
+
+@overload
+def fake_button(text: str = None, func: Callable[[], Any] = None): ...
+
+
+@overload
+def fake_button(icon: str = None, link: str = None): ...
+
+
+@overload
+def fake_button(icon: str = None, func: Callable[[], Any] = None): ...
+
+
 def fake_button(
-    text: str, icon: str = None, func: Callable[[], Any] = None, link: str = None
+    text: str = None, icon: str = None, func: Callable[[], Any] = None, link: str = None
 ):
     with ui.link(target=link).classes(replace=fake_button_style) as b:
         with ui.row().classes("items-center"):
             if icon:
                 ui.icon(icon)
-            ui.label(text).classes("gt-sm")
+            if text:
+                ui.label(text).classes("gt-sm")
 
     if func and not link:
         b.on("click", func)
