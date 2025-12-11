@@ -1,9 +1,9 @@
 from typing import Dict, Optional, BinaryIO, Generator
 
 from schemas.file_schema import FileMetadata, DirMetadata
+from storage.base import StorageBackend
+from storage.local_storage import LocalStorage
 from utils import logger, _
-from .base import StorageBackend
-from .local_storage import LocalStorage
 
 
 class BackendNotFoundError(Exception):

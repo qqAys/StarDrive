@@ -1,6 +1,6 @@
 from typing import Optional
 
-from storage.manager import StorageManager
+from services.file_service import StorageManager
 
 storage_manager_instance: Optional[StorageManager] = None
 
