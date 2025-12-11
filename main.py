@@ -10,7 +10,7 @@ from config import settings
 from middleware import AuthLoggerMiddleware
 from storage.local_storage import LocalStorage
 from storage.manager import StorageManager
-from ui.pages import login, browser, console
+from ui.pages import login, browser, console, profile
 from ui.pages.error_page import render_404, render_50x
 from utils import return_file_response, logger, static_path
 
@@ -40,9 +40,9 @@ def timeout_error_page(exception: Exception) -> None:
 
 @app.on_startup
 def on_app_startup():
-    M = StorageManager()
-    M.set_current_backend(LocalStorage.name)
-    globals.set_storage_manager(M)
+    local_storage_manager = StorageManager()
+    local_storage_manager.set_current_backend(LocalStorage.name)
+    globals.set_storage_manager(local_storage_manager)
 
     app.add_static_files("/static", Path(static_path))
 
@@ -69,6 +69,7 @@ def on_app_startup():
 
     app.include_router(login.router)
     app.include_router(browser.router)
+    app.include_router(profile.router)
     app.include_router(console.router)
 
     @ui.page("/{_:path}")
