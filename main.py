@@ -8,8 +8,8 @@ from nicegui import ui, app
 import globals
 from config import settings
 from middleware import AuthLoggerMiddleware
+from services.file_service import StorageManager
 from storage.local_storage import LocalStorage
-from storage.manager import StorageManager
 from ui.pages import login, browser, console, profile
 from ui.pages.error_page import render_404, render_50x
 from utils import return_file_response, logger, static_path
