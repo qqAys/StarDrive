@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 from fastapi.responses import RedirectResponse
@@ -6,6 +7,7 @@ from nicegui.elements.table import Table
 
 import globals
 from ui.components.base import base_layout
+from ui.components.dialog import AskDialog
 from ui.components.notify import notify
 from ui.components.table import add_table_controls
 from utils import bytes_to_human_readable, _, timestamp_to_human_readable
@@ -37,6 +39,8 @@ async def index():
 
     @ui.refreshable
     async def browser() -> Table:
+        nonlocal file_list
+        file_list = M.list_files(current_path)
 
         size_sort_js = """(a, b, rowA, rowB) => {
             const isDirA = rowA.type === 'dir';
@@ -52,8 +56,8 @@ async def index():
 
         columns = [
             {
-                "name": "file",
-                "label": _("File"),
+                "name": "name",
+                "label": _("Name"),
                 "field": "name",
                 "align": "left",
                 "required": True,
@@ -80,13 +84,27 @@ async def index():
                 "field": "updated_at",
                 "sortable": True,
             },
+            {
+                "name": "action",
+                "label": _("Action"),
+                "align": "center",
+            },
         ]
         browser_table = ui.table(
             columns=columns,
             rows=[],
             row_key="file",
             title=_("File List"),
+            pagination=0,
+            column_defaults={"align": "left"},
         ).classes("w-full h-full")
+
+        browser_table.pagination = {
+            "sortBy": None,
+            "descending": False,
+            "page": 1,
+            "rowsPerPage": 0 if len(file_list) < 50 else 15,
+        }
 
         async def back_func():
             nonlocal file_list, current_path
@@ -94,14 +112,29 @@ async def index():
                 notify.warning(_("You are already at the root directory"))
                 return
             current_path = Path(current_path).parent.__str__()
-            file_list = M.list_files(current_path)
             await browser.refresh()
 
         add_table_controls(browser_table, show_path=current_path, back_func=back_func)
+        browser_table.add_slot(
+            "body-cell-name", '<q-td v-html="props.row.name"></q-td>'
+        )
+        browser_table.add_slot(
+            "body-cell-action",
+            f"""
+    <q-td :props="props">
+        <q-btn flat dense round icon="share" @click="() => $parent.$emit('share', props.row)" />
+        <q-btn flat dense round icon="delete" @click="() => $parent.$emit('delete', props.row)" />
+        <q-btn flat dense round icon="download" @click="() => $parent.$emit('download', props.row)" />
+        <q-btn flat dense round icon="edit_document" @click="() => $parent.$emit('rename', props.row)" />
+        <q-btn flat dense round icon="drive_file_move" @click="() => $parent.$emit('move', props.row)" />
+    </q-td>
+""",
+        )
 
         browser_table.rows = [
             {
-                "name": f"📁 {p.name}" if p.type == "dir" else p.name,
+                "name": f"📁 <b>{p.name}</b>" if p.type == "dir" else p.name,
+                "raw_name": p.name,
                 "type": p.type,
                 "path": p.path,
                 "size": bytes_to_human_readable(p.size) if p.size else "-",
@@ -116,32 +149,51 @@ async def index():
             for p in file_list
         ]
 
-        async def handle_row_click(e: events.GenericEventArguments):
+        async def handle_row_double_click(e: events.GenericEventArguments):
             nonlocal file_list, current_path
             click_event_params, click_row, click_index = e.args
             target_path = click_row["path"]
 
             if click_row["type"] == "dir":
-                file_list = M.list_files(target_path)
                 current_path = target_path
                 await browser.refresh()
             else:
                 ui.download.content(M.download_file(target_path), click_row["name"])
 
-        browser_table.on("row-dblclick", handle_row_click)
+        async def handle_action_click(action, e: events.GenericEventArguments):
+            click_row = e.args
+
+            click_name = click_row["raw_name"]
+            click_path = click_row["path"]
+            click_type = click_row["type"]
+
+            if action == "delete":
+                confirm = await AskDialog(
+                    title=(
+                        _("Delete file") if click_type == "file" else _("Delete folder")
+                    ),
+                    message=_("Are you sure you want to delete {}?").format(click_name),
+                    warning=True,
+                ).open()
+                if confirm:
+                    try:
+                        if click_type == "dir":
+                            M.delete_directory(click_path)
+                        else:
+                            M.delete_file(click_path)
+                        notify.success(_("Successfully deleted {}").format(click_name))
+                    except Exception as e:
+                        notify.error(e)
+                else:
+                    return
+
+            await asyncio.sleep(0.2)
+            await browser.refresh()
+
+        browser_table.on("row-dblclick", handle_row_double_click)
+        browser_table.on("delete", lambda e: handle_action_click("delete", e))
 
         return browser_table
-
-    def switch_lang():
-        lang_code = app.storage.user.get("default_lang", "en_US")
-        if lang_code == "en_US":
-            lang_code = "zh_CN"
-        else:
-            lang_code = "en_US"
-        app.storage.user["default_lang"] = lang_code
-        ui.navigate.to(this_page_routes)
-
-    ui.button("切换语言", on_click=switch_lang)
 
     await browser()
     file_list = M.list_files(current_path)
