@@ -58,12 +58,18 @@ class RenameDialog(Dialog):
     async def open(self):
         with self.dialog, ui.card().classes("w-full"):
             ui.label(self.title).classes("text-lg font-bold")
-            new_name = ui.input(label=_("New name"), value=self.old_name).classes("w-full")
+            new_name = ui.input(label=_("New name"), value=self.old_name).classes(
+                "w-full"
+            )
 
             def is_same(a, b):
                 return a == b
 
             def on_confirm():
+                if not new_name.value:
+                    notify.warning(_("New name cannot be empty"))
+                    new_name.value = self.old_name
+                    return None
                 if is_same(new_name.value, self.old_name):
                     notify.warning(_("New name cannot be the same as the old name"))
                     return None
