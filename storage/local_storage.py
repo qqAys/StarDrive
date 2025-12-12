@@ -37,7 +37,9 @@ class LocalStorage(StorageBackend):
         """
         将虚拟的远程路径转换为本地的绝对 Path 对象。
         """
-        full_path = self.root_path / remote_path.lstrip("/")
+        remote_path_str = str(remote_path)
+        stripped_remote_path = remote_path_str.lstrip("/")
+        full_path = self.root_path / stripped_remote_path
 
         try:
             full_resolved_path = full_path.resolve(strict=False)
