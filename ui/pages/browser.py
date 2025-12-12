@@ -23,12 +23,13 @@ router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
+# @router.page("/{path:path}")
 @base_layout(header=True, footer=True, args={"title": _("Home")})
-async def index():
+async def index(path: str = None):
 
     file_manager = globals.get_storage_manager()
 
     file_browser_component = FileBrowserTable(
-        file_service=file_manager, initial_path="."
+        file_service=file_manager, target_path="" if path is None else f"./{path}"
     )
     await file_browser_component.refresh()
