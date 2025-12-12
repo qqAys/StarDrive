@@ -1,7 +1,7 @@
 from nicegui import ui, app
 
 from config import settings
-from ui.components.dialog import AskDialog
+from ui.components.dialog import ConfirmDialog
 from ui.components.fake_button import fake_button
 from ui.components.notify import notify
 from utils import _
@@ -31,7 +31,7 @@ class Header:
 
     @staticmethod
     async def logout():
-        confirm = await AskDialog(
+        confirm = await ConfirmDialog(
             title=_("Logout"),
             message=_("Are you sure you want to logout?"),
             warning=True,
