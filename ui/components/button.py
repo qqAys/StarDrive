@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+
 from nicegui import ui
 
 

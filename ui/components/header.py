@@ -23,9 +23,9 @@ class Header:
         )
 
         # eva-icons
-        ui.add_head_html(
-            '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />'
-        )
+        # ui.add_head_html(
+        #     '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />'
+        # )
 
         self.header = ui.header
 
