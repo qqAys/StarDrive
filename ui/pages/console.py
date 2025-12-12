@@ -8,7 +8,7 @@ from starlette.responses import RedirectResponse
 
 from config import settings
 from ui.components.base import base_layout
-from ui.components.dialog import AskDialog
+from ui.components.dialog import ConfirmDialog
 from ui.components.json_edit import style
 from ui.components.notify import notify
 from utils import _
@@ -87,7 +87,7 @@ async def console_page(request: Request, client: Client):
             app_reload_button = ui.button("APP RELOAD", color="red")
 
         async def on_app_reload_click():
-            confirm = await AskDialog(
+            confirm = await ConfirmDialog(
                 title="APP RELOAD",
                 message="是否确定要重新加载APP?",
             ).open()
