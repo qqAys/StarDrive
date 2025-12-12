@@ -56,9 +56,9 @@ class RenameDialog(Dialog):
         self.dialog = ui.dialog().props(self.dialog_props)
 
     async def open(self):
-        with self.dialog, ui.card():
-            ui.label(self.title).classes("w-full text-lg font-bold")
-            new_name = ui.input(label=_("New name"), value=self.old_name)
+        with self.dialog, ui.card().classes("w-full"):
+            ui.label(self.title).classes("text-lg font-bold")
+            new_name = ui.input(label=_("New name"), value=self.old_name).classes("w-full")
 
             def is_same(a, b):
                 return a == b
