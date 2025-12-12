@@ -1,0 +1,10 @@
+services:
+  stardrive:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/opt/stardrive/data
+    environment:
+      - STARDRIVE_STORAGE_SECRET="your-secret-here"
+    restart: always
