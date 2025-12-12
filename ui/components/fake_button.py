@@ -30,14 +30,20 @@ def fake_button(icon: str = None, func: Callable[[], Any] = None): ...
 
 
 def fake_button(
-    text: str = None, icon: str = None, func: Callable[[], Any] = None, link: str = None
+    text: str = None,
+    icon: str = None,
+    func: Callable[[], Any] = None,
+    link: str = None,
+    text_primary: bool = False,
 ):
     with ui.link(target=link).classes(replace=fake_button_style) as b:
         with ui.row().classes("items-center"):
             if icon:
                 ui.icon(icon)
             if text:
-                ui.label(text).classes("gt-sm")
+                ui.label(text).classes(
+                    f"gt-sm{" text-primary" if text_primary else ""}"
+                )
 
     if func and not link:
         b.on("click", func)
