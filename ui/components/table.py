@@ -1,11 +1,11 @@
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Optional
 
 from nicegui import ui, events
-from nicegui.elements.table import Table
 
 from services.file_service import StorageManager
 from ui.components.dialog import AskDialog
+from ui.components.input import input_with_icon
 from ui.components.notify import notify
 from utils import _, bytes_to_human_readable, timestamp_to_human_readable
 
@@ -31,17 +31,22 @@ class FileBrowserTable:
 
         self.file_service = file_service
 
-        self.browser_table: Optional[Table] = None
+        self.browser_table: Optional[ui.table] = None
 
         self.is_select_mode = False
+        self.edit_button_icon_open = "keyboard_arrow_left"
+        self.edit_button_icon_close = "keyboard_arrow_right"
+        self.search_input: Optional[ui.input] = None
+        self.edit_button: Optional[ui.button] = None
+        self.remove_button: Optional[ui.button] = None
 
         self.file_list = []
 
-        self.current_path = initial_path
+        self.current_path: Path = Path(initial_path)
 
         @ui.refreshable
         async def browser_content():
-            self.file_list = self.file_service.list_files(self.current_path)
+            self.file_list = self.file_service.list_files(self.current_path.__str__())
             columns = [
                 {
                     "name": "name",
@@ -49,7 +54,13 @@ class FileBrowserTable:
                     "field": "name",
                     "align": "left",
                     "required": True,
-                    "sortable": True,
+                },
+                {
+                    "name": "type",
+                    "label": _("Type"),
+                    "field": "type",
+                    "classes": "hidden",
+                    "headerClasses": "hidden",
                 },
                 {
                     "name": "size",
@@ -57,22 +68,23 @@ class FileBrowserTable:
                     "field": "size",
                     "align": "right",
                     "required": True,
-                    "sortable": True,
                     ":sort": size_sort_js,
                 },
                 {
                     "name": "created_at",
                     "label": _("Created At"),
                     "field": "created_at",
-                    "sortable": True,
                 },
                 {
                     "name": "updated_at",
                     "label": _("Updated At"),
                     "field": "updated_at",
-                    "sortable": True,
                 },
             ]
+
+            if self.browser_table:
+                self.browser_table.clear()
+
             self.browser_table = ui.table(
                 columns=columns,
                 rows=[],
@@ -80,76 +92,105 @@ class FileBrowserTable:
                 title=_("File List"),
                 pagination=0,
                 column_defaults={
+                    "sortable": True,
                     "headerClasses": "text-primary",
                 },
             ).classes("w-full h-full")
 
             self.browser_table.pagination = {
-                "sortBy": "name",
+                "sortBy": "type",
                 "descending": False,
                 "page": 1,
                 "rowsPerPage": 0 if len(self.file_list) < 50 else 15,
             }
 
-
             with self.browser_table.add_slot("top-left"):
-                with ui.row().classes("items-center gap-4"):
-                    ui.button(icon="arrow_back", on_click=self.back_func).props("flat")
-                    ui.label(self.current_path)
-            with self.browser_table.add_slot("top-right"):
-                with ui.row().classes("items-center gap-4"):
-                    ui.input(_("filter")).bind_value(self.browser_table, "filter").props("clearable dense")
+                with ui.row().classes("items-center gap-x-0"):
+                    # 返回上一级目录按钮
+                    ui.button(icon="arrow_upward", on_click=self.back_func).props(
+                        "flat dense"
+                    )
 
-                    async def handle_remove_click(_remove_all: bool = False):
-                        if _remove_all:
-                            table_selected = self.browser_table.rows
+                    # 路径分隔符
+                    if self.current_path.parts:
+                        home_button = ui.button(
+                            text=_("Home"),
+                            on_click=lambda: self.goto_func(Path(initial_path)),
+                        ).props("flat dense")
+                        home_button.tooltip(self.current_path.__str__())
+
+                        ui.icon("chevron_right").classes(
+                            "text-xl text-gray-500 mx-0.5 cursor-pointer"
+                        )
+
+                    # 面包屑导航栏渲染，构建累积路径
+                    MAX_DISPLAY_PARTS = 3
+                    path_parts = [p for p in self.current_path.parts if p]
+                    cumulative_path = Path()
+
+                    for index, p in enumerate(path_parts):
+
+                        if cumulative_path == Path("."):
+                            cumulative_path = Path(p)
                         else:
-                            table_selected = self.browser_table.selected
-                            if not table_selected:
-                                return
-                        confirm = await AskDialog(
-                            _("Are you sure you want to delete {} items?").format(
-                                len(table_selected)
-                            ),
-                        ).open()
-                        if confirm:
-                            notify.success(
-                                _("{} items removed FAKE").format(len(table_selected))
+                            cumulative_path /= p
+
+                        target_path = cumulative_path
+
+                        is_first = index == 0
+                        is_second_last = index == len(path_parts) - 2
+                        is_last = index == len(path_parts) - 1
+
+                        should_display_button = (
+                            len(path_parts) <= MAX_DISPLAY_PARTS
+                            or is_first
+                            or is_second_last
+                            or is_last
+                        )
+
+                        if should_display_button:
+                            # 跳转按钮本身
+                            ui.button(
+                                p,
+                                on_click=lambda path_to_go=target_path: self.goto_func(
+                                    path_to_go
+                                ),
+                            ).props(f"flat dense{" disable" if is_last else ""}")
+                            # 按钮后的分隔符
+                            if not is_last:
+                                ui.icon("chevron_right").classes(
+                                    "text-xl text-gray-500 mx-0.5"
+                                )
+
+                        elif index == 1 and len(path_parts) > MAX_DISPLAY_PARTS:
+                            ui.button("...").props("flat dense disable")
+                            ui.icon("chevron_right").classes(
+                                "text-xl text-gray-500 mx-0.5"
                             )
 
-                    def handle_edit_click():
-                        self.browser_table.set_selection("multiple" if self.browser_table.selection is None else None)
-                        self.is_select_mode = not self.is_select_mode
-                        self.browser_table.selected = []
-                        edit_button.props(
-                            "icon=playlist_add_check"
-                            if remove_button.visible is False
-                            else "icon=edit_note"
-                        )
-                        edit_button.text = (
-                            _("Done") if remove_button.visible is False else _("Edit")
-                        )
-                        remove_button.set_enabled(remove_button.visible is True)
-                        remove_button.set_visibility(remove_button.visible is False)
+            with self.browser_table.add_slot("top-right"):
+                with ui.row().classes("items-center gap-4"):
+                    self.remove_button = ui.button(
+                        icon="delete", on_click=self.handle_remove_button_click
+                    ).props("flat dense")
+                    self.edit_button = ui.button(
+                        icon=(
+                            self.edit_button_icon_close
+                            if self.is_select_mode
+                            else self.edit_button_icon_open
+                        ),
+                        on_click=self.handle_edit_button_click,
+                    ).props("flat dense")
+                    self.search_input = (
+                        input_with_icon(_("Search"), icon="search")
+                        .bind_value(self.browser_table, "filter")
+                        .props("clearable dense")
+                    )
 
-                    remove_button = ui.button(
-                        _("Remove selected"), icon="remove", on_click=handle_remove_click
-                    ).props("flat")
-                    remove_button.set_visibility(False)
-
-                    edit_button = ui.button(
-                        _("Edit"), icon="edit_note", on_click=handle_edit_click
-                    ).props("flat")
-
-                    def toggle_remove_button(e):
-                        if not e.selection:
-                            remove_button.set_enabled(False)
-                        else:
-                            remove_button.set_enabled(True)
-
-                    self.browser_table.on_select(toggle_remove_button)
-
-                    remove_button.set_enabled(False)
+                    self.remove_button.set_visibility(self.is_select_mode)
+                    self.browser_table.set_selection(
+                        "multiple" if self.is_select_mode else None
+                    )
 
             self.browser_table.add_slot(
                 "body-cell-name", '<q-td v-html="props.row.name"></q-td>'
@@ -179,6 +220,8 @@ class FileBrowserTable:
 
             self.browser_table.on("row-click", self.handle_row_click)
 
+            self.browser_table.update()
+
             return self.browser_table
 
         self.refresh_func = browser_content
@@ -189,52 +232,86 @@ class FileBrowserTable:
         await self.refresh_func.refresh()
 
     async def back_func(self):
-        if self.current_path == ".":
-            notify.warning(_("You are already at the root directory"))
+        if self.current_path.parent == self.current_path:
+            notify.warning(_("You are already at the root directory."))
             return
-        self.current_path = Path(self.current_path).parent.__str__()
+
+        await self.goto_func(self.current_path.parent)
+
+    async def goto_func(self, path: Path):
+        self.current_path = path
+        self.current_path = (
+            self.current_path.resolve()
+            if self.current_path.is_absolute()
+            else self.current_path.resolve().relative_to(Path.cwd())
+        )
         await self.refresh()
+        return
+
+    def copy_path_to_clipboard(self):
+        try:
+            ui.clipboard.write(self.current_path.__str__())
+        except Exception as e:
+            notify.error(_("Failed to copy path to clipboard."))
+
+        notify.success(_("Copied to clipboard."))
 
     async def handle_row_click(self, e: events.GenericEventArguments):
         click_event_params, click_row, click_index = e.args
+
         if self.is_select_mode:
-            self.browser_table.selected.append(click_row)
+            if click_row in self.browser_table.selected:
+                self.browser_table.selected.remove(click_row)
+            else:
+                self.browser_table.selected.append(click_row)
             return
+
         target_path = click_row["path"]
 
         if click_row["type"] == "dir":
-            self.current_path = target_path
-            await self.refresh()
+            await self.goto_func(Path(target_path))
+            return
         else:
             ui.download.content(
                 self.file_service.download_file(target_path), click_row["name"]
             )
 
-    async def handle_action_click(self, action, e: events.GenericEventArguments):
-        click_row = e.args
+    def handle_edit_button_click(self):
+        self.is_select_mode = not self.is_select_mode
 
-        click_name = click_row["raw_name"]
-        click_path = click_row["path"]
-        click_type = click_row["type"]
+        self.browser_table.set_selection("multiple" if self.is_select_mode else None)
+        self.browser_table.selected = []
+        self.edit_button.props(
+            f"icon={self.edit_button_icon_close if self.is_select_mode else self.edit_button_icon_open}"
+        )
+        self.remove_button.set_visibility(self.is_select_mode)
 
-        if action == "delete":
-            confirm = await AskDialog(
-                title=(
-                    _("Delete file") if click_type == "file" else _("Delete folder")
-                ),
-                message=_("Are you sure you want to delete {}?").format(click_name),
-                warning=True,
-            ).open()
-            if confirm:
-                try:
-                    if click_type == "dir":
-                        self.file_service.delete_directory(click_path)
+    async def handle_remove_button_click(self):
+        if not self.browser_table.selected:
+            notify.warning(_("Please select at least one file!"))
+            return
+
+        confirm = await AskDialog(
+            title=_("Are you sure you want to delete {} items?").format(
+                len(self.browser_table.selected)
+            ),
+            message=[item["raw_name"] for item in self.browser_table.selected],
+            warning=True,
+        ).open()
+
+        if confirm:
+            result = []
+            try:
+                for item in self.browser_table.selected:
+                    if item["type"] == "dir":
+                        self.file_service.delete_directory(item["path"])
                     else:
-                        self.file_service.delete_file(click_path)
-                    notify.success(_("Successfully deleted {}").format(click_name))
-                except Exception as e:
-                    notify.error(e)
-            else:
-                return
+                        self.file_service.delete_file(item["path"])
+                    result.append({"action": "delete", "raw": item, "result": True})
+                notify.success(_("Deleted {} items.").format(len(result)))
+            except Exception as e:
+                notify.error(e)
+        else:
+            return
 
         await self.refresh()
