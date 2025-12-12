@@ -16,7 +16,7 @@ class Dialog:
 
 class AskDialog(Dialog):
 
-    def __init__(self, title: str, message: str = None, warning: bool = False):
+    def __init__(self, title: str, message: str | list = None, warning: bool = False):
         super().__init__()
         self.title = title
         self.message = message
@@ -28,7 +28,11 @@ class AskDialog(Dialog):
         with self.dialog, ui.card():
             ui.label(self.title).classes("text-lg font-bold")
             if self.message:
-                ui.label(self.message)
+                if isinstance(self.message, str):
+                    ui.label(self.message)
+                elif isinstance(self.message, list):
+                    for message in self.message:
+                        ui.label(message)
 
             with ui.row().classes("w-full justify-between"):
                 ui.button(
