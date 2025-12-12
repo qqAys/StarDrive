@@ -4,7 +4,7 @@ from typing import Optional
 from nicegui import ui, events
 
 from services.file_service import StorageManager
-from ui.components.dialog import AskDialog
+from ui.components.dialog import ConfirmDialog, RenameDialog
 from ui.components.input import input_with_icon
 from ui.components.notify import notify
 from utils import _, bytes_to_human_readable, timestamp_to_human_readable
@@ -27,26 +27,40 @@ class FileBrowserTable:
         self,
         file_service: StorageManager,
         initial_path: str = ".",
+        target_path: str = "",
     ):
 
         self.file_service = file_service
 
         self.browser_table: Optional[ui.table] = None
+        self.action_column = {
+            "sortable": False,
+            "name": "action",
+            "label": _("Action"),
+            "style": "width: 0px",
+            "align": "center",
+        }
 
         self.is_select_mode = False
         self.edit_button_icon_open = "keyboard_arrow_left"
         self.edit_button_icon_close = "keyboard_arrow_right"
         self.search_input: Optional[ui.input] = None
         self.edit_button: Optional[ui.button] = None
-        self.remove_button: Optional[ui.button] = None
+        self.delete_button: Optional[ui.button] = None
+        self.move_button: Optional[ui.button] = None
 
         self.file_list = []
 
-        self.current_path: Path = Path(initial_path)
+        self.current_path: Path = Path(initial_path, target_path)
+
+        if not self.file_service.exists(self.current_path.__str__()):
+            notify.error(_("Path not exists, will go to home dir."))
+            self.current_path: Path = Path(initial_path)
 
         @ui.refreshable
         async def browser_content():
             self.file_list = self.file_service.list_files(self.current_path.__str__())
+
             columns = [
                 {
                     "name": "name",
@@ -66,20 +80,23 @@ class FileBrowserTable:
                     "name": "size",
                     "label": _("Size"),
                     "field": "size",
-                    "align": "right",
                     "required": True,
                     ":sort": size_sort_js,
+                    "style": "width: 0px",
                 },
                 {
                     "name": "created_at",
                     "label": _("Created At"),
                     "field": "created_at",
+                    "style": "width: 0px",
                 },
                 {
                     "name": "updated_at",
                     "label": _("Updated At"),
                     "field": "updated_at",
+                    "style": "width: 0px",
                 },
+                self.action_column,
             ]
 
             if self.browser_table:
@@ -93,7 +110,7 @@ class FileBrowserTable:
                 pagination=0,
                 column_defaults={
                     "sortable": True,
-                    "headerClasses": "text-primary",
+                    "align": "center",
                 },
             ).classes("w-full h-full")
 
@@ -103,6 +120,11 @@ class FileBrowserTable:
                 "page": 1,
                 "rowsPerPage": 0 if len(self.file_list) < 50 else 15,
             }
+
+            with self.browser_table.add_slot("no-data"):
+                with ui.row().classes("items-center"):
+                    ui.icon("warning").classes("text-2xl")
+                    ui.label(_("Empty here.")).classes("font-bold")
 
             with self.browser_table.add_slot("top-left"):
                 with ui.row().classes("items-center gap-x-0"):
@@ -119,9 +141,7 @@ class FileBrowserTable:
                         ).props("flat dense")
                         home_button.tooltip(self.current_path.__str__())
 
-                        ui.icon("chevron_right").classes(
-                            "text-xl text-gray-500 mx-0.5 cursor-pointer"
-                        )
+                        ui.icon("chevron_right").classes("text-xl text-gray-500 mx-0.5")
 
                     # 面包屑导航栏渲染，构建累积路径
                     MAX_DISPLAY_PARTS = 3
@@ -155,7 +175,9 @@ class FileBrowserTable:
                                 on_click=lambda path_to_go=target_path: self.goto_func(
                                     path_to_go
                                 ),
-                            ).props(f"flat dense{" disable" if is_last else ""}")
+                            ).props(
+                                f"no-caps flat dense{" disable" if is_last else ""}"
+                            )
                             # 按钮后的分隔符
                             if not is_last:
                                 ui.icon("chevron_right").classes(
@@ -170,10 +192,23 @@ class FileBrowserTable:
 
             with self.browser_table.add_slot("top-right"):
                 with ui.row().classes("items-center gap-4"):
-                    self.remove_button = ui.button(
-                        icon="delete", on_click=self.handle_remove_button_click
-                    ).props("flat dense")
+                    self.move_button = (
+                        ui.button(
+                            icon="move_to_inbox", on_click=self.handle_move_button_click
+                        )
+                        .props("flat dense")
+                        .tooltip(_("Move"))
+                    )
+                    self.delete_button = (
+                        ui.button(
+                            icon="delete_outline",
+                            on_click=self.handle_delete_button_click,
+                        )
+                        .props("flat dense")
+                        .tooltip(_("Delete"))
+                    )
                     self.edit_button = ui.button(
+                        text=_("More actions"),
                         icon=(
                             self.edit_button_icon_close
                             if self.is_select_mode
@@ -187,10 +222,21 @@ class FileBrowserTable:
                         .props("clearable dense")
                     )
 
-                    self.remove_button.set_visibility(self.is_select_mode)
+                    self.move_button.set_visibility(self.is_select_mode)
+                    self.delete_button.set_visibility(self.is_select_mode)
                     self.browser_table.set_selection(
                         "multiple" if self.is_select_mode else None
                     )
+
+            self.browser_table.add_slot(
+                "body-cell-action",
+                """
+                <q-td :props="props">
+                    <q-btn icon="share" @click="() => $parent.$emit('share', props.row)" flat dense />
+                    <q-btn icon="drive_file_rename_outline" @click="() => $parent.$emit('rename', props.row)" flat dense />
+                </q-td>
+            """,
+            )
 
             self.browser_table.add_slot(
                 "body-cell-name", '<q-td v-html="props.row.name"></q-td>'
@@ -219,6 +265,10 @@ class FileBrowserTable:
             ]
 
             self.browser_table.on("row-click", self.handle_row_click)
+            self.browser_table.on("row-dblclick", self.handle_row_double_click)
+
+            self.browser_table.on("rename", self.handle_rename_button_click)
+            self.browser_table.on("share", self.handle_share_button_click)
 
             self.browser_table.update()
 
@@ -248,15 +298,7 @@ class FileBrowserTable:
         await self.refresh()
         return
 
-    def copy_path_to_clipboard(self):
-        try:
-            ui.clipboard.write(self.current_path.__str__())
-        except Exception as e:
-            notify.error(_("Failed to copy path to clipboard."))
-
-        notify.success(_("Copied to clipboard."))
-
-    async def handle_row_click(self, e: events.GenericEventArguments):
+    def handle_row_click(self, e: events.GenericEventArguments):
         click_event_params, click_row, click_index = e.args
 
         if self.is_select_mode:
@@ -264,8 +306,12 @@ class FileBrowserTable:
                 self.browser_table.selected.remove(click_row)
             else:
                 self.browser_table.selected.append(click_row)
+
+    async def handle_row_double_click(self, e: events.GenericEventArguments):
+        if self.is_select_mode:
             return
 
+        click_event_params, click_row, click_index = e.args
         target_path = click_row["path"]
 
         if click_row["type"] == "dir":
@@ -281,17 +327,53 @@ class FileBrowserTable:
 
         self.browser_table.set_selection("multiple" if self.is_select_mode else None)
         self.browser_table.selected = []
+
+        # 隐藏 action 列
+        if self.is_select_mode:
+            self.browser_table.columns.remove(self.action_column)
+        else:
+            self.browser_table.columns.append(self.action_column)
+
         self.edit_button.props(
             f"icon={self.edit_button_icon_close if self.is_select_mode else self.edit_button_icon_open}"
         )
-        self.remove_button.set_visibility(self.is_select_mode)
+        self.move_button.set_visibility(self.is_select_mode)
+        self.delete_button.set_visibility(self.is_select_mode)
 
-    async def handle_remove_button_click(self):
+    async def handle_move_button_click(self):
+        if not self.browser_table.selected:
+            notify.warning(_("Please select at least one file!"))
+            return
+        raise NotImplementedError
+
+    async def handle_rename_button_click(self, e: events.GenericEventArguments):
+        target_path = e.args["path"]
+        new_name = await RenameDialog(
+            title=_("Rename"), old_name=e.args["raw_name"]
+        ).open()
+        if new_name:
+            new_path = Path(target_path).parent / new_name
+            if self.file_service.exists(new_path):
+                notify.warning(
+                    _("File or directory already exists, please choose another name.")
+                )
+                return
+            try:
+                self.file_service.move_file(target_path, new_path)
+                notify.success(_("Rename successful."))
+            except Exception as e:
+                notify.error(e)
+        else:
+            return
+
+        await self.refresh()
+
+    async def handle_delete_button_click(self):
         if not self.browser_table.selected:
             notify.warning(_("Please select at least one file!"))
             return
 
-        confirm = await AskDialog(
+        confirm = await ConfirmDialog(
             title=_("Are you sure you want to delete {} items?").format(
                 len(self.browser_table.selected)
             ),
@@ -315,3 +397,12 @@ class FileBrowserTable:
             return
 
         await self.refresh()
+
+    @staticmethod
+    async def handle_share_button_click(e: events.GenericEventArguments):
+        target_path = e.args["path"]
+        confirm = await ConfirmDialog(title=_("Share {}?").format(target_path)).open()
+        if confirm:
+            # share_link = self.file_service.share_file(target_path)
+            # ui.clipboard.write(share_link)
+            notify.success(_("Copied share link to clipboard. {}").format(target_path))
