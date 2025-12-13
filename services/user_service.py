@@ -1,6 +1,7 @@
 from typing import Optional
+from zoneinfo import ZoneInfo
 
-from nicegui import app
+from nicegui import app, ui
 from pydantic import EmailStr
 
 from schemas.user_schema import (
@@ -188,3 +189,25 @@ class UserManager:
         取消超级用户权限
         """
         return self.superuser_change(email, False)
+
+
+async def get_user_timezone_from_browser():
+    try:
+        user_timezone_name = await ui.run_javascript(
+            """
+            try {
+                const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                return timezone;
+            } catch (e) {
+                return ""; 
+            }""",
+        )
+    except Exception as e:
+        logger.error(_("Error getting user timezone: {}").format(e))
+        user_timezone_name = "UTC"
+
+    return user_timezone_name
+
+
+def get_user_timezone():
+    return ZoneInfo(app.storage.user.get("timezone", "UTC"))
