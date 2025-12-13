@@ -117,6 +117,8 @@ class FileBrowserTable:
                 {
                     "name": "created_at",
                     "label": _("Created At"),
+                    "classes": "hidden",
+                    "headerClasses": "hidden",
                     "field": "created_at",
                     "style": "width: 0px",
                 },
