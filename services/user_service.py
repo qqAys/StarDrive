@@ -65,17 +65,12 @@ class UserManager:
         """
         用户登录
         """
-        try:
-            if not HashingManager.verify_password(
-                user_in.password, self.users[user_in.email]["password_hash"]
-            ):
-                message = _("Invalid password or email")
-                logger.warning(message)
-                raise ValueError(message)
-        except Exception as e:
-            message = _("Login failed")
-            logger.error(message)
-            raise ValueError(message) from e
+        if not HashingManager.verify_password(
+            user_in.password, self.users[user_in.email]["password_hash"]
+        ):
+            message = _("Invalid password or email")
+            logger.warning(message)
+            raise ValueError(message)
 
         app.storage.user.update({"username": user_in.email, "authenticated": True})
         return self.get(user_in.email)
