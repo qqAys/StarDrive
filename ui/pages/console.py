@@ -59,6 +59,10 @@ def get_system_metrics():
 @base_layout(header=True, footer=True, args={"title": _("Console")})
 async def console_page(request: Request, client: Client):
     with ui.column().classes("w-full"):
+        ui.input(_("Service URL")).bind_value(app.storage.general, "service_url")
+
+        ui.separator()
+
         system_load_label = ui.label().classes("font-bold")
         process_memory_label = ui.label().classes("font-bold")
 
