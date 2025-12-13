@@ -48,7 +48,11 @@ def login_page(redirect_to: str = None):
 
             def try_login():
                 pre_login_user = UserLogin(email=email.value, password=password.value)
-                login_user = user.login(pre_login_user)
+                try:
+                    login_user = user.login(pre_login_user)
+                except Exception as e:
+                    notify.error(e)
+                    return
                 if not login_user:
                     notify.warning(_("User not found"))
                     return
