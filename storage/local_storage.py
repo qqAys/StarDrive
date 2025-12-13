@@ -1,6 +1,9 @@
+import asyncio
 import shutil
 from pathlib import Path
-from typing import BinaryIO
+from typing import AsyncIterator
+
+import aiofiles
 
 from schemas.file_schema import FileMetadata, DirMetadata
 from utils import logger, _
@@ -63,43 +66,7 @@ class LocalStorage(StorageBackend):
         full_path = self._get_full_path(remote_path)
         return full_path.exists()
 
-    def upload_file(self, file_object: BinaryIO, remote_path: str):
-        full_path = self._get_full_path(remote_path)
-
-        # 确保父目录存在
-        full_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # 将文件流内容写入
-        try:
-            with full_path.open("wb") as dest_file:
-                shutil.copyfileobj(file_object, dest_file)
-        except PermissionError as e:
-            raise StoragePermissionError(
-                _("Permission denied to write file to {}").format(full_path)
-            ) from e
-        except Exception as e:
-            raise StorageError(
-                _("Could not write file to {}").format(full_path), e
-            ) from e
-
-    def upload_file_from_path(self, local_path: str, remote_path: str):
-        local_src_path = Path(local_path)
-        full_dest_path = self._get_full_path(remote_path)
-
-        # 检查本地源文件
-        if not local_src_path.is_file():
-            raise StorageFileNotFoundError(
-                _("Local source file does not exist or is a directory: {}").format(
-                    local_path
-                )
-            )
-
-        # 确保目标父目录存在
-        full_dest_path.parent.mkdir(parents=True, exist_ok=True)
-
-        shutil.copy2(local_src_path, full_dest_path)
-
-    def download_file(self, remote_path: str):
+    def get_full_path(self, remote_path: str) -> Path:
         full_path = self._get_full_path(remote_path)
 
         if not full_path.exists():
@@ -111,7 +78,31 @@ class LocalStorage(StorageBackend):
                 _("Path points to a directory: {}").format(remote_path)
             )
 
-        return full_path.open("rb").read()
+        return full_path
+
+    async def upload_file(self, file_object: AsyncIterator[bytes], remote_path: str):
+        full_path: Path = self._get_full_path(remote_path)
+        try:
+            await asyncio.to_thread(full_path.parent.mkdir, parents=True, exist_ok=True)
+            async with aiofiles.open(full_path, mode="wb") as dest_file:
+
+                async for chunk in file_object:
+                    if not chunk:
+                        continue
+
+                    await dest_file.write(chunk)
+
+        except PermissionError as e:
+            raise StoragePermissionError(
+                _("Permission denied to write file to {}").format(full_path)
+            ) from e
+        except Exception as e:
+            raise StorageError(
+                _("Could not write file to {}").format(full_path), e
+            ) from e
+
+    def download_file(self, remote_path: str) -> Path:
+        return self.get_full_path(remote_path)
 
     def download_file_with_stream(self, remote_path: str):
         full_path = self._get_full_path(remote_path)

@@ -1,9 +1,18 @@
-from typing import Dict, Optional, BinaryIO, Generator
+from datetime import datetime, timezone
+from typing import Dict, Optional, Generator, AsyncIterator
+from uuid import uuid4
 
+from nicegui import app
+
+from api import download_file_form_browser_url_prefix
+from config import settings
 from schemas.file_schema import FileMetadata, DirMetadata
+from security import generate_jwt_secret
 from storage.base import StorageBackend
 from storage.local_storage import LocalStorage
 from utils import logger, _
+
+storage_key = "temp_public_download_key"
 
 
 def get_file_icon(type_: str, extension: str):
@@ -24,8 +33,28 @@ def get_file_icon(type_: str, extension: str):
         return "📕"
 
     # --- 代码/脚本 ---
-    elif extension in ["py", "js", "ts", "html", "css", "scss", "json", "xml", "yaml", "yml", "java", "c", "cpp", "h",
-                       "hpp", "go", "rb", "php", "sh", "bat"]:
+    elif extension in [
+        "py",
+        "js",
+        "ts",
+        "html",
+        "css",
+        "scss",
+        "json",
+        "xml",
+        "yaml",
+        "yml",
+        "java",
+        "c",
+        "cpp",
+        "h",
+        "hpp",
+        "go",
+        "rb",
+        "php",
+        "sh",
+        "bat",
+    ]:
         return "💻"
 
     # --- 压缩/归档文件 ---
@@ -33,7 +62,17 @@ def get_file_icon(type_: str, extension: str):
         return "📦"
 
     # --- 图像文件 ---
-    elif extension in ["jpg", "jpeg", "png", "gif", "svg", "ico", "bmp", "webp", "tiff"]:
+    elif extension in [
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "svg",
+        "ico",
+        "bmp",
+        "webp",
+        "tiff",
+    ]:
         return "🖼️"
 
     # --- 媒体文件 ---
@@ -76,6 +115,7 @@ class StorageManager:
 
     def __init__(self):
         # 存储所有已注册的后端实例
+        self._get_full_path = None
         self._backends: Dict[str, StorageBackend] = {}
         # 当前正在使用的存储后端名称
         self._current_backend_name: Optional[str] = None
@@ -138,19 +178,20 @@ class StorageManager:
         backend = self._get_current_backend()
         return backend.exists(remote_path)
 
-    def upload_file(self, file_object: BinaryIO, remote_path: str) -> bool:
+    def get_full_path(self, remote_path: str) -> str:
+        """获取远程路径的完整路径。"""
+        backend = self._get_current_backend()
+        return backend.get_full_path(remote_path)
+
+    async def upload_file(
+        self, file_object: AsyncIterator[bytes], remote_path: str
+    ) -> bool:
         """流式上传文件。"""
         backend = self._get_current_backend()
-        backend.upload_file(file_object, remote_path)
+        await backend.upload_file(file_object, remote_path)
         return True
 
-    def upload_file_from_path(self, local_path: str, remote_path: str) -> bool:
-        """从本地路径上传文件。"""
-        backend = self._get_current_backend()
-        backend.upload_file_from_path(local_path, remote_path)
-        return True
-
-    def download_file(self, remote_path: str) -> bytes:
+    def download_file(self, remote_path: str):
         """下载文件。"""
         backend = self._get_current_backend()
         return backend.download_file(remote_path)
@@ -202,3 +243,52 @@ class StorageManager:
         """获取单个文件或目录的元数据。"""
         backend = self._get_current_backend()
         return backend.get_file_metadata(remote_path)
+
+
+def generate_download_url(target_path: str, file_name: str) -> str:
+    """
+    生成下载链接。
+    """
+
+    this_url_ttl = datetime.now(timezone.utc) + settings.DEFAULT_DOWNLOAD_LINK_TTL
+
+    download_id = uuid4().hex[:12]
+    download_info = {
+        "user": app.storage.user["username"],
+        "path": target_path,
+        "name": file_name,
+        "exp": this_url_ttl,
+    }
+
+    if storage_key not in app.storage.general:
+        app.storage.general[storage_key] = {}
+
+    app.storage.general[storage_key][download_id] = download_info
+
+    payload = {"download_id": download_id, "exp": this_url_ttl}
+
+    return (
+        f"/api/{download_file_form_browser_url_prefix}/{generate_jwt_secret(payload)}"
+    )
+
+
+def get_download_info(download_id: str) -> dict | None:
+    """
+    获取下载链接信息。
+    """
+    if storage_key not in app.storage.general:
+        app.storage.general[storage_key] = {}
+
+    return app.storage.general[storage_key].get(download_id, None)
+
+
+def clear_expired_download_links():
+    """
+    清理过期的下载链接。
+    """
+    if storage_key not in app.storage.general:
+        app.storage.general[storage_key] = {}
+
+    for download_id, download_info in app.storage.general[storage_key].items():
+        if download_info["exp"] < datetime.now(timezone.utc):
+            del app.storage.general[storage_key][download_id]

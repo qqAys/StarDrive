@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import BinaryIO
+from typing import BinaryIO, AsyncIterator
 
 from schemas.file_schema import FileMetadata, DirMetadata
 
@@ -55,11 +55,11 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    def upload_file(self, file_object: BinaryIO, remote_path: str):
+    def get_full_path(self, remote_path: str):
         pass
 
     @abstractmethod
-    def upload_file_from_path(self, local_path: str, remote_path: str):
+    async def upload_file(self, file_object: AsyncIterator[bytes], remote_path: str):
         pass
 
     @abstractmethod

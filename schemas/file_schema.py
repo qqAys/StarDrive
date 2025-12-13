@@ -6,6 +6,7 @@ from utils import _
 
 FILE_NAME_FORBIDDEN_CHARS = r'\/:*?"<>|'
 
+
 # --- 文件元数据的基类 ---
 class FileMetadataBase(BaseModel):
     name: str = Field(description=_("File name or Directory name"))
