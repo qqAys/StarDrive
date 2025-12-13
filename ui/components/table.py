@@ -53,13 +53,13 @@ class FileBrowserTable:
 
         self.current_path: Path = Path(initial_path, target_path)
 
-        if not self.file_service.exists(self.current_path.__str__()):
+        if not self.file_service.exists(str(self.current_path)):
             notify.error(_("Path not exists, will go to home dir."))
             self.current_path: Path = Path(initial_path)
 
         @ui.refreshable
         async def browser_content():
-            self.file_list = self.file_service.list_files(self.current_path.__str__())
+            self.file_list = self.file_service.list_files(str(self.current_path))
 
             columns = [
                 {
@@ -131,7 +131,7 @@ class FileBrowserTable:
                     # 返回上一级目录按钮
                     ui.button(icon="arrow_upward", on_click=self.back_func).props(
                         "flat dense"
-                    )
+                    ).tooltip(_("Back to parent directory"))
 
                     # 路径分隔符
                     if self.current_path.parts:
@@ -139,7 +139,7 @@ class FileBrowserTable:
                             text=_("Home"),
                             on_click=lambda: self.goto_func(Path(initial_path)),
                         ).props("flat dense")
-                        home_button.tooltip(self.current_path.__str__())
+                        home_button.tooltip(_("Back to home directory"))
 
                         ui.icon("chevron_right").classes("text-xl text-gray-500 mx-0.5")
 
@@ -170,19 +170,21 @@ class FileBrowserTable:
 
                         if should_display_button:
                             # 跳转按钮本身
-                            ui.button(
-                                p,
-                                on_click=lambda path_to_go=target_path: self.goto_func(
-                                    path_to_go
-                                ),
-                            ).props(
-                                f"no-caps flat dense{" disable" if is_last else ""}"
-                            )
-                            # 按钮后的分隔符
                             if not is_last:
+                                ui.button(
+                                    p,
+                                    on_click=lambda path_to_go=target_path: self.goto_func(
+                                        path_to_go
+                                    ),
+                                ).props(
+                                    f"no-caps flat dense"
+                                )
+                                # 按钮后的分隔符
                                 ui.icon("chevron_right").classes(
                                     "text-xl text-gray-500 mx-0.5"
                                 )
+                            else:
+                                ui.button(p, on_click=self.copy_path_clipboard).props("no-caps flat dense").tooltip("/" + str(self.current_path))
 
                         elif index == 1 and len(path_parts) > MAX_DISPLAY_PARTS:
                             ui.button("...").props("flat dense disable")
@@ -208,14 +210,13 @@ class FileBrowserTable:
                         .tooltip(_("Delete"))
                     )
                     self.edit_button = ui.button(
-                        text=_("More actions"),
                         icon=(
                             self.edit_button_icon_close
                             if self.is_select_mode
                             else self.edit_button_icon_open
                         ),
                         on_click=self.handle_edit_button_click,
-                    ).props("flat dense")
+                    ).props("flat dense").tooltip(_("More actions"))
                     self.search_input = (
                         input_with_icon(_("Search"), icon="search")
                         .bind_value(self.browser_table, "filter")
@@ -230,10 +231,10 @@ class FileBrowserTable:
 
             self.browser_table.add_slot(
                 "body-cell-action",
-                """
+                f"""
                 <q-td :props="props">
-                    <q-btn icon="share" @click="() => $parent.$emit('share', props.row)" flat dense />
-                    <q-btn icon="drive_file_rename_outline" @click="() => $parent.$emit('rename', props.row)" flat dense />
+                    <q-btn icon="share" @click="() => $parent.$emit('share', props.row)" flat dense><q-tooltip>{_("Share")}</<q-tooltip></q-btn>
+                    <q-btn icon="drive_file_rename_outline" @click="() => $parent.$emit('rename', props.row)" flat dense><q-tooltip>{_("Rename")}</<q-tooltip></q-btn>
                 </q-td>
             """,
             )
@@ -283,7 +284,7 @@ class FileBrowserTable:
 
     async def back_func(self):
         if self.current_path.parent == self.current_path:
-            notify.warning(_("You are already at the root directory."))
+            notify.warning(_("You are already at the root directory"))
             return
 
         await self.goto_func(self.current_path.parent)
@@ -297,6 +298,10 @@ class FileBrowserTable:
         )
         await self.refresh()
         return
+
+    def copy_path_clipboard(self):
+        ui.clipboard.write(str(self.current_path))
+        notify.success(_("Copied to clipboard"))
 
     def handle_row_click(self, e: events.GenericEventArguments):
         click_event_params, click_row, click_index = e.args
@@ -342,7 +347,7 @@ class FileBrowserTable:
 
     async def handle_move_button_click(self):
         if not self.browser_table.selected:
-            notify.warning(_("Please select at least one file!"))
+            notify.warning(_("Please select at least one file"))
             return
         raise NotImplementedError
 
@@ -355,12 +360,12 @@ class FileBrowserTable:
             new_path = Path(target_path).parent / new_name
             if self.file_service.exists(new_path):
                 notify.warning(
-                    _("File or directory already exists, please choose another name.")
+                    _("File or directory already exists, please choose another name")
                 )
                 return
             try:
                 self.file_service.move_file(target_path, new_path)
-                notify.success(_("Rename successful."))
+                notify.success(_("Rename successful"))
             except Exception as e:
                 notify.error(e)
         else:
@@ -370,7 +375,7 @@ class FileBrowserTable:
 
     async def handle_delete_button_click(self):
         if not self.browser_table.selected:
-            notify.warning(_("Please select at least one file!"))
+            notify.warning(_("Please select at least one file"))
             return
 
         confirm = await ConfirmDialog(
@@ -390,7 +395,7 @@ class FileBrowserTable:
                     else:
                         self.file_service.delete_file(item["path"])
                     result.append({"action": "delete", "raw": item, "result": True})
-                notify.success(_("Deleted {} items.").format(len(result)))
+                notify.success(_("Deleted {} items").format(len(result)))
             except Exception as e:
                 notify.error(e)
         else:
@@ -405,4 +410,4 @@ class FileBrowserTable:
         if confirm:
             # share_link = self.file_service.share_file(target_path)
             # ui.clipboard.write(share_link)
-            notify.success(_("Copied share link to clipboard. {}").format(target_path))
+            notify.success(_("Copied share link to clipboard {}").format(target_path))
