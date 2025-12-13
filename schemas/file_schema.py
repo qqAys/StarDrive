@@ -11,6 +11,7 @@ class FileMetadataBase(BaseModel):
     name: str = Field(description=_("File name or Directory name"))
     path: str = Field(description=_("Path"))
     type: Literal["file", "dir", "link"] = Field(description=_("File type"))
+    extension: Optional[str] = Field(default=None, description=_("File extension"))
     size: int = Field(default=0, description=_("File size (bytes)"))
     created_at: Optional[float] = Field(
         default=None, description=_("Creation timestamp")

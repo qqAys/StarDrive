@@ -3,7 +3,7 @@ from typing import Optional
 
 from nicegui import ui, events
 
-from services.file_service import StorageManager
+from services.file_service import StorageManager, get_file_icon
 from ui.components.dialog import ConfirmDialog, RenameDialog
 from ui.components.input import input_with_icon
 from ui.components.notify import notify
@@ -73,6 +73,13 @@ class FileBrowserTable:
                     "name": "type",
                     "label": _("Type"),
                     "field": "type",
+                    "classes": "hidden",
+                    "headerClasses": "hidden",
+                },
+                {
+                    "name": "extension",
+                    "label": _("Extension"),
+                    "field": "extension",
                     "classes": "hidden",
                     "headerClasses": "hidden",
                 },
@@ -245,9 +252,10 @@ class FileBrowserTable:
 
             self.browser_table.rows = [
                 {
-                    "name": f"📁 <b>{p.name}</b>" if p.type == "dir" else p.name,
+                    "name": f"{get_file_icon(p.type, p.extension)} <b>{p.name}</b>",
                     "raw_name": p.name,
                     "type": p.type,
+                    "extension": p.extension,
                     "path": p.path,
                     "size": bytes_to_human_readable(p.size) if p.size else "-",
                     "raw_size": p.size if p.size else -1,
@@ -329,6 +337,9 @@ class FileBrowserTable:
 
     def handle_edit_button_click(self):
         self.is_select_mode = not self.is_select_mode
+
+        if self.is_select_mode:
+            notify.info(_("Select mode enabled"))
 
         self.browser_table.set_selection("multiple" if self.is_select_mode else None)
         self.browser_table.selected = []

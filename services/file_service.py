@@ -6,6 +6,63 @@ from storage.local_storage import LocalStorage
 from utils import logger, _
 
 
+def get_file_icon(type_: str, extension: str):
+    if type_ == "dir":
+        return "📁"  # 文件夹
+
+    if not extension.strip():
+        return "❓"
+    else:
+        extension = extension.replace(".", "")
+
+    # --- 文档/文本文件 ---
+    if extension in ["txt", "md", "log", "cfg", "ini"]:
+        return "📄"
+    elif extension in ["doc", "docx", "odt", "rtf"]:
+        return "📝"
+    elif extension == "pdf":
+        return "📕"
+
+    # --- 代码/脚本 ---
+    elif extension in ["py", "js", "ts", "html", "css", "scss", "json", "xml", "yaml", "yml", "java", "c", "cpp", "h",
+                       "hpp", "go", "rb", "php", "sh", "bat"]:
+        return "💻"
+
+    # --- 压缩/归档文件 ---
+    elif extension in ["zip", "rar", "7z", "tar", "gz", "bz2", "xz", "iso"]:
+        return "📦"
+
+    # --- 图像文件 ---
+    elif extension in ["jpg", "jpeg", "png", "gif", "svg", "ico", "bmp", "webp", "tiff"]:
+        return "🖼️"
+
+    # --- 媒体文件 ---
+    elif extension in ["mp4", "avi", "mov", "wmv", "flv", "mkv"]:
+        return "🎬"
+    elif extension in ["mp3", "wav", "flac", "ogg", "aac", "m4a"]:
+        return "🎵"
+
+    # --- 办公/数据文件 ---
+    elif extension in ["xls", "xlsx", "csv", "ods"]:
+        return "📈"
+    elif extension in ["ppt", "pptx", "odp"]:
+        return "🖥️"
+    elif extension in ["db", "sqlite", "mdb", "accdb"]:
+        return "🗃️"
+
+    # --- 可执行/系统文件 ---
+    elif extension in ["exe", "dll", "msi", "app", "apk", "dmg"]:
+        return "⚙️"
+
+    # --- 字体文件 ---
+    elif extension in ["ttf", "otf", "woff", "woff2"]:
+        return "🅰️"
+
+    # --- 通用/未知文件---
+    else:
+        return "❓"
+
+
 class BackendNotFoundError(Exception):
     """存储后端未找到的异常。"""
 

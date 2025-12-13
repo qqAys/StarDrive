@@ -192,6 +192,7 @@ class LocalStorage(StorageBackend):
                     metadata = FileMetadata(
                         name=entry_path.name,
                         path=entry_remote_path,
+                        extension=entry_path.suffix,
                         size=stat_info.st_size,
                         created_at=stat_info.st_ctime,
                         updated_at=stat_info.st_mtime,
@@ -314,6 +315,7 @@ class LocalStorage(StorageBackend):
             return FileMetadata(
                 name=full_path.name,
                 path=remote_path,
+                extension=full_path.suffix,
                 size=stat_info.st_size,
                 created_at=stat_info.st_ctime,
                 updated_at=stat_info.st_mtime,
