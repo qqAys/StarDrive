@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, timezone
 from typing import Literal, Any, ClassVar
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -40,6 +40,8 @@ class Config(BaseSettings):
     NICEGUI_TIMER_INTERVAL: float = 2
 
     DEFAULT_DOWNLOAD_LINK_TTL: ClassVar[timedelta] = timedelta(seconds=60)
+
+    SYSTEM_DEFAULT_TIMEZONE: ClassVar[timezone] = timezone.utc
 
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
