@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 from utils import _
 
+FILE_NAME_FORBIDDEN_CHARS = r'\/:*?"<>|'
 
 # --- 文件元数据的基类 ---
 class FileMetadataBase(BaseModel):
