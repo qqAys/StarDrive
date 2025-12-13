@@ -142,27 +142,31 @@ class ShareDialog(Dialog):
                             .astimezone(get_user_timezone())
                             .strftime("%Y-%m-%d %H:%M:%S")
                         )
-                        with ui.dropdown_button(
-                            _("Expire At: {}").format(link_expire_time),
-                            icon="share",
-                            split=True,
-                            on_click=lambda url=link_url: ui.navigate.to(
-                                url, new_tab=True
-                            ),
-                        ).props("no-caps") as dropdown_button:
+                        with (
+                            ui.dropdown_button(
+                                _("EXP: {}").format(link_expire_time),
+                                icon="share",
+                                split=True,
+                                on_click=lambda url=link_url: ui.navigate.to(
+                                    url, new_tab=True
+                                ),
+                            )
+                            .props("no-caps dense")
+                            .classes("md:w-auto w-full") as dropdown_button
+                        ):
                             with ui.row(wrap=False).classes("w-full justify-between"):
                                 ui.button(
                                     _("Copy"),
                                     icon="content_copy",
                                     on_click=lambda: copy_text_clipboard(link_url),
-                                ).classes("w-full").props("flat")
+                                ).classes("w-full").props("flat dense")
                                 ui.button(
                                     _("Delete"),
                                     icon="delete",
                                     on_click=lambda: delete_share_link(
                                         share_link["id"]
                                     ),
-                                ).classes("w-full").props("flat")
+                                ).classes("w-full").props("flat dense")
                         all_share_link_dropdown_button[share_link["id"]] = (
                             dropdown_button
                         )
@@ -180,11 +184,13 @@ class ShareDialog(Dialog):
             with ui.row().classes("w-full justify-between") as datetime_picker:
                 date_input = ui.date_input(
                     _("Expire date"), value=current_time_local.strftime("%Y-%m-%d")
-                )
+                ).classes("md:w-auto w-full")
                 date_input.picker.props[":options"] = (
                     f'date => date >= "{current_time_local.strftime("%Y/%m/%d")}"'
                 )
-                time_input = ui.time_input(_("Expire time"), value="00:00")
+                time_input = ui.time_input(_("Expire time"), value="00:00").classes(
+                    "md:w-auto w-full"
+                )
                 datetime_picker.set_visibility(True)
 
             with ui.row().classes("w-full justify-between") as days_picker:
