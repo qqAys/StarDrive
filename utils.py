@@ -61,6 +61,8 @@ def create_handler(filename: Path, formatter: logging.Formatter) -> RotatingFile
     return file_handler
 
 
+no_need_output_log = ["python_multipart.multipart"]
+
 # 创建 Handler
 shared_formatter = CustomFormatter()
 stream_handler = StreamHandler()
@@ -76,6 +78,8 @@ for handler in root_logger.handlers[:]:
 
 # 设置级别
 root_logger.setLevel(settings.LOG_LEVEL)
+for logger in no_need_output_log:
+    logging.getLogger(logger).setLevel(logging.ERROR)
 
 # 添加 Handler
 root_logger.addHandler(stream_handler)
