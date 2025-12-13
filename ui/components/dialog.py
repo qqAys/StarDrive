@@ -74,9 +74,11 @@ class RenameDialog(Dialog):
                     notify.warning(_("New name cannot be the same as the old name"))
                     return None
                 if any(char in new_name.value for char in FILE_NAME_FORBIDDEN_CHARS):
-                    notify.warning(f"File name cannot contain any of the following characters: {FILE_NAME_FORBIDDEN_CHARS}")
+                    notify.warning(
+                        f"File name cannot contain any of the following characters: {FILE_NAME_FORBIDDEN_CHARS}"
+                    )
                     return None
-                if new_name.value.endswith('.'):
+                if new_name.value.endswith("."):
                     notify.warning(_("File name cannot end with a dot"))
                     return None
 

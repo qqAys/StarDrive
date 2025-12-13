@@ -2,8 +2,10 @@ from pathlib import Path
 from typing import Optional
 
 from nicegui import ui, events
+from starlette.formparsers import MultiPartParser
 
-from services.file_service import StorageManager, get_file_icon
+from services.file_service import StorageManager, get_file_icon, generate_download_url
+from ui.components import max_w
 from ui.components.dialog import ConfirmDialog, RenameDialog
 from ui.components.input import input_with_icon
 from ui.components.notify import notify
@@ -22,12 +24,17 @@ size_sort_js = """(a, b, rowA, rowB) => {
 }"""
 
 
+MultiPartParser.spool_max_size = 1024 * 1024 * 5  # 5 MB
+
+
 class FileBrowserTable:
     def __init__(
         self,
         file_service: StorageManager,
         initial_path: str = ".",
         target_path: str = "",
+        upload_component: ui.upload = None,
+        upload_dialog: ui.dialog = None,
     ):
 
         self.file_service = file_service
@@ -48,6 +55,13 @@ class FileBrowserTable:
         self.edit_button: Optional[ui.button] = None
         self.delete_button: Optional[ui.button] = None
         self.move_button: Optional[ui.button] = None
+        self.upload_button: Optional[ui.button] = None
+        self.download_button: Optional[ui.button] = None
+
+        self.upload_component = upload_component
+        self.upload_component.on_multi_upload(self.handle_upload)
+        self.upload_dialog = upload_dialog
+        self.on_upload = False
 
         self.file_list = []
 
@@ -80,8 +94,10 @@ class FileBrowserTable:
                     "name": "extension",
                     "label": _("Extension"),
                     "field": "extension",
-                    "classes": "hidden",
-                    "headerClasses": "hidden",
+                    # "classes": "hidden",
+                    # "headerClasses": "hidden",
+                    "align": "left",
+                    "style": "width: 0px",
                 },
                 {
                     "name": "size",
@@ -89,6 +105,7 @@ class FileBrowserTable:
                     "field": "size",
                     "required": True,
                     ":sort": size_sort_js,
+                    "align": "right",
                     "style": "width: 0px",
                 },
                 {
@@ -119,7 +136,7 @@ class FileBrowserTable:
                     "sortable": True,
                     "align": "center",
                 },
-            ).classes("w-full h-full")
+            ).classes("w-full h-full" + max_w)
 
             self.browser_table.pagination = {
                 "sortBy": "type",
@@ -183,15 +200,15 @@ class FileBrowserTable:
                                     on_click=lambda path_to_go=target_path: self.goto_func(
                                         path_to_go
                                     ),
-                                ).props(
-                                    f"no-caps flat dense"
-                                )
+                                ).props(f"no-caps flat dense")
                                 # 按钮后的分隔符
                                 ui.icon("chevron_right").classes(
                                     "text-xl text-gray-500 mx-0.5"
                                 )
                             else:
-                                ui.button(p, on_click=self.copy_path_clipboard).props("no-caps flat dense").tooltip("/" + str(self.current_path))
+                                ui.button(p, on_click=self.copy_path_clipboard).props(
+                                    "no-caps flat dense"
+                                ).tooltip("/" + str(self.current_path))
 
                         elif index == 1 and len(path_parts) > MAX_DISPLAY_PARTS:
                             ui.button("...").props("flat dense disable")
@@ -201,9 +218,24 @@ class FileBrowserTable:
 
             with self.browser_table.add_slot("top-right"):
                 with ui.row().classes("items-center gap-4"):
+                    self.upload_button = (
+                        ui.button(
+                            icon="cloud_upload",
+                            on_click=self.handle_upload_button_click,
+                        )
+                        .props("flat dense")
+                        .tooltip(_("Upload"))
+                    )
+                    self.download_button = (
+                        ui.button(
+                            icon="save_alt", on_click=self.handle_move_button_click
+                        )
+                        .props("flat dense")
+                        .tooltip(_("Download"))
+                    )
                     self.move_button = (
                         ui.button(
-                            icon="move_to_inbox", on_click=self.handle_move_button_click
+                            icon="low_priority", on_click=self.handle_move_button_click
                         )
                         .props("flat dense")
                         .tooltip(_("Move"))
@@ -216,20 +248,26 @@ class FileBrowserTable:
                         .props("flat dense")
                         .tooltip(_("Delete"))
                     )
-                    self.edit_button = ui.button(
-                        icon=(
-                            self.edit_button_icon_close
-                            if self.is_select_mode
-                            else self.edit_button_icon_open
-                        ),
-                        on_click=self.handle_edit_button_click,
-                    ).props("flat dense").tooltip(_("More actions"))
+                    self.edit_button = (
+                        ui.button(
+                            icon=(
+                                self.edit_button_icon_close
+                                if self.is_select_mode
+                                else self.edit_button_icon_open
+                            ),
+                            on_click=self.handle_edit_button_click,
+                        )
+                        .props("flat dense")
+                        .tooltip(_("More actions"))
+                    )
                     self.search_input = (
                         input_with_icon(_("Search"), icon="search")
                         .bind_value(self.browser_table, "filter")
                         .props("clearable dense")
                     )
 
+                    self.upload_button.set_visibility(not self.is_select_mode)
+                    self.download_button.set_visibility(self.is_select_mode)
                     self.move_button.set_visibility(self.is_select_mode)
                     self.delete_button.set_visibility(self.is_select_mode)
                     self.browser_table.set_selection(
@@ -309,7 +347,7 @@ class FileBrowserTable:
 
     def copy_path_clipboard(self):
         ui.clipboard.write(str(self.current_path))
-        notify.success(_("Copied to clipboard"))
+        notify.success(_("Path copied to clipboard"))
 
     def handle_row_click(self, e: events.GenericEventArguments):
         click_event_params, click_row, click_index = e.args
@@ -326,14 +364,61 @@ class FileBrowserTable:
 
         click_event_params, click_row, click_index = e.args
         target_path = click_row["path"]
+        file_name = click_row["raw_name"]
 
         if click_row["type"] == "dir":
             await self.goto_func(Path(target_path))
             return
         else:
-            ui.download.content(
-                self.file_service.download_file(target_path), click_row["name"]
-            )
+            download_url = generate_download_url(target_path, file_name)
+            ui.navigate.to(download_url)
+            return
+
+    async def handle_upload_button_click(self):
+        self.on_upload = not self.on_upload
+        if self.on_upload:
+            self.upload_dialog.open()
+        else:
+            is_uploading = await self.upload_component.get_computed_prop("isUploading")
+            if is_uploading:
+                confirm = await ConfirmDialog(
+                    _("Upload is still in progress"),
+                    _(
+                        "Are you sure you want to cancel the upload? This will cancel the upload process"
+                    ),
+                    warning=True,
+                ).open()
+
+                if confirm:
+                    self.upload_dialog.close()
+                else:
+                    self.on_upload = not self.on_upload
+            else:
+                self.upload_dialog.close()
+
+    async def handle_upload(self, e: events.MultiUploadEventArguments):
+        for f in e.files:
+
+            if self.file_service.exists(str(self.current_path / f.name)):
+                confirm = await ConfirmDialog(
+                    _("File already exists: {}").format(f.name),
+                    _("Do you want to overwrite it?"),
+                    warning=True,
+                ).open()
+                if not confirm:
+                    notify.warning(_("Cancel overwrite: {}").format(f.name))
+                    continue
+
+            try:
+                await self.file_service.upload_file(
+                    f.iterate(), str(self.current_path / f.name)
+                )
+            except Exception as up_e:
+                notify.error(up_e)
+
+        self.upload_component.clear()
+
+        await self.refresh()
 
     def handle_edit_button_click(self):
         self.is_select_mode = not self.is_select_mode
@@ -353,6 +438,8 @@ class FileBrowserTable:
         self.edit_button.props(
             f"icon={self.edit_button_icon_close if self.is_select_mode else self.edit_button_icon_open}"
         )
+        self.upload_button.set_visibility(not self.is_select_mode)
+        self.download_button.set_visibility(self.is_select_mode)
         self.move_button.set_visibility(self.is_select_mode)
         self.delete_button.set_visibility(self.is_select_mode)
 
@@ -364,8 +451,9 @@ class FileBrowserTable:
 
     async def handle_rename_button_click(self, e: events.GenericEventArguments):
         target_path = e.args["path"]
+        file_name = e.args["raw_name"]
         new_name = await RenameDialog(
-            title=_("Rename"), old_name=e.args["raw_name"]
+            title=_("Rename: {}".format(file_name)), old_name=file_name
         ).open()
         if new_name:
             new_path = Path(target_path).parent / new_name
@@ -417,8 +505,9 @@ class FileBrowserTable:
     @staticmethod
     async def handle_share_button_click(e: events.GenericEventArguments):
         target_path = e.args["path"]
+        file_name = e.args["raw_name"]
         confirm = await ConfirmDialog(title=_("Share {}?").format(target_path)).open()
         if confirm:
-            # share_link = self.file_service.share_file(target_path)
-            # ui.clipboard.write(share_link)
+            download_url = generate_download_url(target_path, file_name)
+            ui.clipboard.write(download_url)
             notify.success(_("Copied share link to clipboard {}").format(target_path))
