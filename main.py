@@ -6,6 +6,7 @@ from fastapi.requests import Request
 from nicegui import ui, app
 
 import globals
+from api import download
 from config import settings
 from middleware import AuthLoggerMiddleware
 from services.file_service import StorageManager
@@ -71,6 +72,8 @@ def on_app_startup():
     app.include_router(browser.router)
     app.include_router(profile.router)
     app.include_router(console.router)
+
+    app.include_router(download.router)
 
     @ui.page("/{_:path}")
     def not_found_page(request: Request):

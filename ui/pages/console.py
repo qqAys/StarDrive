@@ -7,6 +7,7 @@ from nicegui import Client, ui, app, APIRouter
 from starlette.responses import RedirectResponse
 
 from config import settings
+from services.file_service import clear_expired_download_links
 from ui.components.base import base_layout
 from ui.components.dialog import ConfirmDialog
 from ui.components.json_edit import style
@@ -78,6 +79,7 @@ async def console_page(request: Request, client: Client):
         ui.separator()
 
         with ui.row().classes("w-full"):
+            ui.button("清除过期分享链接", on_click=clear_expired_download_links)
             ui.button("主动执行FULL GC", on_click=gc.collect)
             ui.button(
                 "查看引用计数统计",
