@@ -1,4 +1,5 @@
-from typing import Literal, Any
+from datetime import timedelta
+from typing import Literal, Any, ClassVar
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -25,7 +26,7 @@ class Config(BaseSettings):
 
     APP_NAME: str = _PROJECT_NAME
     APP_VERSION: str = None
-    APP_GITHUB_URL: str = "https://github.com/qqAys/StarDrive"
+    APP_GITHUB_URL: ClassVar[str] = "https://github.com/qqAys/StarDrive"
 
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8080
@@ -37,6 +38,8 @@ class Config(BaseSettings):
     STORAGE_SECRET: str = None
     NICEGUI_RECONNECT_TIMEOUT: int = 5
     NICEGUI_TIMER_INTERVAL: float = 2
+
+    DEFAULT_DOWNLOAD_LINK_TTL: ClassVar[timedelta] = timedelta(seconds=60)
 
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
