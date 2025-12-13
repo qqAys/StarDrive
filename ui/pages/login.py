@@ -4,6 +4,7 @@ from starlette.responses import RedirectResponse
 from config import settings
 from schemas.user_schema import UserLogin
 from services import user_service
+from services.user_service import get_user_timezone_from_browser
 from ui.components.base import base_layout
 from ui.components.notify import notify
 from utils import _, is_valid_email
@@ -23,7 +24,7 @@ router = APIRouter(prefix=this_page_routes)
 
 @router.page("/")
 @base_layout(header=False, footer=True, args={"from_login_page": True})
-def login_page(redirect_to: str = None):
+async def login_page(redirect_to: str = None):
     def redirect():
         ui.timer(
             settings.NICEGUI_TIMER_INTERVAL,
@@ -46,7 +47,7 @@ def login_page(redirect_to: str = None):
                     "text-xs"
                 )
 
-            def try_login():
+            async def try_login():
                 pre_login_user = UserLogin(email=email.value, password=password.value)
                 try:
                     login_user = user.login(pre_login_user)
@@ -58,6 +59,12 @@ def login_page(redirect_to: str = None):
                     return
 
                 notify.success(_("Login successful"))
+
+                # 获取用户时区
+                user_timezone = await get_user_timezone_from_browser()
+                app.storage.user.update({"timezone": user_timezone})
+
+                # 跳转
                 redirect()
 
             email = (
