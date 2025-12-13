@@ -10,6 +10,7 @@ from schemas.file_schema import FileMetadata, DirMetadata
 from security import generate_jwt_secret
 from storage.base import StorageBackend
 from storage.local_storage import LocalStorage
+from ui.components.notify import notify
 from utils import logger, _
 
 storage_key = "temp_public_download_key"
@@ -286,9 +287,24 @@ def clear_expired_download_links():
     """
     清理过期的下载链接。
     """
+
     if storage_key not in app.storage.general:
         app.storage.general[storage_key] = {}
 
-    for download_id, download_info in app.storage.general[storage_key].items():
-        if download_info["exp"] < datetime.now(timezone.utc):
+    download_keys_to_check = list(app.storage.general[storage_key].keys())
+
+    current_time_utc = datetime.now(timezone.utc)
+
+    for download_id in download_keys_to_check:
+
+        if download_id not in app.storage.general[storage_key]:
+            continue
+
+        download_info = app.storage.general[storage_key][download_id]
+
+        exp_datetime = datetime.fromisoformat(download_info["exp"])
+
+        if exp_datetime < current_time_utc:
+            notify.info(f"清理过期下载链接 (ID: {download_id}, Exp: {download_info['exp']})")
+
             del app.storage.general[storage_key][download_id]
