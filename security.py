@@ -2,7 +2,10 @@ import random
 import string
 
 import bcrypt
+import jwt
 from passlib.context import CryptContext
+
+from config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -20,6 +23,8 @@ unrestricted_page_routes = (
     "/login/",
     "/login",
 )
+
+JWT_ALGORITHM = "HS256"
 
 
 class HashingManager:
@@ -62,3 +67,25 @@ def generate_random_password() -> str:
     )
 
     return password
+
+
+def generate_jwt_secret(payload: dict) -> str:
+    """
+    生成 JWT 密钥
+    """
+
+    token = jwt.encode(payload, settings.STORAGE_SECRET, algorithm=JWT_ALGORITHM)
+
+    return token
+
+
+def verify_jwt_secret(token: str) -> dict | None:
+    """
+    验证 JWT 密钥
+    """
+
+    try:
+        payload = jwt.decode(token, settings.STORAGE_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except (jwt.ExpiredSignatureError, jwt.DecodeError, jwt.InvalidTokenError):
+        return None
