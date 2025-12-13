@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
-from typing import Dict, Optional, Generator, AsyncIterator
+from datetime import datetime, timezone, timedelta
+from typing import Dict, Optional, Generator, AsyncIterator, Literal
 from uuid import uuid4
 
 from nicegui import app
@@ -247,31 +247,69 @@ class StorageManager:
         return backend.get_file_metadata(remote_path)
 
 
-def generate_download_url(target_path: str, file_name: str) -> str:
+def generate_download_url(
+    target_path: str,
+    file_name: str,
+    from_: Literal["download", "share"],
+    expire_datetime_utc: Optional[datetime] = None,
+    expire_days: Optional[int] = None,
+) -> str | None:
     """
     生成下载链接。
     """
+    if not app.storage.general.get("service_url", None):
+        notify.error(
+            _(
+                "Service URL is not set. Please set it in the console panel before sharing files."
+            )
+        )
+        return None
+    current_time_utc = datetime.now(settings.SYSTEM_DEFAULT_TIMEZONE)
+    this_url_ttl: Optional[datetime] = None
 
-    this_url_ttl = datetime.now(timezone.utc) + settings.DEFAULT_DOWNLOAD_LINK_TTL
+    if isinstance(expire_days, int) and expire_days > 0:
+        this_url_ttl = current_time_utc + timedelta(days=expire_days)
+
+    elif isinstance(expire_datetime_utc, datetime):
+        # 传入了具体的 datetime 对象
+        this_url_ttl = expire_datetime_utc
+
+    elif expire_datetime_utc is None and expire_days is None:
+        # 既没有指定时间，也没有指定天数，使用配置文件中的默认 TTL
+        this_url_ttl = current_time_utc + settings.DEFAULT_DOWNLOAD_LINK_TTL
 
     download_id = uuid4().hex[:12]
     download_info = {
         "user": app.storage.user["username"],
         "path": target_path,
         "name": file_name,
-        "exp": this_url_ttl,
+        "from": from_,
+        "exp": this_url_ttl.isoformat() if this_url_ttl else None,
     }
 
     if storage_key not in app.storage.general:
         app.storage.general[storage_key] = {}
 
+    payload = {"download_id": download_id}
+    if this_url_ttl:
+        payload.update({"exp": int(this_url_ttl.timestamp())})
+
+    if from_ == "download":
+        url = (
+            app.storage.general["service_url"]
+            + f"/api/{download_file_form_browser_url_prefix}/{generate_jwt_secret(payload)}"
+        )
+    elif from_ == "share":
+        url = (
+            app.storage.general["service_url"]
+            + f"/share/{generate_jwt_secret(payload)}"
+        )
+    else:
+        raise ValueError(_("Invalid from parameter."))
+
+    download_info.update({"url": url})
     app.storage.general[storage_key][download_id] = download_info
-
-    payload = {"download_id": download_id, "exp": this_url_ttl}
-
-    return (
-        f"/api/{download_file_form_browser_url_prefix}/{generate_jwt_secret(payload)}"
-    )
+    return url
 
 
 def get_download_info(download_id: str) -> dict | None:
@@ -282,6 +320,17 @@ def get_download_info(download_id: str) -> dict | None:
         app.storage.general[storage_key] = {}
 
     return app.storage.general[storage_key].get(download_id, None)
+
+
+def delete_download_link(download_id: str):
+    """
+    删除下载链接。
+    """
+    if storage_key not in app.storage.general:
+        app.storage.general[storage_key] = {}
+
+    if download_id in app.storage.general[storage_key]:
+        del app.storage.general[storage_key][download_id]
 
 
 def clear_expired_download_links():
@@ -296,16 +345,45 @@ def clear_expired_download_links():
 
     current_time_utc = datetime.now(timezone.utc)
 
-    for download_id in download_keys_to_check:
+    result = {
+        "expired": [],
+        "valid": [],
+    }
 
+    for download_id in download_keys_to_check:
         if download_id not in app.storage.general[storage_key]:
             continue
 
         download_info = app.storage.general[storage_key][download_id]
-
         exp_datetime = datetime.fromisoformat(download_info["exp"])
 
         if exp_datetime < current_time_utc:
-            notify.info(f"清理过期下载链接 (ID: {download_id}, Exp: {download_info['exp']})")
+            result["expired"].append(download_id)
 
-            del app.storage.general[storage_key][download_id]
+            delete_download_link(download_id)
+        else:
+            result["valid"].append(download_id)
+
+    notify.info(
+        _("Cleaned up expired download links, Valid: {}, Expired: {}").format(
+            len(result["valid"]), len(result["expired"])
+        )
+    )
+
+
+def get_user_share_links(file_name: str | None = None) -> list[dict]:
+    """
+    获取用户分享链接。
+    """
+    if storage_key not in app.storage.general:
+        app.storage.general[storage_key] = {}
+
+    share_links = []
+
+    for download_id, download_info in app.storage.general[storage_key].items():
+        if app.storage.user["username"] == download_info["user"]:
+            if download_info["from"] == "share":
+                if file_name is None or file_name == download_info["name"]:
+                    share_links.append({"id": download_id, "info": download_info})
+
+    return share_links
