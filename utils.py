@@ -2,7 +2,7 @@ import gettext
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import getLogger, StreamHandler
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -166,7 +166,13 @@ def timestamp_to_human_readable(timestamp: float) -> str:
     """
     将时间戳转换为人类可读的格式。
     """
-    return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.fromtimestamp(
+        timestamp, tz=settings.SYSTEM_DEFAULT_TIMEZONE
+    ).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def convert_datetime_to_utc(dt: datetime) -> datetime:
+    return dt.astimezone(timezone.utc)
 
 
 def return_file_response(
