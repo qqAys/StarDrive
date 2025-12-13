@@ -387,3 +387,17 @@ def get_user_share_links(file_name: str | None = None) -> list[dict]:
                     share_links.append({"id": download_id, "info": download_info})
 
     return share_links
+
+
+def set_user_last_path(path):
+    """
+    设置用户最近一次访问的路径。
+    """
+    app.storage.user["last_path"] = str(path)
+
+
+def get_user_last_path() -> str | None:
+    """
+    获取用户最近一次访问的路径。
+    """
+    return app.storage.user.get("last_path", None)

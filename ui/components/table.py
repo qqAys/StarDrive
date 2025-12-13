@@ -4,7 +4,12 @@ from typing import Optional
 from nicegui import ui, events
 from starlette.formparsers import MultiPartParser
 
-from services.file_service import StorageManager, get_file_icon, generate_download_url
+from services.file_service import (
+    StorageManager,
+    get_file_icon,
+    generate_download_url,
+    set_user_last_path,
+)
 from ui.components import max_w
 from ui.components.clipboard import copy_text_clipboard
 from ui.components.dialog import ConfirmDialog, RenameDialog, ShareDialog
@@ -66,11 +71,11 @@ class FileBrowserTable:
 
         self.file_list = []
 
-        self.current_path: Path = Path(initial_path, target_path)
+        self._current_path: Path = Path(initial_path, target_path)
 
         if not self.file_service.exists(str(self.current_path)):
             notify.error(_("Path not exists, will go to home dir."))
-            self.current_path: Path = Path(initial_path)
+            self._current_path: Path = Path(initial_path)
 
         @ui.refreshable
         async def browser_content():
@@ -327,6 +332,18 @@ class FileBrowserTable:
         self.refresh_func = browser_content
 
         ui.timer(0.1, self.refresh_func, once=True)
+
+    @property
+    def current_path(self):
+        return self._current_path
+
+    @current_path.setter
+    def current_path(self, new_path):
+        old_path = self._current_path
+
+        if old_path != new_path:
+            self._current_path = new_path
+            set_user_last_path(new_path)
 
     async def refresh(self):
         await self.refresh_func.refresh()

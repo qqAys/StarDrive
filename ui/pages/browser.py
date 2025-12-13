@@ -2,6 +2,7 @@ from fastapi.responses import RedirectResponse
 from nicegui import APIRouter, app, ui
 
 import globals
+from services.file_service import get_user_last_path
 from ui.components.base import base_layout
 from ui.components.table import FileBrowserTable
 from utils import _
@@ -23,9 +24,8 @@ router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
-# @router.page("/{path:path}")
 @base_layout(header=True, footer=True, args={"title": _("Home")})
-async def index(path: str = None):
+async def index():
 
     file_manager = globals.get_storage_manager()
 
@@ -37,9 +37,11 @@ async def index(path: str = None):
     ):
         upload_component.set_visibility(True)
 
+    user_last_path = get_user_last_path()
+
     file_browser_component = FileBrowserTable(
         file_service=file_manager,
-        target_path="" if path is None else f"./{path}",
+        target_path="" if user_last_path is None else f"./{user_last_path}",
         upload_component=upload_component,
         upload_dialog=upload_dialog,
     )
