@@ -6,7 +6,8 @@ from starlette.formparsers import MultiPartParser
 
 from services.file_service import StorageManager, get_file_icon, generate_download_url
 from ui.components import max_w
-from ui.components.dialog import ConfirmDialog, RenameDialog
+from ui.components.clipboard import copy_text_clipboard
+from ui.components.dialog import ConfirmDialog, RenameDialog, ShareDialog
 from ui.components.input import input_with_icon
 from ui.components.notify import notify
 from utils import _, bytes_to_human_readable, timestamp_to_human_readable
@@ -228,14 +229,16 @@ class FileBrowserTable:
                     )
                     self.download_button = (
                         ui.button(
-                            icon="cloud_download", on_click=self.handle_move_button_click
+                            icon="cloud_download",
+                            on_click=self.handle_move_button_click,
                         )
                         .props("flat dense")
                         .tooltip(_("Download"))
                     )
                     self.move_button = (
                         ui.button(
-                            icon="drive_file_move", on_click=self.handle_move_button_click
+                            icon="drive_file_move",
+                            on_click=self.handle_move_button_click,
                         )
                         .props("flat dense")
                         .tooltip(_("Move"))
@@ -346,8 +349,7 @@ class FileBrowserTable:
         return
 
     def copy_path_clipboard(self):
-        ui.clipboard.write(str(self.current_path))
-        notify.success(_("Path copied to clipboard"))
+        copy_text_clipboard(str(self.current_path))
 
     def handle_row_click(self, e: events.GenericEventArguments):
         click_event_params, click_row, click_index = e.args
@@ -370,7 +372,9 @@ class FileBrowserTable:
             await self.goto_func(Path(target_path))
             return
         else:
-            download_url = generate_download_url(target_path, file_name)
+            download_url = generate_download_url(target_path, file_name, "download")
+            if not download_url:
+                return
             ui.navigate.to(download_url)
             return
 
@@ -506,8 +510,16 @@ class FileBrowserTable:
     async def handle_share_button_click(e: events.GenericEventArguments):
         target_path = e.args["path"]
         file_name = e.args["raw_name"]
-        confirm = await ConfirmDialog(title=_("Share {}?").format(target_path)).open()
-        if confirm:
-            download_url = generate_download_url(target_path, file_name)
+        expire_define = await ShareDialog(file_name=file_name).open()
+        if expire_define:
+            download_url = generate_download_url(
+                target_path,
+                file_name,
+                "share",
+                expire_define["expire_datetime_utc"],
+                expire_define["expire_days"],
+            )
+            if not download_url:
+                return
             ui.clipboard.write(download_url)
             notify.success(_("Copied share link to clipboard {}").format(target_path))
