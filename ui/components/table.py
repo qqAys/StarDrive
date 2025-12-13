@@ -228,21 +228,21 @@ class FileBrowserTable:
                     )
                     self.download_button = (
                         ui.button(
-                            icon="save_alt", on_click=self.handle_move_button_click
+                            icon="cloud_download", on_click=self.handle_move_button_click
                         )
                         .props("flat dense")
                         .tooltip(_("Download"))
                     )
                     self.move_button = (
                         ui.button(
-                            icon="low_priority", on_click=self.handle_move_button_click
+                            icon="drive_file_move", on_click=self.handle_move_button_click
                         )
                         .props("flat dense")
                         .tooltip(_("Move"))
                     )
                     self.delete_button = (
                         ui.button(
-                            icon="delete_outline",
+                            icon="delete",
                             on_click=self.handle_delete_button_click,
                         )
                         .props("flat dense")

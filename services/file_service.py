@@ -26,7 +26,7 @@ def get_file_icon(type_: str, extension: str):
         extension = extension.replace(".", "")
 
     # --- 文档/文本文件 ---
-    if extension in ["txt", "md", "log", "cfg", "ini"]:
+    if extension in ["txt", "md", "log", "cfg", "ini", "conf"]:
         return "📄"
     elif extension in ["doc", "docx", "odt", "rtf"]:
         return "📝"
@@ -45,6 +45,7 @@ def get_file_icon(type_: str, extension: str):
         "xml",
         "yaml",
         "yml",
+        "toml",
         "java",
         "c",
         "cpp",
@@ -56,7 +57,7 @@ def get_file_icon(type_: str, extension: str):
         "sh",
         "bat",
     ]:
-        return "💻"
+        return "📜"
 
     # --- 压缩/归档文件 ---
     elif extension in ["zip", "rar", "7z", "tar", "gz", "bz2", "xz", "iso"]:
