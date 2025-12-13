@@ -26,7 +26,7 @@ class AuthLoggerMiddleware(BaseHTTPMiddleware):
             "headers": dict(request.headers),
             "query_params": dict(request.query_params),
             "cookies": dict(request.cookies),
-            "body": await request.body(),
+            # "body": await request.body(),
         }
         logger.debug(request_data)
 
