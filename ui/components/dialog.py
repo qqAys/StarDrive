@@ -1,5 +1,6 @@
 from nicegui import ui
 
+from schemas.file_schema import FILE_NAME_FORBIDDEN_CHARS
 from ui.components.notify import notify
 from utils import _
 
@@ -66,14 +67,20 @@ class RenameDialog(Dialog):
                 return a == b
 
             def on_confirm():
-                if not new_name.value:
+                if not new_name.value.strip():
                     notify.warning(_("New name cannot be empty"))
-                    new_name.value = self.old_name
                     return None
                 if is_same(new_name.value, self.old_name):
                     notify.warning(_("New name cannot be the same as the old name"))
                     return None
-                return self.dialog.submit(new_name.value)
+                if any(char in new_name.value for char in FILE_NAME_FORBIDDEN_CHARS):
+                    notify.warning(f"File name cannot contain any of the following characters: {FILE_NAME_FORBIDDEN_CHARS}")
+                    return None
+                if new_name.value.endswith('.'):
+                    notify.warning(_("File name cannot end with a dot"))
+                    return None
+
+                return self.dialog.submit(new_name.value.strip())
 
             with ui.row().classes("w-full justify-between"):
                 ui.button(
