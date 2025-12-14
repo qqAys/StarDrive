@@ -1,4 +1,5 @@
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 from typing import Dict, Optional, Generator, AsyncIterator, Literal
 from uuid import uuid4
 
@@ -180,7 +181,7 @@ class StorageManager:
         backend = self._get_current_backend()
         return backend.exists(remote_path)
 
-    def get_full_path(self, remote_path: str) -> str:
+    def get_full_path(self, remote_path: str) -> Path:
         """获取远程路径的完整路径。"""
         backend = self._get_current_backend()
         return backend.get_full_path(remote_path)

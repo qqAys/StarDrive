@@ -73,10 +73,6 @@ class LocalStorage(StorageBackend):
             raise StorageFileNotFoundError(
                 _("File does not exist, cannot download: {}").format(remote_path)
             )
-        if full_path.is_dir():
-            raise StorageIsADirectoryError(
-                _("Path points to a directory: {}").format(remote_path)
-            )
 
         return full_path
 

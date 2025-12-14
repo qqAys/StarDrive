@@ -25,6 +25,10 @@ class FileMetadataBase(BaseModel):
         extra = "ignore"
         from_attributes = True
 
+    @property
+    def is_dir(self) -> bool:
+        return self.type == "dir"
+
 
 # 目录元数据
 class DirMetadata(FileMetadataBase):
