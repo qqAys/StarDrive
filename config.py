@@ -43,6 +43,9 @@ class Config(BaseSettings):
 
     SYSTEM_DEFAULT_TIMEZONE: ClassVar[timezone] = timezone.utc
 
+    MULTIPARTPARSER_SPOOL_MAX_SIZE: ClassVar[int] = 1024 * 1024 * 5
+    STREAM_CHUNK_SIZE: ClassVar[int] = 1024 * 8
+
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     def __init__(self, **values: Any):
