@@ -4,6 +4,7 @@ from typing import Optional
 from nicegui import ui, events
 from starlette.formparsers import MultiPartParser
 
+from config import settings
 from services.file_service import (
     StorageManager,
     get_file_icon,
@@ -30,7 +31,7 @@ size_sort_js = """(a, b, rowA, rowB) => {
 }"""
 
 
-MultiPartParser.spool_max_size = 1024 * 1024 * 5  # 5 MB
+MultiPartParser.spool_max_size = settings.MULTIPARTPARSER_SPOOL_MAX_SIZE
 
 
 class FileBrowserTable:
@@ -471,7 +472,11 @@ class FileBrowserTable:
             notify.warning(_("Please select at least one file"))
             return
 
-        raise NotImplementedError
+        download_url = generate_download_url([s["path"] for s in self.browser_table.selected], [s["raw_name"] for s in self.browser_table.selected], "download")
+        if not download_url:
+            return
+        ui.navigate.to(download_url)
+        return
 
     async def handle_move_button_click(self):
         if not self.browser_table.selected:
