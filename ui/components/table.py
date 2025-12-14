@@ -10,10 +10,17 @@ from services.file_service import (
     get_file_icon,
     generate_download_url,
     set_user_last_path,
+    validate_filename,
 )
 from ui.components import max_w
-from ui.components.clipboard import copy_text_clipboard
-from ui.components.dialog import ConfirmDialog, RenameDialog, ShareDialog, MoveDialog
+from ui.components.clipboard import copy_share_link_to_clipboard
+from ui.components.dialog import (
+    ConfirmDialog,
+    RenameDialog,
+    ShareDialog,
+    MoveDialog,
+    InputDialog,
+)
 from ui.components.input import input_with_icon
 from ui.components.notify import notify
 from utils import _, bytes_to_human_readable, timestamp_to_human_readable
@@ -62,6 +69,7 @@ class FileBrowserTable:
         self.edit_button: Optional[ui.button] = None
         self.delete_button: Optional[ui.button] = None
         self.move_button: Optional[ui.button] = None
+        self.new_directory_button: Optional[ui.button] = None
         self.upload_button: Optional[ui.button] = None
         self.download_button: Optional[ui.button] = None
 
@@ -227,6 +235,14 @@ class FileBrowserTable:
 
             with self.browser_table.add_slot("top-right"):
                 with ui.row().classes("items-center gap-4"):
+                    self.new_directory_button = (
+                        ui.button(
+                            icon="create_new_folder",
+                            on_click=self.handle_new_directory_button_click,
+                        )
+                        .props("flat dense")
+                        .tooltip(_("New Directory"))
+                    )
                     self.upload_button = (
                         ui.button(
                             icon="cloud_upload",
@@ -353,7 +369,7 @@ class FileBrowserTable:
 
     async def back_func(self):
         if self.current_path.parent == self.current_path:
-            notify.warning(_("You are already at the root directory"))
+            notify.warning(_("Already at the root directory. Cannot go back further."))
             return
 
         await self.goto_func(self.current_path.parent)
@@ -369,7 +385,7 @@ class FileBrowserTable:
         return
 
     def copy_path_clipboard(self):
-        copy_text_clipboard(str(self.current_path))
+        copy_share_link_to_clipboard(str(self.current_path))
 
     def handle_row_click(self, e: events.GenericEventArguments):
         click_event_params, click_row, click_index = e.args
@@ -392,11 +408,56 @@ class FileBrowserTable:
             await self.goto_func(Path(target_path))
             return
         else:
-            download_url = generate_download_url(target_path, file_name, "download")
-            if not download_url:
+            confirm = await ConfirmDialog(
+                _("Download file"), _("Do you want to download this file?")
+            ).open()
+            if confirm:
+                download_url = generate_download_url(target_path, file_name, "download")
+                if not download_url:
+                    return
+                ui.navigate.to(download_url)
+            else:
+                notify.warning(_("Cancel download"))
+        return
+
+    async def handle_new_directory_button_click(self):
+        new_directory_name = await InputDialog(
+            _("New Directory"),
+            message=_(
+                "Please enter the name of the new directory.\n\n"
+                "You can use `/` to create subfolders, e.g., `parent/child`."
+            ),
+            input_label=_("Directory Name"),
+        ).open()
+
+        if new_directory_name:
+            check, error_message = validate_filename(
+                new_directory_name, allow_subdirs=True
+            )
+            if not check:
+                notify.error(error_message)
                 return
-            ui.navigate.to(download_url)
-            return
+
+            new_directory = self.current_path / new_directory_name
+            if self.file_service.exists(new_directory):
+                notify.warning(
+                    _(
+                        "A directory with the same name already exists. Please choose another name."
+                    )
+                )
+            else:
+                try:
+                    self.file_service.create_directory(new_directory)
+                except Exception as e:
+                    notify.error(_("Failed to create new directory: {}").format(str(e)))
+                    return
+                notify.success(
+                    _("New directory created successfully: {}").format(new_directory)
+                )
+        else:
+            notify.warning(_("Cancel creating new directory"))
+
+        await self.refresh()
 
     async def handle_upload_button_click(self):
         self.on_upload = not self.on_upload
@@ -406,9 +467,9 @@ class FileBrowserTable:
             is_uploading = await self.upload_component.get_computed_prop("isUploading")
             if is_uploading:
                 confirm = await ConfirmDialog(
-                    _("Upload is still in progress"),
+                    _("Upload in Progress"),
                     _(
-                        "Are you sure you want to cancel the upload? This will cancel the upload process"
+                        "Are you sure you want to cancel? This will stop the ongoing upload."
                     ),
                     warning=True,
                 ).open()
@@ -425,8 +486,8 @@ class FileBrowserTable:
 
             if self.file_service.exists(str(self.current_path / f.name)):
                 confirm = await ConfirmDialog(
-                    _("File already exists: {}").format(f.name),
-                    _("Do you want to overwrite it?"),
+                    _("File Exists: {}").format(f.name),
+                    _("This file already exists. Do you want to overwrite it?"),
                     warning=True,
                 ).open()
                 if not confirm:
@@ -448,7 +509,7 @@ class FileBrowserTable:
         self.is_select_mode = not self.is_select_mode
 
         if self.is_select_mode:
-            notify.info(_("Select mode enabled"))
+            notify.info(_("Selection mode enabled"))
 
         self.browser_table.set_selection("multiple" if self.is_select_mode else None)
         self.browser_table.selected = []
@@ -472,10 +533,26 @@ class FileBrowserTable:
             notify.warning(_("Please select at least one file"))
             return
 
-        download_url = generate_download_url([s["path"] for s in self.browser_table.selected], [s["raw_name"] for s in self.browser_table.selected], "download")
-        if not download_url:
-            return
-        ui.navigate.to(download_url)
+        confirm = await ConfirmDialog(
+            _("Download Files"),
+            _(
+                "You selected multiple items or a folder. "
+                "They will be compressed into a **single tar.gz file** for download. "
+                "Do you want to continue?"
+            ),
+        ).open()
+
+        if confirm:
+            download_url = generate_download_url(
+                [s["path"] for s in self.browser_table.selected],
+                [s["raw_name"] for s in self.browser_table.selected],
+                "download",
+            )
+            if not download_url:
+                return
+            ui.navigate.to(download_url)
+        else:
+            notify.warning(_("Cancel download"))
         return
 
     async def handle_move_button_click(self):
@@ -491,7 +568,7 @@ class FileBrowserTable:
             if confirm == self.current_path:
                 notify.error(
                     _(
-                        "Cannot move items to the current directory. Please select a different destination"
+                        "Cannot move items to the same folder. Please select a different destination."
                     )
                 )
                 return
@@ -514,14 +591,14 @@ class FileBrowserTable:
     async def handle_rename_button_click(self, e: events.GenericEventArguments):
         target_path = e.args["path"]
         file_name = e.args["raw_name"]
-        new_name = await RenameDialog(
-            title=_("Rename: {}".format(file_name)), old_name=file_name
-        ).open()
+        new_name = await RenameDialog(old_name=file_name).open()
         if new_name:
             new_path = Path(target_path).parent / new_name
             if self.file_service.exists(new_path):
                 notify.warning(
-                    _("File or directory already exists, please choose another name")
+                    _(
+                        "A file or folder with this name already exists. Please choose a different name."
+                    )
                 )
                 return
             try:
@@ -540,10 +617,11 @@ class FileBrowserTable:
             return
 
         confirm = await ConfirmDialog(
-            title=_("Are you sure you want to delete {} items?").format(
-                len(self.browser_table.selected)
-            ),
-            message=[item["raw_name"] for item in self.browser_table.selected],
+            title=_("Delete {} items?").format(len(self.browser_table.selected)),
+            message=[
+                f"{get_file_icon(item["type"], item["extension"])} {item["raw_name"]}"
+                for item in self.browser_table.selected
+            ],
             warning=True,
         ).open()
 
@@ -579,5 +657,4 @@ class FileBrowserTable:
             )
             if not download_url:
                 return
-            ui.clipboard.write(download_url)
-            notify.success(_("Copied share link to clipboard {}").format(target_path))
+            copy_share_link_to_clipboard(download_url)

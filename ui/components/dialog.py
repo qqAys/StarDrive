@@ -12,18 +12,54 @@ from services.file_service import (
     get_file_icon,
 )
 from services.user_service import get_user_timezone
-from ui.components.clipboard import copy_text_clipboard
+from ui.components.clipboard import copy_share_link_to_clipboard
 from ui.components.notify import notify
 from utils import _
 
 
 class Dialog:
     dialog_props = 'backdrop-filter="blur(2px) brightness(90%)"'
+    title_class = "text-lg font-bold break-words max-w-full"
 
     def __init__(self):
         self.dialog = ui.dialog().props(self.dialog_props)
 
     async def open(self):
+        r = await self.dialog
+        return r
+
+
+class InputDialog(Dialog):
+    def __init__(
+        self, title: str, input_label: str, input_value: str = "", message: str = None
+    ):
+        super().__init__()
+        self.title = title
+        self.message = message
+        self.input_label = input_label
+        self.input_value = input_value
+
+        self.dialog = ui.dialog().props(self.dialog_props)
+
+    async def open(self):
+        with self.dialog, ui.card().classes("w-full"):
+            ui.label(self.title).classes(self.title_class)
+
+            if self.message:
+                ui.markdown(self.message).classes("break-words max-w-full")
+
+            input_component = ui.input(
+                label=self.input_label, value=self.input_value
+            ).classes("w-full")
+
+            with ui.row().classes("w-full justify-between"):
+                ui.button(
+                    _("Confirm"),
+                    on_click=lambda: self.dialog.submit(input_component.value),
+                    color="green",
+                )
+                ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(None))
+
         r = await self.dialog
         return r
 
@@ -40,13 +76,13 @@ class ConfirmDialog(Dialog):
 
     async def open(self):
         with self.dialog, ui.card():
-            ui.label(self.title).classes("text-lg font-bold")
+            ui.label(self.title).classes(self.title_class)
             if self.message:
                 if isinstance(self.message, str):
-                    ui.label(self.message)
+                    ui.markdown(self.message).classes("break-words max-w-full")
                 elif isinstance(self.message, list):
-                    for message in self.message:
-                        ui.label(message)
+                    formatted = "\n".join(f"- `{msg}`" for msg in self.message)
+                    ui.markdown(formatted).classes("break-words max-w-full")
 
             with ui.row().classes("w-full justify-between"):
                 ui.button(
@@ -60,48 +96,47 @@ class ConfirmDialog(Dialog):
         return r
 
 
-class RenameDialog(Dialog):
-    def __init__(self, title: str, old_name: str):
-        super().__init__()
-        self.title = title
+class RenameDialog(InputDialog):
+    def __init__(self, old_name: str):
+        super().__init__(
+            title=_("Rename {}".format(old_name)),
+            input_label=_("New name"),
+            input_value=old_name,
+        )
         self.old_name = old_name
-
-        self.dialog = ui.dialog().props(self.dialog_props)
 
     async def open(self):
         with self.dialog, ui.card().classes("w-full"):
-            ui.label(self.title).classes("text-lg font-bold")
-            new_name = ui.input(label=_("New name"), value=self.old_name).classes(
-                "w-full"
-            )
+            ui.label(self.title).classes(self.title_class)
+
+            input_component = ui.input(
+                label=self.input_label, value=self.input_value
+            ).classes("w-full")
 
             def is_same(a, b):
                 return a == b
 
             def on_confirm():
-                if not new_name.value.strip():
+                new_val = input_component.value.strip()
+                if not new_val:
                     notify.warning(_("New name cannot be empty"))
                     return None
-                if is_same(new_name.value, self.old_name):
+                if is_same(new_val, self.old_name):
                     notify.warning(_("New name cannot be the same as the old name"))
                     return None
-                if any(char in new_name.value for char in FILE_NAME_FORBIDDEN_CHARS):
+                if any(char in new_val for char in FILE_NAME_FORBIDDEN_CHARS):
                     notify.warning(
                         f"File name cannot contain any of the following characters: {FILE_NAME_FORBIDDEN_CHARS}"
                     )
                     return None
-                if new_name.value.endswith("."):
+                if new_val.endswith("."):
                     notify.warning(_("File name cannot end with a dot"))
                     return None
 
-                return self.dialog.submit(new_name.value.strip())
+                return self.dialog.submit(new_val)
 
             with ui.row().classes("w-full justify-between"):
-                ui.button(
-                    _("Confirm"),
-                    on_click=on_confirm,
-                    color="green",
-                )
+                ui.button(_("Confirm"), on_click=on_confirm, color="green")
                 ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(None))
 
         r = await self.dialog
@@ -118,7 +153,7 @@ class ShareDialog(Dialog):
 
     async def open(self):
         with self.dialog, ui.card().classes("w-full"):
-            ui.label(self.title).classes("text-lg font-bold")
+            ui.label(self.title).classes(self.title_class)
 
             user_share_links = get_user_share_links(self.file_name)
             if user_share_links:
@@ -166,12 +201,16 @@ class ShareDialog(Dialog):
                                 ui.button(
                                     _("Copy"),
                                     icon="content_copy",
-                                    on_click=lambda: copy_text_clipboard(link_url),
+                                    on_click=lambda: copy_share_link_to_clipboard(
+                                        link_url
+                                    ),
                                 ).classes("w-full").props("flat dense")
                                 ui.button(
                                     _("Delete"),
                                     icon="delete",
-                                    on_click=lambda d_id=share_link["id"]: delete_share_link(d_id),
+                                    on_click=lambda d_id=share_link[
+                                        "id"
+                                    ]: delete_share_link(d_id),
                                 ).classes("w-full").props("flat dense")
                         all_share_link_dropdown_button[share_link["id"]] = (
                             dropdown_button
@@ -281,7 +320,7 @@ class MoveDialog(Dialog):
 
     async def open(self):
         with self.dialog, ui.card().classes("w-full"):
-            self.title_label = ui.label().classes("text-lg font-bold")
+            self.title_label = ui.label().classes(self.title_class)
 
             columns = [{"name": "name", "label": _("Directory"), "field": "name"}]
 
