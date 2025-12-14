@@ -157,6 +157,7 @@ class ShareDialog(Dialog):
                                 on_click=lambda url=link_url: ui.navigate.to(
                                     url, new_tab=True
                                 ),
+                                auto_close=True,
                             )
                             .props("no-caps dense")
                             .classes("md:w-auto w-full") as dropdown_button
@@ -170,9 +171,7 @@ class ShareDialog(Dialog):
                                 ui.button(
                                     _("Delete"),
                                     icon="delete",
-                                    on_click=lambda: delete_share_link(
-                                        share_link["id"]
-                                    ),
+                                    on_click=lambda d_id=share_link["id"]: delete_share_link(d_id),
                                 ).classes("w-full").props("flat dense")
                         all_share_link_dropdown_button[share_link["id"]] = (
                             dropdown_button
