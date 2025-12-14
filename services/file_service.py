@@ -1,10 +1,14 @@
+import asyncio
+import io
+import zipfile
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Dict, Optional, Generator, AsyncIterator, Literal
+from typing import Dict, Optional, Generator, AsyncIterator, Literal, List, AsyncGenerator
 from uuid import uuid4
 
 from nicegui import app
 
+import storage
 from api import download_file_form_browser_url_prefix
 from config import settings
 from schemas.file_schema import FileMetadata, DirMetadata
@@ -174,6 +178,47 @@ class StorageManager:
             )
         return self._backends[self._current_backend_name]
 
+    def _add_to_zip(self, zip_file: zipfile.ZipFile, path: str, base_dir_path: str):
+        """
+        【递归辅助函数】: 将文件或目录添加到 ZIP 归档中。
+        """
+        # 计算文件在 ZIP 包内的路径 (arcname)。例如: BASE_DIR/img/a.jpg -> img/a.jpg
+        full_path = self.get_full_path(path)
+        base_dir_path = self.get_full_path(base_dir_path)
+        arcname = full_path.relative_to(base_dir_path)
+
+        if full_path.is_file():
+            zip_file.write(full_path, arcname=arcname)
+
+        elif full_path.is_dir():
+            zip_file.write(full_path, arcname=arcname)
+            for item in full_path.iterdir():
+                self._add_to_zip(zip_file, str(item), str(base_dir_path))
+        else:
+            logger.warning(f"Skipping non-file/non-dir item: {arcname}")
+
+    def _perform_zip_creation(self, zip_buffer: io.BytesIO, relative_paths: List[str], base_dir_path: str):
+        """
+        【同步辅助函数】: 在单独的线程中执行 ZIP 文件的创建，支持文件和文件夹。
+        """
+        logger.debug("Starting synchronous ZIP file creation...")
+
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zip_file:
+
+            for relative_path_str in relative_paths:
+
+                if not self.exists(relative_path_str):
+                    logger.debug(f"Path not permitted or not found: {relative_path_str}. Skipping.")
+                    continue
+
+                try:
+                    self._add_to_zip(zip_file, relative_path_str, base_dir_path)
+                except Exception as e:
+                    logger.error(f"Error processing item {relative_path_str}: {e}")
+                    continue
+
+        logger.debug("Synchronous ZIP file creation completed.")
+
     # 代理方法
 
     def exists(self, remote_path: str) -> bool:
@@ -205,6 +250,22 @@ class StorageManager:
         """流式下载文件。"""
         backend = self._get_current_backend()
         for chunk in backend.download_file_with_stream(remote_path):
+            yield chunk
+
+    async def download_file_with_compressed_stream(self, relative_paths: List[str], base_dir_path: str) -> AsyncGenerator[bytes, None]:
+        """ZIP 压缩流式返回"""
+        zip_buffer = io.BytesIO()
+
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._perform_zip_creation, zip_buffer, relative_paths, base_dir_path)
+
+        zip_buffer.seek(0)
+
+        while True:
+            chunk = await loop.run_in_executor(None, zip_buffer.read, settings.STREAM_CHUNK_SIZE)
+
+            if not chunk:
+                break
             yield chunk
 
     def delete_file(self, remote_path: str) -> bool:
@@ -249,8 +310,8 @@ class StorageManager:
 
 
 def generate_download_url(
-    target_path: str,
-    file_name: str,
+    target_path: str | list[str],
+    file_name: str | list[str],
     from_: Literal["download", "share"],
     expire_datetime_utc: Optional[datetime] = None,
     expire_days: Optional[int] = None,
@@ -282,6 +343,7 @@ def generate_download_url(
     download_id = uuid4().hex[:12]
     download_info = {
         "user": app.storage.user["username"],
+        "base_path": app.storage.user["last_path"],
         "path": target_path,
         "name": file_name,
         "from": from_,
