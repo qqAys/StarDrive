@@ -1,14 +1,21 @@
 import asyncio
-import io
-import zipfile
+import sys
+import tarfile
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Dict, Optional, Generator, AsyncIterator, Literal, List, AsyncGenerator
+from typing import (
+    Dict,
+    Optional,
+    Generator,
+    AsyncIterator,
+    Literal,
+    List,
+    AsyncGenerator,
+)
 from uuid import uuid4
 
 from nicegui import app
 
-import storage
 from api import download_file_form_browser_url_prefix
 from config import settings
 from schemas.file_schema import FileMetadata, DirMetadata
@@ -109,6 +116,27 @@ def get_file_icon(type_: str, extension: str):
         return "❓"
 
 
+class AsyncStreamWriter:
+    def __init__(self):
+        self.queue = asyncio.Queue()
+        self.closed = False
+
+    def write(self, data: bytes):
+        if data:
+            self.queue.put_nowait(data)
+
+    def flush(self):
+        pass
+
+    def close(self):
+        self.closed = True
+
+    async def __aiter__(self):
+        while not self.closed or not self.queue.empty():
+            chunk = await self.queue.get()
+            yield chunk
+
+
 class BackendNotFoundError(Exception):
     """存储后端未找到的异常。"""
 
@@ -178,47 +206,6 @@ class StorageManager:
             )
         return self._backends[self._current_backend_name]
 
-    def _add_to_zip(self, zip_file: zipfile.ZipFile, path: str, base_dir_path: str):
-        """
-        【递归辅助函数】: 将文件或目录添加到 ZIP 归档中。
-        """
-        # 计算文件在 ZIP 包内的路径 (arcname)。例如: BASE_DIR/img/a.jpg -> img/a.jpg
-        full_path = self.get_full_path(path)
-        base_dir_path = self.get_full_path(base_dir_path)
-        arcname = full_path.relative_to(base_dir_path)
-
-        if full_path.is_file():
-            zip_file.write(full_path, arcname=arcname)
-
-        elif full_path.is_dir():
-            zip_file.write(full_path, arcname=arcname)
-            for item in full_path.iterdir():
-                self._add_to_zip(zip_file, str(item), str(base_dir_path))
-        else:
-            logger.warning(f"Skipping non-file/non-dir item: {arcname}")
-
-    def _perform_zip_creation(self, zip_buffer: io.BytesIO, relative_paths: List[str], base_dir_path: str):
-        """
-        【同步辅助函数】: 在单独的线程中执行 ZIP 文件的创建，支持文件和文件夹。
-        """
-        logger.debug("Starting synchronous ZIP file creation...")
-
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zip_file:
-
-            for relative_path_str in relative_paths:
-
-                if not self.exists(relative_path_str):
-                    logger.debug(f"Path not permitted or not found: {relative_path_str}. Skipping.")
-                    continue
-
-                try:
-                    self._add_to_zip(zip_file, relative_path_str, base_dir_path)
-                except Exception as e:
-                    logger.error(f"Error processing item {relative_path_str}: {e}")
-                    continue
-
-        logger.debug("Synchronous ZIP file creation completed.")
-
     # 代理方法
 
     def exists(self, remote_path: str) -> bool:
@@ -252,20 +239,42 @@ class StorageManager:
         for chunk in backend.download_file_with_stream(remote_path):
             yield chunk
 
-    async def download_file_with_compressed_stream(self, relative_paths: List[str], base_dir_path: str) -> AsyncGenerator[bytes, None]:
-        """ZIP 压缩流式返回"""
-        zip_buffer = io.BytesIO()
+    async def download_file_with_compressed_stream(
+        self,
+        relative_paths: List[str],
+        base_dir_path: str,
+    ) -> AsyncGenerator[bytes, None]:
+        """
+        tar.gz 流式压缩下载
+        """
 
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, self._perform_zip_creation, zip_buffer, relative_paths, base_dir_path)
+        writer = AsyncStreamWriter()
+        loop = asyncio.get_running_loop()
 
-        zip_buffer.seek(0)
+        def tar_worker():
+            try:
+                with tarfile.open(
+                    mode="w|gz",
+                    fileobj=writer,
+                    format=tarfile.PAX_FORMAT,
+                    bufsize=settings.STREAM_CHUNK_SIZE,
+                ) as tar:
 
-        while True:
-            chunk = await loop.run_in_executor(None, zip_buffer.read, settings.STREAM_CHUNK_SIZE)
+                    base_dir = self.get_full_path(base_dir_path)
+                    for rel in relative_paths:
+                        if not self.exists(rel):
+                            continue
 
-            if not chunk:
-                break
+                        full_path = self.get_full_path(rel)
+                        arcname = full_path.relative_to(base_dir)
+                        tar.add(full_path, arcname=str(arcname), recursive=True)
+            finally:
+                writer.close()
+
+        # 后台线程执行压缩
+        loop.run_in_executor(None, tar_worker)
+        # 实时返回
+        async for chunk in writer:
             yield chunk
 
     def delete_file(self, remote_path: str) -> bool:
@@ -464,3 +473,134 @@ def get_user_last_path() -> str | None:
     获取用户最近一次访问的路径。
     """
     return app.storage.user.get("last_path", None)
+
+
+WINDOWS_FORBIDDEN_CHARS = (
+    r'<>:"|?*'  # 移除了 /\\，因为 / 和 \ 在 allow_subdirs=True 时是路径分隔符
+)
+# 针对单个文件名，所有这些字符都是禁止的。
+# 但为了路径解析的兼容性，将 : / \ 留给 PurePath 处理
+FULL_FORBIDDEN_CHARS = r'<>:"/\\|?*'
+
+WINDOWS_RESERVED_NAMES = {
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    *(f"COM{i}" for i in range(1, 10)),
+    *(f"LPT{i}" for i in range(1, 10)),
+}
+
+MAX_FILENAME_LENGTH = 255
+
+
+def is_windows_reserved(name_part: str) -> bool:
+    """检查是否为 Windows 保留名称 (支持带扩展名的形式)"""
+    name_part = name_part.upper().strip()
+
+    # 检查完整的保留名称 (例如 "CON")
+    if name_part in WINDOWS_RESERVED_NAMES:
+        return True
+
+    # 检查带扩展名的保留名称 (例如 "CON.TXT")
+    if "." in name_part:
+        # 取点号之前的部分
+        base_name = name_part.split(".", 1)[0]
+        if base_name in WINDOWS_RESERVED_NAMES:
+            return True
+
+    return False
+
+
+def validate_filename(name: str, allow_subdirs: bool = False) -> tuple[bool, str]:
+    """
+    跨平台文件/目录名称验证 (完善版)
+
+    :param name: 用户输入的名称
+    :param allow_subdirs: 是否允许使用路径分隔符来创建子目录
+    :return: (合法性: bool, 提示信息: str)
+    """
+    # 1. 初始检查
+    if not name or not name.strip():
+        return False, _("Name cannot be empty or only spaces.")
+
+    name = name.strip()
+
+    # 2. 长度检查
+    if len(name) > MAX_FILENAME_LENGTH:
+        return False, _("Name is too long (max {} characters).").format(
+            MAX_FILENAME_LENGTH
+        )
+
+    # 3. 路径解析和穿越检查 (仅当允许子目录时)
+    if allow_subdirs:
+        # 检查开头是否为路径分隔符
+        if name.startswith("/") or name.startswith("\\"):
+            return False, _(
+                "Name cannot start with a path separator (must be a relative path)."
+            )
+        try:
+            # 使用 Path 而非 PurePath，检查更严格
+            path = Path(name)
+        except Exception:
+            # 处理 Path 无法解析的极端情况 (如空字符)
+            return False, _("Invalid path format.")
+
+        # 路径穿越检查
+        # 检查是否包含 '..' (相对父目录)
+        if ".." in path.parts:
+            return False, _("Name cannot contain '..' to traverse directories.")
+
+        # 检查是否为绝对路径 (例如以 / 或 C: 开头)
+        if path.is_absolute():
+            return False, _(
+                "Name cannot start with a path separator or drive letter (must be relative)."
+            )
+
+        # 需要检查的名称部分
+        parts_to_check = path.parts
+        # 确保路径分隔符 (/, \) 本身不被视为待检查的禁用字符
+        chars_to_check = WINDOWS_FORBIDDEN_CHARS
+
+    else:
+        # 仅检查单个名称
+        parts_to_check = [name]
+        # 如果不允许子目录，则所有的路径分隔符也是禁用字符
+        chars_to_check = FULL_FORBIDDEN_CHARS
+
+    # 4. 核心系统特定检查
+    is_win = sys.platform.startswith("win")
+
+    for part in parts_to_check:
+        if not part:  # 跳过空部分 (例如 // 或 a//b)
+            continue
+
+        # 4.1. Linux/Unix 特定检查 (不允许路径分隔符作为名称的一部分)
+        # 注意：当 allow_subdirs=True 时，此检查被跳过
+        if not is_win and not allow_subdirs and "/" in part:
+            return False, _("Name cannot contain '/' in Linux/Unix.")
+
+        # 4.2. Windows 特定检查
+        # if is_win:
+
+        # 禁用字符检查
+        if any(char in part for char in chars_to_check):
+            return False, _("Name cannot contain any of these characters: {}").format(
+                chars_to_check
+            )
+
+        # 保留名称检查 (完善后的函数)
+        if is_windows_reserved(part):
+            return False, _("Name segment '{}' is a reserved system name.").format(part)
+
+        # 结尾检查
+        if part.endswith(".") or part.endswith(" "):
+            return False, _("Name segment cannot end with a dot or space.")
+
+        # Windows 不允许 : 字符 (除了作为驱动器分隔符 C:)
+        # 注意: 如果 name 是 "a:b"，Path() 会把它解释为驱动器，导致 path.parts 只有一个元素 "a:b"
+        # 这里依赖 FULL_FORBIDDEN_CHARS 包含了 ":" 来处理单文件名的禁止。
+        # 如果 allow_subdirs=True，: 也不在 WINDOWS_FORBIDDEN_CHARS 中，Path(C:/a) 才是合法的驱动器。
+        # 这里不再重复检查 :，因为它已被 Path 解析或被 FULL_FORBIDDEN_CHARS 包含。
+
+    return True, _("Name is valid.")

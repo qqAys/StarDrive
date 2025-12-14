@@ -1,3 +1,4 @@
+import mimetypes
 import time
 from typing import Annotated
 
@@ -38,9 +39,7 @@ async def verify_download_token(jwt_token: str):
     elif isinstance(file_path, list) and isinstance(file_name, list):
         is_multi_file = True
     else:
-        raise HTTPException(
-            status_code=401, detail="Download link is invalid."
-        )
+        raise HTTPException(status_code=401, detail="Download link is invalid.")
 
     return is_multi_file, file_path, file_name, base_dir_path
 
@@ -50,7 +49,10 @@ router = APIRouter(prefix="/api")
 
 @router.get("/" + download_file_form_browser_url_prefix + "/{jwt_token}")
 async def download_file_form_browser_api(
-    validated_data: Annotated[tuple[bool, str | list[str], str | list[str], str], Depends(verify_download_token)],
+    validated_data: Annotated[
+        tuple[bool, str | list[str], str | list[str], str],
+        Depends(verify_download_token),
+    ],
 ):
     file_manager = globals.get_storage_manager()
 
@@ -60,25 +62,29 @@ async def download_file_form_browser_api(
         if not file_manager.exists(str(full_path)):
             raise HTTPException(status_code=404, detail="File not found")
 
+        mime_type, _ = mimetypes.guess_type(file_name)
+
         return FileResponse(
             path=file_manager.get_full_path(str(full_path)),
             filename=file_name,
-            media_type="application/octet-stream",
+            media_type=mime_type or "application/octet-stream",
         )
     else:
         relative_paths = full_path
         if not relative_paths:
             raise HTTPException(status_code=400, detail="No files or folders provided.")
 
-        filename_as = f"download_{int(time.time())}.zip"
+        filename_as = f"download_{int(time.time())}.tar.gz"
 
         headers = {
             "Content-Disposition": f'attachment; filename="{filename_as}"',
-            "Content-Type": "application/zip",
+            "Cache-Control": "no-store",
         }
 
         return StreamingResponse(
-            content=file_manager.download_file_with_compressed_stream(relative_paths, base_dir_path),
+            content=file_manager.download_file_with_compressed_stream(
+                relative_paths, base_dir_path
+            ),
+            media_type="application/gzip",
             headers=headers,
-            media_type="application/zip"
         )
