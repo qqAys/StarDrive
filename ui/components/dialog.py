@@ -1,9 +1,16 @@
 from datetime import datetime, timezone, date, time
+from pathlib import Path
+from typing import Optional
 
 from nicegui import ui, events
 
 from schemas.file_schema import FILE_NAME_FORBIDDEN_CHARS
-from services.file_service import get_user_share_links, delete_download_link
+from services.file_service import (
+    get_user_share_links,
+    delete_download_link,
+    StorageManager,
+    get_file_icon,
+)
 from services.user_service import get_user_timezone
 from ui.components.clipboard import copy_text_clipboard
 from ui.components.notify import notify
@@ -252,6 +259,89 @@ class ShareDialog(Dialog):
                 ui.button(
                     _("Confirm"),
                     on_click=on_confirm,
+                    color="green",
+                )
+                ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(None))
+
+        r = await self.dialog
+        return r
+
+
+class MoveDialog(Dialog):
+    def __init__(
+        self, file_service: StorageManager, items_count: int, current_path: Path
+    ):
+        super().__init__()
+        self.title_label: Optional[ui.label] = None
+
+        self.file_service = file_service
+        self.items_count = items_count
+        self.current_path = current_path
+
+        self.dialog = ui.dialog().props(self.dialog_props)
+
+    async def open(self):
+        with self.dialog, ui.card().classes("w-full"):
+            self.title_label = ui.label().classes("text-lg font-bold")
+
+            columns = [{"name": "name", "label": _("Directory"), "field": "name"}]
+
+            dir_table = ui.table(
+                columns=columns,
+                rows=[],
+                column_defaults={"sortable": True, "align": "left", "required": True},
+            ).classes("w-full")
+
+            target_path = self.current_path
+
+            with dir_table.add_slot("top-left"):
+                with ui.row().classes("items-center gap-x-0"):
+                    # 返回上一级目录按钮
+                    ui.button(
+                        icon="arrow_upward",
+                        on_click=lambda: refresh_dir_table(target_path, True),
+                    ).props("flat dense").tooltip(_("Back to parent directory"))
+
+            with dir_table.add_slot("no-data"):
+                with ui.row().classes("items-center"):
+                    ui.icon("warning").classes("text-2xl")
+                    ui.label(_("No directories found.")).classes("font-bold")
+
+            dir_table_rows = []
+
+            def refresh_dir_table(path: Path, parent: bool = False):
+                nonlocal dir_table_rows, target_path
+                if parent:
+                    path = path.parent
+
+                self.title_label.text = _("Move {} items to {}").format(
+                    self.items_count, str(path)
+                )
+                dir_table_rows = []
+                for meta_data in self.file_service.list_files(str(path)):
+                    if meta_data.is_dir:
+                        dir_table_rows.append(
+                            {
+                                "name": f"{get_file_icon(meta_data.type, meta_data.extension)} {meta_data.name}",
+                                "path": meta_data.path,
+                            }
+                        )
+                dir_table.rows = dir_table_rows
+                target_path = path
+
+            refresh_dir_table(target_path)
+
+            async def handle_row_double_click(e: events.GenericEventArguments):
+                click_event_params, click_row, click_index = e.args
+                refresh_dir_table(Path(click_row["path"]))
+                return
+
+            dir_table.on("row-dblclick", handle_row_double_click)
+
+            with ui.row().classes("w-full justify-between"):
+                ui.button(
+                    _("Confirm"),
+                    on_click=lambda: self.dialog.submit(target_path),
                     color="green",
                 )
                 ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(None))

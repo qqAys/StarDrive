@@ -12,7 +12,7 @@ from services.file_service import (
 )
 from ui.components import max_w
 from ui.components.clipboard import copy_text_clipboard
-from ui.components.dialog import ConfirmDialog, RenameDialog, ShareDialog
+from ui.components.dialog import ConfirmDialog, RenameDialog, ShareDialog, MoveDialog
 from ui.components.input import input_with_icon
 from ui.components.notify import notify
 from utils import _, bytes_to_human_readable, timestamp_to_human_readable
@@ -216,7 +216,7 @@ class FileBrowserTable:
                             else:
                                 ui.button(p, on_click=self.copy_path_clipboard).props(
                                     "no-caps flat dense"
-                                ).tooltip("/" + str(self.current_path))
+                                ).tooltip(str(self.current_path))
 
                         elif index == 1 and len(path_parts) > MAX_DISPLAY_PARTS:
                             ui.button("...").props("flat dense disable")
@@ -237,7 +237,7 @@ class FileBrowserTable:
                     self.download_button = (
                         ui.button(
                             icon="cloud_download",
-                            on_click=self.handle_move_button_click,
+                            on_click=self.handle_download_button_click,
                         )
                         .props("flat dense")
                         .tooltip(_("Download"))
@@ -273,7 +273,7 @@ class FileBrowserTable:
                     self.search_input = (
                         input_with_icon(_("Search"), icon="search")
                         .bind_value(self.browser_table, "filter")
-                        .props("clearable dense")
+                        .props("clearable dense flat")
                     )
 
                     self.upload_button.set_visibility(not self.is_select_mode)
@@ -466,11 +466,45 @@ class FileBrowserTable:
         self.move_button.set_visibility(self.is_select_mode)
         self.delete_button.set_visibility(self.is_select_mode)
 
+    async def handle_download_button_click(self):
+        if not self.browser_table.selected:
+            notify.warning(_("Please select at least one file"))
+            return
+
+        raise NotImplementedError
+
     async def handle_move_button_click(self):
         if not self.browser_table.selected:
             notify.warning(_("Please select at least one file"))
             return
-        raise NotImplementedError
+
+        confirm = await MoveDialog(
+            self.file_service, len(self.browser_table.selected), self.current_path
+        ).open()
+        if confirm:
+            # Checks if the target move directory is the same as the current directory.
+            if confirm == self.current_path:
+                notify.error(
+                    _(
+                        "Cannot move items to the current directory. Please select a different destination"
+                    )
+                )
+                return
+
+            result = []
+            for item in self.browser_table.selected:
+                try:
+                    self.file_service.move_file(
+                        item["path"], confirm / item["raw_name"]
+                    )
+                    result.append({"action": "delete", "raw": item, "result": True})
+                except Exception as e:
+                    notify.error(e)
+            notify.success(_("Moved {} items").format(len(result)))
+        else:
+            return
+
+        await self.refresh()
 
     async def handle_rename_button_click(self, e: events.GenericEventArguments):
         target_path = e.args["path"]
