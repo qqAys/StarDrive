@@ -43,6 +43,7 @@ class Config(BaseSettings):
 
     SYSTEM_DEFAULT_TIMEZONE: ClassVar[timezone] = timezone.utc
 
+    NOTIFY_DURATION: ClassVar[int] = 3000
     MULTIPARTPARSER_SPOOL_MAX_SIZE: ClassVar[int] = 1024 * 1024 * 5
     STREAM_CHUNK_SIZE: ClassVar[int] = 1024 * 10
 
