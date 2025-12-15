@@ -20,9 +20,8 @@ from ui.components.dialog import (
     ConfirmDialog,
     MoveDialog,
     InputDialog,
-    DirectoryInfoDialog,
-    FileInfoDialog,
     SearchDialog,
+    MetadataDialog,
 )
 from ui.components.notify import notify
 from utils import _, bytes_to_human_readable, timestamp_to_human_readable
@@ -427,7 +426,9 @@ class FileBrowserTable:
                 ).format(file_name),
             ).open()
             if confirm:
-                download_url = generate_download_url(target_path, file_name, "download")
+                download_url = generate_download_url(
+                    target_path, file_name, "file", "download"
+                )
                 if not download_url:
                     return
                 ui.navigate.to(download_url)
@@ -558,6 +559,7 @@ class FileBrowserTable:
             download_url = generate_download_url(
                 [s["path"] for s in self.browser_table.selected],
                 [s["raw_name"] for s in self.browser_table.selected],
+                "mixed",
                 "download",
             )
             if not download_url:
@@ -637,10 +639,8 @@ class FileBrowserTable:
     async def handle_info_button_click(self, e: events.GenericEventArguments):
         item_metadata = self.file_service.get_file_metadata(e.args["path"])
 
-        if isinstance(item_metadata, DirMetadata):
-            await DirectoryInfoDialog(item_metadata).open()
-        elif isinstance(item_metadata, FileMetadata):
-            await FileInfoDialog(
+        if type(item_metadata) in (DirMetadata, FileMetadata):
+            await MetadataDialog(
                 self.current_path, item_metadata, self.file_service, self.refresh
             ).open()
         else:

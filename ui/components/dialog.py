@@ -5,7 +5,7 @@ from typing import Optional, Callable
 
 from nicegui import ui, events, background_tasks
 
-from schemas.file_schema import FILE_NAME_FORBIDDEN_CHARS, FileMetadata
+from schemas.file_schema import FILE_NAME_FORBIDDEN_CHARS, FileMetadata, DirMetadata
 from services.file_service import (
     get_user_share_links,
     delete_download_link,
@@ -166,9 +166,9 @@ class ConfirmDialog(Dialog):
 
 
 class RenameDialog(InputDialog):
-    def __init__(self, old_name: str):
+    def __init__(self, current_name: str, old_name: str):
         super().__init__(
-            title=_("Rename file"),
+            title=_("Rename {}").format(current_name),
             input_label=_("New name"),
             input_value=old_name,
         )
@@ -481,19 +481,23 @@ class MoveDialog(Dialog):
         return r
 
 
-class FileInfoDialog(Dialog):
+class MetadataDialog(Dialog):
     def __init__(
         self,
         current_path: Path,
-        metadata: FileMetadata,
+        metadata: FileMetadata | DirMetadata,
         file_service: StorageManager,
         refresh_browser_func: Callable,
     ):
         super().__init__()
         self.current_path = current_path
         self.metadata = metadata
+        self.is_dir = self.metadata.is_dir
         self.file_service = file_service
         self.refresh_browser = refresh_browser_func
+
+        self.size_label: ui.label | None = None
+        self.calc_btn: ui.button | None = None
 
         self.user_timezone = get_user_timezone()
 
@@ -502,7 +506,7 @@ class FileInfoDialog(Dialog):
     async def open(self):
         with self.dialog, ui.card().classes("w-full"):
             with ui.row().classes("w-full justify-between"):
-                ui.label(_("File info")).classes(self.title_class)
+                ui.label(_("Metadata info")).classes(self.title_class)
                 ui.button(
                     icon="close", on_click=lambda: self.dialog.submit(None)
                 ).props("flat dense")
@@ -510,26 +514,53 @@ class FileInfoDialog(Dialog):
             with ui.card().props("bordered flat").classes("w-full"):
                 with ui.list().props("dense separator").classes("w-full"):
                     for k, v in {
-                        _("File name"): self.metadata.name,
-                        _("File path"): self.metadata.path,
-                        _("File type"): self.metadata.type,
+                        _("Name"): self.metadata.name,
+                        _("Path"): self.metadata.path,
+                        _("Type"): self.metadata.type,
                         _(
-                            "File size"
+                            "Size"
                         ): f"{bytes_to_human_readable(self.metadata.size)} ({self.metadata.size} bytes)",
+                        **(
+                            {_("Direct children"): self.metadata.num_children}
+                            if self.is_dir
+                            else {}
+                        ),
                         _(
-                            "File extension"
+                            "Extension"
                         ): f"{self.metadata.extension} ({get_file_icon(self.metadata.type, self.metadata.extension)})",
-                        _("File created at"): timestamp_to_human_readable(
+                        _("Created At"): timestamp_to_human_readable(
                             self.metadata.created_at, self.user_timezone
                         ),
-                        _("File updated at"): timestamp_to_human_readable(
+                        _("Updated At"): timestamp_to_human_readable(
                             self.metadata.updated_at, self.user_timezone
                         ),
                     }.items():
                         with ui.item():
                             with ui.row(wrap=False).classes("w-full items-center"):
-                                ui.label(k).classes("font-bold w-2/7 text-nowrap")
-                                ui.markdown(f"`{v}`").classes("w-5/7")
+                                ui.label(k).classes("font-bold w-2/7")
+                                if k == _("Size") and self.metadata.is_dir:
+                                    self.size_label = ui.label(
+                                        _("Click to calculate")
+                                    ).classes("w-5/7")
+
+                                    self.calc_btn = (
+                                        ui.button(
+                                            _("Calculate"),
+                                            icon="calculate",
+                                            color="green",
+                                            on_click=self.calculate_dir_size,
+                                        )
+                                        .props("flat dense no-caps")
+                                        .classes(
+                                            "absolute right-0 top-1/2 -translate-y-1/2"
+                                        )
+                                        .tooltip(_("Calculate directory size"))
+                                    )
+                                    if self.metadata.num_children == 0:
+                                        self.calc_btn.disable()
+                                        self.size_label.text = _("Directory is empty")
+                                else:
+                                    ui.label(v).classes("w-5/7 text-pretty break-words")
 
             with ui.grid(columns=3).classes("w-full justify-between"):
                 ui.button(
@@ -567,6 +598,11 @@ class FileInfoDialog(Dialog):
         r = await self.dialog
         return r
 
+    async def calculate_dir_size(self):
+        self.size_label.text = _("Calculating...")
+        dir_size = await self.file_service.get_directory_size(self.metadata.path)
+        self.size_label.text = f"{bytes_to_human_readable(dir_size)} ({dir_size} bytes)"
+
     async def on_delete_button_click(self):
         confirm = await ConfirmDialog(
             _("Confirm Delete"),
@@ -584,7 +620,9 @@ class FileInfoDialog(Dialog):
         await self.refresh_browser()
 
     async def on_rename_button_click(self):
-        new_name = await RenameDialog(old_name=self.metadata.name).open()
+        new_name = await RenameDialog(
+            current_name=self.metadata.name, old_name=self.metadata.name
+        ).open()
         if new_name:
             new_path = Path(self.metadata.path).parent / new_name
             if self.file_service.exists(new_path):
@@ -636,6 +674,7 @@ class FileInfoDialog(Dialog):
             download_url = generate_download_url(
                 self.metadata.path,
                 self.metadata.name,
+                self.metadata.type,
                 "share",
                 expire_define["expire_datetime_utc"],
                 expire_define["expire_days"],
@@ -656,7 +695,7 @@ class FileInfoDialog(Dialog):
         ).open()
         if confirm:
             download_url = generate_download_url(
-                self.metadata.path, self.metadata.name, "download"
+                self.metadata.path, self.metadata.name, self.metadata.type, "download"
             )
             if not download_url:
                 return
@@ -664,7 +703,3 @@ class FileInfoDialog(Dialog):
             return
         else:
             return
-
-
-class DirectoryInfoDialog(Dialog):
-    pass
