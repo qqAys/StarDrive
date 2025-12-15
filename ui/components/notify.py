@@ -1,5 +1,7 @@
 from nicegui import ui
 
+from config import settings
+
 
 class Notify:
     """
@@ -9,7 +11,7 @@ class Notify:
     def __init__(self):
         self.notify = ui.notify
         self.position = "top"
-        self.duration = 3000
+        self.duration = settings.NOTIFY_DURATION
 
     def success(self, message: str):
         self.notify(
