@@ -97,3 +97,9 @@ class StorageBackend(ABC):
     @abstractmethod
     def get_file_metadata(self, remote_path: str) -> FileMetadata | DirMetadata:
         pass
+
+    @abstractmethod
+    async def search(
+        self, query: str, search_path: str
+    ) -> list[FileMetadata | DirMetadata]:
+        pass

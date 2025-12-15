@@ -317,6 +317,12 @@ class StorageManager:
         backend = self._get_current_backend()
         return backend.get_file_metadata(remote_path)
 
+    async def search(
+        self, query: str, search_path: str
+    ) -> list[FileMetadata | DirMetadata]:
+        backend = self._get_current_backend()
+        return await backend.search(query, search_path)
+
 
 def generate_download_url(
     target_path: str | list[str],

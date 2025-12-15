@@ -1,7 +1,7 @@
 import asyncio
 import shutil
 from pathlib import Path
-from typing import AsyncIterator
+from typing import AsyncIterator, List
 
 import aiofiles
 
@@ -307,3 +307,161 @@ class LocalStorage(StorageBackend):
                 created_at=stat_info.st_birthtime,
                 updated_at=stat_info.st_ctime,
             )
+
+    # 辅助函数：在线程中同步地递归搜索文件
+    @staticmethod
+    def _synchronous_recursive_search(
+        start_path: Path,
+        query: str,
+        match_case: bool,
+        file_only: bool,
+    ) -> List[Path]:
+        """
+        同步递归遍历文件系统，实现带深度限制的搜索。
+        该函数设计为在 asyncio.to_thread 中运行。
+        """
+        found_paths = []
+
+        def traverse(current_path: Path, current_depth: int):
+
+            try:
+                # 遍历当前目录下的所有文件和子目录
+                for entry_path in current_path.iterdir():
+
+                    # 排除隐藏文件/目录
+                    if entry_path.name.startswith("."):
+                        continue
+
+                    name_to_match = entry_path.name
+                    search_query = query
+
+                    if not match_case:
+                        name_to_match = name_to_match.lower()
+                        search_query = query.lower()
+
+                    # 1. 检查是否匹配查询
+                    # 检查文件名是否包含查询字符串（更像模糊搜索）
+                    if search_query in name_to_match:
+                        is_dir = entry_path.is_dir()
+
+                        if file_only and is_dir:
+                            # 如果只搜索文件，跳过目录
+                            pass
+                        else:
+                            # 匹配成功，添加到结果列表
+                            found_paths.append(entry_path)
+
+                    # 2. 如果是目录，继续递归搜索
+                    if entry_path.is_dir():
+                        traverse(entry_path, current_depth + 1)
+
+            except PermissionError:
+                # 忽略没有权限访问的目录
+                logger.warning(
+                    _("Permission denied accessing directory: {}").format(current_path)
+                )
+            except Exception as e:
+                logger.error(
+                    _("Error during sync search in {}: {}").format(current_path, e)
+                )
+
+        # 启动递归搜索，初始深度为 0 (相对于 start_path)
+        traverse(start_path, 0)
+        return found_paths
+
+    async def search(
+        self,
+        query: str,
+        remote_path: str = "/",
+        match_case: bool = False,
+        file_only: bool = False,
+    ) -> List[FileMetadata | DirMetadata]:
+        """
+        使用 asyncio.to_thread 实现异步非阻塞文件搜索，支持深度限制。
+
+        :param query: 要搜索的文件名模式（模糊匹配，包含）。
+        :param remote_path: 开始搜索的虚拟路径（相对于 root_path）。
+        :param match_case: 是否区分大小写。
+        :param file_only: 是否只返回文件（True）或文件和目录（False）。
+        :return: 匹配到的文件元数据列表。
+        """
+        start_full_path = self._get_full_path(remote_path)
+
+        if not start_full_path.exists():
+            raise StorageFileNotFoundError(
+                _("Search path does not exist: {}").format(remote_path)
+            )
+
+        logger.debug(
+            _("Starting deep search from {} with query '{}'").format(
+                start_full_path, query
+            )
+        )
+
+        try:
+            # 1. 异步执行同步递归搜索（I/O 阻塞操作）
+            # 这将整个文件系统遍历操作移到后台线程中运行，不阻塞主事件循环。
+            found_paths = await asyncio.to_thread(
+                self._synchronous_recursive_search,
+                start_full_path,
+                query,
+                match_case,
+                file_only,
+            )
+
+            # 2. 将本地路径转换为元数据（大量 stat() I/O 阻塞）
+
+            # 定义一个辅助函数来获取单个文件的元数据
+            def get_single_metadata(path: Path) -> FileMetadata | DirMetadata | None:
+                # 安全检查，确保路径在我们定义的根目录内
+                if not path.is_relative_to(self.root_path):
+                    return None
+
+                remote_path_str = path.relative_to(self.root_path).as_posix()
+
+                try:
+                    # stat() 操作是 I/O 阻塞的
+                    stat_info = path.stat()
+                    is_dir = path.is_dir()
+
+                    if is_dir:
+                        return DirMetadata(
+                            name=path.name,
+                            path=remote_path_str,
+                            size=0,
+                            created_at=stat_info.st_birthtime,
+                            updated_at=stat_info.st_ctime,
+                        )
+                    else:
+                        return FileMetadata(
+                            name=path.name,
+                            path=remote_path_str,
+                            extension=path.suffix,
+                            size=stat_info.st_size,
+                            created_at=stat_info.st_birthtime,
+                            updated_at=stat_info.st_ctime,
+                        )
+                except Exception as e:
+                    # 捕获任何 stat 错误（如文件被删除或权限改变）
+                    logger.warning(f"Failed to get metadata for {path}: {e}")
+                    return None
+
+            # 3. 并行执行所有元数据获取任务
+            # 将所有 stat/metadata 获取请求放入线程池，并行处理，以减少总等待时间。
+            metadata_tasks = [
+                asyncio.to_thread(get_single_metadata, p) for p in found_paths
+            ]
+
+            results = await asyncio.gather(*metadata_tasks)
+
+            # 过滤掉 None 的结果（权限错误、文件丢失等）
+            metadata_list = [r for r in results if r is not None]
+
+            return metadata_list
+
+        except StorageError:
+            raise
+        except Exception as e:
+            raise StorageError(
+                _("An unexpected error occurred during search: {}").format(e)
+            ) from e
