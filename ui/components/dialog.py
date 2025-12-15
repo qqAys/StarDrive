@@ -15,6 +15,7 @@ from services.file_service import (
 )
 from services.user_service import get_user_timezone
 from ui.components.clipboard import copy_to_clipboard
+from ui.components.link import link
 from ui.components.notify import notify
 from utils import _, bytes_to_human_readable, timestamp_to_human_readable
 
@@ -44,17 +45,16 @@ class SearchDialog(Dialog):
     async def open(self):
         with self.dialog, ui.card().tight().classes("w-[800px] h-[600px]"):
             with ui.row().classes("w-full items-center px-4"):
-                ui.icon("search", size="2em")
                 self.search_input = (
                     ui.input(
                         label=_("Search in {}").format(self.current_path.name),
                         on_change=self.on_search_input_value_change,
                     )
                     .classes("flex-grow")
-                    .props("borderless autofocus")
+                    .props("autofocus")
                 )
-
-                ui.separator()
+                with self.search_input.add_slot("append"):
+                    ui.icon("search")
 
                 self.results = ui.element("q-list").classes("w-full").props("separator")
 
@@ -90,7 +90,7 @@ class SearchDialog(Dialog):
                         for result_item in results:
                             with ui.item().props("clickable"):
                                 with ui.item_section():
-                                    with ui.link().on("click", self.dialog.close):
+                                    with link("").on("click", self.dialog.close):
                                         ui.item_label(result_item.name)
                                         with ui.item_label().props("caption"):
                                             ui.markdown(f"`{result_item.path}`")
