@@ -162,12 +162,12 @@ def bytes_to_human_readable(num_bytes: int) -> str:
     return f"{num_bytes:.2f} YB"
 
 
-def timestamp_to_human_readable(timestamp: float) -> str:
+def timestamp_to_human_readable(timestamp: float, tz=None) -> str:
     """
     将时间戳转换为人类可读的格式。
     """
     return datetime.fromtimestamp(
-        timestamp, tz=settings.SYSTEM_DEFAULT_TIMEZONE
+        timestamp, tz=tz or settings.SYSTEM_DEFAULT_TIMEZONE
     ).strftime("%Y-%m-%d %H:%M:%S")
 
 
