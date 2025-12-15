@@ -528,11 +528,17 @@ class MetadataDialog(Dialog):
                         _(
                             "Extension"
                         ): f"{self.metadata.extension} ({get_file_icon(self.metadata.type, self.metadata.extension)})",
+                        _("Accessed At"): timestamp_to_human_readable(
+                            self.metadata.accessed_at, self.user_timezone
+                        ),
                         _("Created At"): timestamp_to_human_readable(
                             self.metadata.created_at, self.user_timezone
                         ),
-                        _("Updated At"): timestamp_to_human_readable(
-                            self.metadata.updated_at, self.user_timezone
+                        _("Modified At"): timestamp_to_human_readable(
+                            self.metadata.modified_at, self.user_timezone
+                        ),
+                        _("Status Changed At"): timestamp_to_human_readable(
+                            self.metadata.status_changed_at, self.user_timezone
                         ),
                     }.items():
                         with ui.item():

@@ -166,6 +166,8 @@ def timestamp_to_human_readable(timestamp: float, tz=None) -> str:
     """
     将时间戳转换为人类可读的格式。
     """
+    if not timestamp:
+        return "None"
     return datetime.fromtimestamp(
         timestamp, tz=tz or settings.SYSTEM_DEFAULT_TIMEZONE
     ).strftime("%Y-%m-%d %H:%M:%S")

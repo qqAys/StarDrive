@@ -14,11 +14,17 @@ class FileMetadataBase(BaseModel):
     type: Literal["file", "dir", "link"] = Field(description=_("File type"))
     extension: Optional[str] = Field(default=None, description=_("File extension"))
     size: int = Field(default=0, description=_("File size (bytes)"))
+    accessed_at: Optional[float] = Field(
+        default=None, description=_("Last access timestamp")
+    )
+    modified_at: Optional[float] = Field(
+        default=None, description=_("Last modified timestamp")
+    )
     created_at: Optional[float] = Field(
         default=None, description=_("Creation timestamp")
     )
-    updated_at: Optional[float] = Field(
-        default=None, description=_("Last update timestamp")
+    status_changed_at: Optional[float] = Field(
+        default=None, description=_("Last status change timestamp")
     )
 
     class Config:

@@ -335,13 +335,16 @@ class FileBrowserTable:
                     "raw_size": p.size if p.size else -1,
                     "created_at": (
                         timestamp_to_human_readable(p.created_at, self.user_timezone)
-                        if p.created_at
-                        else "-"
                     ),
                     "updated_at": (
-                        timestamp_to_human_readable(p.updated_at, self.user_timezone)
-                        if p.updated_at
-                        else "-"
+                        timestamp_to_human_readable(
+                            (
+                                p.accessed_at
+                                if settings.SYSTEM_NAME == "Windows"
+                                else p.modified_at
+                            ),
+                            self.user_timezone,
+                        )
                     ),
                 }
                 for p in self.file_list

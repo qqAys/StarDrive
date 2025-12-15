@@ -1,12 +1,12 @@
 import asyncio
 import os
-import platform
 import shutil
 from pathlib import Path
-from typing import AsyncIterator, List, NamedTuple
+from typing import AsyncIterator, List, NamedTuple, Optional
 
 import aiofiles
 
+from config import settings
 from schemas.file_schema import FileMetadata, DirMetadata
 from utils import logger, _
 from .base import (
@@ -21,45 +21,61 @@ from .base import (
 
 
 class PathStat(NamedTuple):
+    """文件/目录状态的自定义具名元组。"""
+
     size: int
-    created_at: float | None  # 文件创建时间（可能不存在）
-    updated_at: float  # 文件内容最后修改时间
+    # 最后访问时间 (st_atime)
+    accessed_at: Optional[float]
+    # 最后修改时间 (st_mtime)
+    modified_at: Optional[float]
+    # 文件创建时间（仅在 Windows/macOS 上有明确含义，Linux 上可能为None）
+    created_at: Optional[float]
+    # 最后状态更改时间（仅在 Unix/Linux 上有明确含义，Windows 上可能为None）
+    status_changed_at: Optional[float]
 
 
 def parse_path_stat(stat: os.stat_result) -> PathStat:
-    """
-    提取文件的大小（size）、创建时间（created_at）和最后修改时间（updated_at）。
 
-    规则：
-    - updated_at 始终使用 st_mtime（内容修改时间）
-    - created_at 优先使用真实创建时间（birth time）
-    - 若平台不支持创建时间，则返回 None
-    """
+    # 提取不变的时间戳字段
+    size = stat.st_size
+    accessed_at = stat.st_atime
+    modified_at = stat.st_mtime
 
-    # 内容最后修改时间（跨平台语义一致）
-    updated_at = stat.st_mtime
-
-    # 文件创建时间（并非所有系统都支持）
+    # 初始化 created_at 和 status_changed_at 为 None
     created_at = None
+    status_changed_at = None
 
-    # macOS / BSD
-    if hasattr(stat, "st_birthtime"):
-        created_at = stat.st_birthtime
+    # --- 跨平台逻辑判断 st_ctime 的含义 ---
 
-    # 部分 Linux（statx / 新内核）
-    elif hasattr(stat, "st_btime"):
-        created_at = stat.st_btime
-    elif hasattr(stat, "st_ctime"):
+    current_system = settings.SYSTEM_NAME
+
+    if current_system == "Windows":
+        # 在 Windows 上，st_ctime 明确表示文件创建时间
         created_at = stat.st_ctime
+        # status_changed_at 不明确，设为 None
 
-    # Windows：st_ctime 即创建时间
-    elif platform.system() == "Windows":
-        created_at = stat.st_ctime
+    elif current_system == "Linux" or current_system == "Darwin":  # Linux / macOS
+        # 在 Unix/Linux/macOS 上：
+        # - st_ctime 明确表示文件状态的最后更改时间（如权限、所有者变更等）
+        status_changed_at = stat.st_ctime
+
+        # - Windows 上代表的创建时间，在 Unix-like 系统上通常通过 st_birthtime 访问
+        #   Python 的 os.stat_result 在某些系统/版本上可能包含 st_birthtime 属性
+        if hasattr(stat, "st_birthtime"):
+            created_at = stat.st_birthtime
+        # 注意：在 Linux 上，st_birthtime 的可用性取决于文件系统（如 ext4）。
+        # 如果没有，则 created_at 保持为 None。
+
+    else:
+        # 其他系统，如 BSD 等，默认将 st_ctime 视为状态更改时间
+        status_changed_at = stat.st_ctime
 
     return PathStat(
-        size=stat.st_size,
+        size=size,
+        accessed_at=accessed_at,
+        modified_at=modified_at,
         created_at=created_at,
-        updated_at=updated_at,
+        status_changed_at=status_changed_at,
     )
 
 
@@ -216,8 +232,10 @@ class LocalStorage(StorageBackend):
                         name=entry_path.name,
                         path=entry_remote_path,
                         size=0,
+                        accessed_at=stat_info.accessed_at,
+                        modified_at=stat_info.modified_at,
                         created_at=stat_info.created_at,
-                        updated_at=stat_info.updated_at,
+                        status_changed_at=stat_info.status_changed_at,
                         num_children=len(list(entry_path.iterdir())),
                     )
                 else:
@@ -226,8 +244,10 @@ class LocalStorage(StorageBackend):
                         path=entry_remote_path,
                         extension=entry_path.suffix if entry_path.suffix else None,
                         size=stat_info.size,
+                        accessed_at=stat_info.accessed_at,
+                        modified_at=stat_info.modified_at,
                         created_at=stat_info.created_at,
-                        updated_at=stat_info.updated_at,
+                        status_changed_at=stat_info.status_changed_at,
                     )
 
                 metadata_list.append(metadata)
@@ -339,8 +359,10 @@ class LocalStorage(StorageBackend):
                 name=full_path.name,
                 path=remote_path,
                 size=0,
+                accessed_at=stat_info.accessed_at,
+                modified_at=stat_info.modified_at,
                 created_at=stat_info.created_at,
-                updated_at=stat_info.updated_at,
+                status_changed_at=stat_info.status_changed_at,
                 num_children=len(list(full_path.iterdir())),
             )
         else:
@@ -349,8 +371,10 @@ class LocalStorage(StorageBackend):
                 path=remote_path,
                 extension=full_path.suffix if full_path.suffix else None,
                 size=stat_info.size,
+                accessed_at=stat_info.accessed_at,
+                modified_at=stat_info.modified_at,
                 created_at=stat_info.created_at,
-                updated_at=stat_info.updated_at,
+                status_changed_at=stat_info.status_changed_at,
             )
 
     async def get_directory_size(self, remote_path: str) -> int:
@@ -520,8 +544,10 @@ class LocalStorage(StorageBackend):
                             name=path.name,
                             path=remote_path_str,
                             size=0,
+                            accessed_at=stat_info.accessed_at,
+                            modified_at=stat_info.modified_at,
                             created_at=stat_info.created_at,
-                            updated_at=stat_info.updated_at,
+                            status_changed_at=stat_info.status_changed_at,
                         )
                     else:
                         return FileMetadata(
@@ -529,8 +555,10 @@ class LocalStorage(StorageBackend):
                             path=remote_path_str,
                             extension=path.suffix if path.suffix else None,
                             size=stat_info.size,
+                            accessed_at=stat_info.accessed_at,
+                            modified_at=stat_info.modified_at,
                             created_at=stat_info.created_at,
-                            updated_at=stat_info.updated_at,
+                            status_changed_at=stat_info.status_changed_at,
                         )
                 except Exception as e:
                     # 捕获任何 stat 错误（如文件被删除或权限改变）
