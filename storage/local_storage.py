@@ -171,7 +171,7 @@ class LocalStorage(StorageBackend):
                         name=entry_path.name,
                         path=entry_remote_path,
                         size=0,
-                        created_at=stat_info.st_birthtime,
+                        created_at=stat_info.st_mtime,
                         updated_at=stat_info.st_ctime,
                         num_children=len(list(entry_path.iterdir())),
                     )
@@ -181,7 +181,7 @@ class LocalStorage(StorageBackend):
                         path=entry_remote_path,
                         extension=entry_path.suffix,
                         size=stat_info.st_size,
-                        created_at=stat_info.st_birthtime,
+                        created_at=stat_info.st_mtime,
                         updated_at=stat_info.st_ctime,
                     )
 
@@ -294,7 +294,7 @@ class LocalStorage(StorageBackend):
                 name=full_path.name,
                 path=remote_path,
                 size=0,
-                created_at=stat_info.st_birthtime,
+                created_at=stat_info.st_mtime,
                 updated_at=stat_info.st_ctime,
                 num_children=len(list(full_path.iterdir())),
             )
@@ -304,7 +304,7 @@ class LocalStorage(StorageBackend):
                 path=remote_path,
                 extension=full_path.suffix,
                 size=stat_info.st_size,
-                created_at=stat_info.st_birthtime,
+                created_at=stat_info.st_mtime,
                 updated_at=stat_info.st_ctime,
             )
 
@@ -429,7 +429,7 @@ class LocalStorage(StorageBackend):
                             name=path.name,
                             path=remote_path_str,
                             size=0,
-                            created_at=stat_info.st_birthtime,
+                            created_at=stat_info.st_mtime,
                             updated_at=stat_info.st_ctime,
                         )
                     else:
@@ -438,7 +438,7 @@ class LocalStorage(StorageBackend):
                             path=remote_path_str,
                             extension=path.suffix,
                             size=stat_info.st_size,
-                            created_at=stat_info.st_birthtime,
+                            created_at=stat_info.st_mtime,
                             updated_at=stat_info.st_ctime,
                         )
                 except Exception as e:
