@@ -1,8 +1,9 @@
+import asyncio
 from datetime import datetime, timezone, date, time
 from pathlib import Path
 from typing import Optional, Callable
 
-from nicegui import ui, events
+from nicegui import ui, events, background_tasks
 
 from schemas.file_schema import FILE_NAME_FORBIDDEN_CHARS, FileMetadata
 from services.file_service import (
@@ -28,6 +29,73 @@ class Dialog:
     async def open(self):
         r = await self.dialog
         return r
+
+
+class SearchDialog(Dialog):
+    def __init__(self, file_service: StorageManager, current_path: Path):
+        super().__init__()
+        self.search_input: Optional[ui.input] = None
+        self.file_service = file_service
+        self.current_path = current_path
+
+        self.last_query: Optional[str] = None
+        self.results: Optional[ui.element] = None
+
+    async def open(self):
+        with self.dialog, ui.card().tight().classes("w-[800px] h-[600px]"):
+            with ui.row().classes("w-full items-center px-4"):
+                ui.icon("search", size="2em")
+                self.search_input = (
+                    ui.input(
+                        label=_("Search in {}").format(self.current_path.name),
+                        on_change=self.on_search_input_value_change,
+                    )
+                    .classes("flex-grow")
+                    .props("borderless autofocus")
+                )
+
+                ui.separator()
+
+                self.results = ui.element("q-list").classes("w-full").props("separator")
+
+        r = await self.dialog
+        return r
+
+    async def search(self, query: str):
+        return await self.file_service.search(query, str(self.current_path))
+
+    async def on_search_input_value_change(self):
+        async def handle_input():
+            with self.results:
+                # Debouncing: Wait for the input to finish typing
+                await asyncio.sleep(1)
+
+                query = self.search_input.value.strip()
+                if query == self.last_query:
+                    return
+
+                self.results.clear()
+
+                if not query:
+                    return
+
+                self.last_query = query
+                results = await self.search(query)
+
+                if not results:
+                    ui.label(_("No results found")).classes("text-center")
+                    return
+                else:
+                    with ui.list().props("bordered separator"):
+                        for result_item in results:
+                            with ui.item().props("clickable"):
+                                with ui.item_section():
+                                    with ui.link().on("click", self.dialog.close):
+                                        ui.item_label(result_item.name)
+                                        with ui.item_label().props("caption"):
+                                            ui.markdown(f"`{result_item.path}`")
+
+        background_tasks.create_lazy(handle_input(), name="handle_search_input")
 
 
 class InputDialog(Dialog):
@@ -100,7 +168,7 @@ class ConfirmDialog(Dialog):
 class RenameDialog(InputDialog):
     def __init__(self, old_name: str):
         super().__init__(
-            title=_("Rename {}".format(old_name)),
+            title=_("Confirm Rename"),
             input_label=_("New name"),
             input_value=old_name,
         )
@@ -110,9 +178,15 @@ class RenameDialog(InputDialog):
         with self.dialog, ui.card().classes("w-full"):
             ui.label(self.title).classes(self.title_class)
 
-            input_component = ui.input(
-                label=self.input_label, value=self.input_value
-            ).classes("w-full")
+            ui.input(label=_("Current name"), value=self.old_name).classes(
+                "w-full"
+            ).disable()
+
+            input_component = (
+                ui.input(label=self.input_label, value=self.input_value)
+                .classes("w-full")
+                .props("autofocus")
+            )
 
             def is_same(a, b):
                 return a == b
@@ -123,7 +197,7 @@ class RenameDialog(InputDialog):
                     notify.warning(_("New name cannot be empty"))
                     return None
                 if is_same(new_val, self.old_name):
-                    notify.warning(_("New name cannot be the same as the old name"))
+                    notify.warning(_("New name cannot be the same as the current name"))
                     return None
                 if any(char in new_val for char in FILE_NAME_FORBIDDEN_CHARS):
                     notify.warning(
@@ -484,8 +558,8 @@ class FileInfoDialog(Dialog):
 
     async def on_delete_button_click(self):
         confirm = await ConfirmDialog(
-            _("Delete {}").format(self.metadata.name),
-            _("Are you sure you want to delete this file?"),
+            _("Confirm Delete"),
+            _("Are you sure you want to delete **`{}`**").format(self.metadata.name),
             warning=True,
         ).open()
         if confirm:
@@ -564,8 +638,10 @@ class FileInfoDialog(Dialog):
 
     async def on_download_button_click(self):
         confirm = await ConfirmDialog(
-            _("Download {}").format(self.metadata.name),
-            _("Do you want to download this file?"),
+            _("Confirm Download"),
+            _("Are you sure you want to download **`{}`**? ").format(
+                self.metadata.name
+            ),
         ).open()
         if confirm:
             download_url = generate_download_url(

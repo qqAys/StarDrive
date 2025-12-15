@@ -22,8 +22,8 @@ from ui.components.dialog import (
     InputDialog,
     DirectoryInfoDialog,
     FileInfoDialog,
+    SearchDialog,
 )
-from ui.components.input import input_with_icon
 from ui.components.notify import notify
 from utils import _, bytes_to_human_readable, timestamp_to_human_readable
 
@@ -167,14 +167,14 @@ class FileBrowserTable:
             with self.browser_table.add_slot("no-data"):
                 with ui.row().classes("items-center"):
                     ui.icon("warning").classes("text-2xl")
-                    ui.label(_("Empty here.")).classes("font-bold")
+                    ui.label(_("Empty Here.")).classes("font-bold")
 
             with self.browser_table.add_slot("top-left"):
                 with ui.row().classes("items-center gap-x-0"):
                     # 返回上一级目录按钮
                     ui.button(icon="arrow_upward", on_click=self.back_func).props(
                         "flat dense"
-                    ).tooltip(_("Back to parent directory"))
+                    ).tooltip(_("Back to Parent Directory"))
 
                     # 路径分隔符
                     if self.current_path.parts:
@@ -182,7 +182,7 @@ class FileBrowserTable:
                             text=_("Home"),
                             on_click=lambda: self.goto_func(Path(initial_path)),
                         ).props("flat dense")
-                        home_button.tooltip(_("Back to home directory"))
+                        home_button.tooltip(_("Back to Home Directory"))
 
                         ui.icon("chevron_right").classes("text-xl text-gray-500 mx-0.5")
 
@@ -288,12 +288,15 @@ class FileBrowserTable:
                             on_click=self.handle_edit_button_click,
                         )
                         .props("flat dense")
-                        .tooltip(_("More actions"))
+                        .tooltip(_("More Actions"))
                     )
-                    self.search_input = (
-                        input_with_icon(_("Search"), icon="search")
-                        .bind_value(self.browser_table, "filter")
-                        .props("clearable dense flat")
+                    self.search_button = (
+                        ui.button(
+                            icon="find_in_page",
+                            on_click=self.handle_search_button_click,
+                        )
+                        .props("dense flat")
+                        .tooltip(_("Search in Current Directory (./)"))
                     )
 
                     self.new_directory_button.set_visibility(not self.is_select_mode)
@@ -415,7 +418,10 @@ class FileBrowserTable:
             return
         else:
             confirm = await ConfirmDialog(
-                _("Download file"), _("Do you want to download this file?")
+                _("Confirm Download"),
+                _(
+                    "Are you sure you want to download **`{}`**? To **delete**, **move**, **rename** or **share** this file, please use the **Information** button(i) next to the file row."
+                ).format(file_name),
             ).open()
             if confirm:
                 download_url = generate_download_url(target_path, file_name, "download")
@@ -621,6 +627,9 @@ class FileBrowserTable:
             return
 
         await self.refresh()
+
+    async def handle_search_button_click(self):
+        await SearchDialog(self.file_service, self.current_path).open()
 
     async def handle_info_button_click(self, e: events.GenericEventArguments):
         item_metadata = self.file_service.get_file_metadata(e.args["path"])
