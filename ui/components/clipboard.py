@@ -4,10 +4,10 @@ from ui.components.notify import notify
 from utils import _
 
 
-def copy_share_link_to_clipboard(link: str) -> bool:
+def copy_to_clipboard(link: str, message: str) -> bool:
     try:
         ui.clipboard.write(link)
-        notify.success(_("Share link copied to clipboard."))
+        notify.success(message)
     except Exception as e:
         notify.error(_("Failed to copy to clipboard: {}").format(e))
         return False

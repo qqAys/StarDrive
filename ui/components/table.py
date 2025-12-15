@@ -5,6 +5,7 @@ from nicegui import ui, events
 from starlette.formparsers import MultiPartParser
 
 from config import settings
+from schemas.file_schema import DirMetadata, FileMetadata
 from services.file_service import (
     StorageManager,
     get_file_icon,
@@ -12,14 +13,15 @@ from services.file_service import (
     set_user_last_path,
     validate_filename,
 )
+from services.user_service import get_user_timezone
 from ui.components import max_w
-from ui.components.clipboard import copy_share_link_to_clipboard
+from ui.components.clipboard import copy_to_clipboard
 from ui.components.dialog import (
     ConfirmDialog,
-    RenameDialog,
-    ShareDialog,
     MoveDialog,
     InputDialog,
+    DirectoryInfoDialog,
+    FileInfoDialog,
 )
 from ui.components.input import input_with_icon
 from ui.components.notify import notify
@@ -37,7 +39,6 @@ size_sort_js = """(a, b, rowA, rowB) => {
     return rowA.raw_size - rowB.raw_size;
 }"""
 
-
 MultiPartParser.spool_max_size = settings.MULTIPARTPARSER_SPOOL_MAX_SIZE
 
 
@@ -52,6 +53,7 @@ class FileBrowserTable:
     ):
 
         self.file_service = file_service
+        self.user_timezone = get_user_timezone()
 
         self.browser_table: Optional[ui.table] = None
         self.action_column = {
@@ -251,13 +253,13 @@ class FileBrowserTable:
                         .props("flat dense")
                         .tooltip(_("Upload"))
                     )
-                    self.download_button = (
+                    self.delete_button = (
                         ui.button(
-                            icon="cloud_download",
-                            on_click=self.handle_download_button_click,
+                            icon="delete_forever",
+                            on_click=self.handle_delete_button_click,
                         )
                         .props("flat dense")
-                        .tooltip(_("Download"))
+                        .tooltip(_("Delete"))
                     )
                     self.move_button = (
                         ui.button(
@@ -267,14 +269,15 @@ class FileBrowserTable:
                         .props("flat dense")
                         .tooltip(_("Move"))
                     )
-                    self.delete_button = (
+                    self.download_button = (
                         ui.button(
-                            icon="delete",
-                            on_click=self.handle_delete_button_click,
+                            icon="cloud_download",
+                            on_click=self.handle_download_button_click,
                         )
                         .props("flat dense")
-                        .tooltip(_("Delete"))
+                        .tooltip(_("Download"))
                     )
+
                     self.edit_button = (
                         ui.button(
                             icon=(
@@ -293,10 +296,12 @@ class FileBrowserTable:
                         .props("clearable dense flat")
                     )
 
+                    self.new_directory_button.set_visibility(not self.is_select_mode)
                     self.upload_button.set_visibility(not self.is_select_mode)
-                    self.download_button.set_visibility(self.is_select_mode)
-                    self.move_button.set_visibility(self.is_select_mode)
                     self.delete_button.set_visibility(self.is_select_mode)
+                    self.move_button.set_visibility(self.is_select_mode)
+                    self.download_button.set_visibility(self.is_select_mode)
+
                     self.browser_table.set_selection(
                         "multiple" if self.is_select_mode else None
                     )
@@ -305,8 +310,7 @@ class FileBrowserTable:
                 "body-cell-action",
                 f"""
                 <q-td :props="props">
-                    <q-btn icon="share" @click="() => $parent.$emit('share', props.row)" flat dense><q-tooltip>{_("Share")}</<q-tooltip></q-btn>
-                    <q-btn icon="drive_file_rename_outline" @click="() => $parent.$emit('rename', props.row)" flat dense><q-tooltip>{_("Rename")}</<q-tooltip></q-btn>
+                    <q-btn icon="info" @click="() => $parent.$emit('info', props.row)" flat dense><q-tooltip>{_("Information")}</<q-tooltip></q-btn>
                 </q-td>
             """,
             )
@@ -320,17 +324,17 @@ class FileBrowserTable:
                     "name": f"{get_file_icon(p.type, p.extension)} <b>{p.name}</b>",
                     "raw_name": p.name,
                     "type": p.type,
-                    "extension": p.extension,
+                    "extension": p.extension if p.extension else "-",
                     "path": p.path,
                     "size": bytes_to_human_readable(p.size) if p.size else "-",
                     "raw_size": p.size if p.size else -1,
                     "created_at": (
-                        timestamp_to_human_readable(p.created_at)
+                        timestamp_to_human_readable(p.created_at, self.user_timezone)
                         if p.created_at
                         else "-"
                     ),
                     "updated_at": (
-                        timestamp_to_human_readable(p.updated_at)
+                        timestamp_to_human_readable(p.updated_at, self.user_timezone)
                         if p.updated_at
                         else "-"
                     ),
@@ -341,8 +345,7 @@ class FileBrowserTable:
             self.browser_table.on("row-click", self.handle_row_click)
             self.browser_table.on("row-dblclick", self.handle_row_double_click)
 
-            self.browser_table.on("rename", self.handle_rename_button_click)
-            self.browser_table.on("share", self.handle_share_button_click)
+            self.browser_table.on("info", self.handle_info_button_click)
 
             self.browser_table.update()
 
@@ -385,11 +388,14 @@ class FileBrowserTable:
         return
 
     def copy_path_clipboard(self):
-        copy_share_link_to_clipboard(str(self.current_path))
+        copy_to_clipboard(
+            str(self.current_path), message=_("Path copied to clipboard.")
+        )
 
     def handle_row_click(self, e: events.GenericEventArguments):
         click_event_params, click_row, click_index = e.args
 
+        # In select mode
         if self.is_select_mode:
             if click_row in self.browser_table.selected:
                 self.browser_table.selected.remove(click_row)
@@ -416,8 +422,6 @@ class FileBrowserTable:
                 if not download_url:
                     return
                 ui.navigate.to(download_url)
-            else:
-                notify.warning(_("Cancel download"))
         return
 
     async def handle_new_directory_button_click(self):
@@ -454,8 +458,6 @@ class FileBrowserTable:
                 notify.success(
                     _("New directory created successfully: {}").format(new_directory)
                 )
-        else:
-            notify.warning(_("Cancel creating new directory"))
 
         await self.refresh()
 
@@ -520,13 +522,14 @@ class FileBrowserTable:
         else:
             self.browser_table.columns.append(self.action_column)
 
+        self.new_directory_button.set_visibility(not self.is_select_mode)
+        self.upload_button.set_visibility(not self.is_select_mode)
+        self.move_button.set_visibility(self.is_select_mode)
+        self.delete_button.set_visibility(self.is_select_mode)
+        self.download_button.set_visibility(self.is_select_mode)
         self.edit_button.props(
             f"icon={self.edit_button_icon_close if self.is_select_mode else self.edit_button_icon_open}"
         )
-        self.upload_button.set_visibility(not self.is_select_mode)
-        self.download_button.set_visibility(self.is_select_mode)
-        self.move_button.set_visibility(self.is_select_mode)
-        self.delete_button.set_visibility(self.is_select_mode)
 
     async def handle_download_button_click(self):
         if not self.browser_table.selected:
@@ -551,8 +554,6 @@ class FileBrowserTable:
             if not download_url:
                 return
             ui.navigate.to(download_url)
-        else:
-            notify.warning(_("Cancel download"))
         return
 
     async def handle_move_button_click(self):
@@ -561,7 +562,9 @@ class FileBrowserTable:
             return
 
         confirm = await MoveDialog(
-            self.file_service, len(self.browser_table.selected), self.current_path
+            self.file_service,
+            [f["raw_name"] for f in self.browser_table.selected],
+            self.current_path,
         ).open()
         if confirm:
             # Checks if the target move directory is the same as the current directory.
@@ -588,36 +591,13 @@ class FileBrowserTable:
 
         await self.refresh()
 
-    async def handle_rename_button_click(self, e: events.GenericEventArguments):
-        target_path = e.args["path"]
-        file_name = e.args["raw_name"]
-        new_name = await RenameDialog(old_name=file_name).open()
-        if new_name:
-            new_path = Path(target_path).parent / new_name
-            if self.file_service.exists(new_path):
-                notify.warning(
-                    _(
-                        "A file or folder with this name already exists. Please choose a different name."
-                    )
-                )
-                return
-            try:
-                self.file_service.move_file(target_path, new_path)
-                notify.success(_("Rename successful"))
-            except Exception as e:
-                notify.error(e)
-        else:
-            return
-
-        await self.refresh()
-
     async def handle_delete_button_click(self):
         if not self.browser_table.selected:
             notify.warning(_("Please select at least one file"))
             return
 
         confirm = await ConfirmDialog(
-            title=_("Delete {} items?").format(len(self.browser_table.selected)),
+            title=_("Delete {} items").format(len(self.browser_table.selected)),
             message=[
                 f"{get_file_icon(item["type"], item["extension"])} {item["raw_name"]}"
                 for item in self.browser_table.selected
@@ -642,19 +622,15 @@ class FileBrowserTable:
 
         await self.refresh()
 
-    @staticmethod
-    async def handle_share_button_click(e: events.GenericEventArguments):
-        target_path = e.args["path"]
-        file_name = e.args["raw_name"]
-        expire_define = await ShareDialog(file_name=file_name).open()
-        if expire_define:
-            download_url = generate_download_url(
-                target_path,
-                file_name,
-                "share",
-                expire_define["expire_datetime_utc"],
-                expire_define["expire_days"],
-            )
-            if not download_url:
-                return
-            copy_share_link_to_clipboard(download_url)
+    async def handle_info_button_click(self, e: events.GenericEventArguments):
+        item_metadata = self.file_service.get_file_metadata(e.args["path"])
+
+        if isinstance(item_metadata, DirMetadata):
+            await DirectoryInfoDialog(item_metadata).open()
+        elif isinstance(item_metadata, FileMetadata):
+            await FileInfoDialog(
+                self.current_path, item_metadata, self.file_service, self.refresh
+            ).open()
+        else:
+            notify.error(_("Failed to get file metadata"))
+            return

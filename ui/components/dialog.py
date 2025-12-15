@@ -1,20 +1,21 @@
 from datetime import datetime, timezone, date, time
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Callable
 
 from nicegui import ui, events
 
-from schemas.file_schema import FILE_NAME_FORBIDDEN_CHARS
+from schemas.file_schema import FILE_NAME_FORBIDDEN_CHARS, FileMetadata
 from services.file_service import (
     get_user_share_links,
     delete_download_link,
     StorageManager,
     get_file_icon,
+    generate_download_url,
 )
 from services.user_service import get_user_timezone
-from ui.components.clipboard import copy_share_link_to_clipboard
+from ui.components.clipboard import copy_to_clipboard
 from ui.components.notify import notify
-from utils import _
+from utils import _, bytes_to_human_readable, timestamp_to_human_readable
 
 
 class Dialog:
@@ -201,8 +202,9 @@ class ShareDialog(Dialog):
                                 ui.button(
                                     _("Copy"),
                                     icon="content_copy",
-                                    on_click=lambda: copy_share_link_to_clipboard(
-                                        link_url
+                                    on_click=lambda: copy_to_clipboard(
+                                        link_url,
+                                        message=_("Share link copied to clipboard."),
                                     ),
                                 ).classes("w-full").props("flat dense")
                                 ui.button(
@@ -306,14 +308,17 @@ class ShareDialog(Dialog):
 
 
 class MoveDialog(Dialog):
-    def __init__(
-        self, file_service: StorageManager, items_count: int, current_path: Path
-    ):
+    """
+    移动对话框
+    用户选择目标文件夹后，返回路径
+    """
+
+    def __init__(self, file_service: StorageManager, files: list, current_path: Path):
         super().__init__()
         self.title_label: Optional[ui.label] = None
 
         self.file_service = file_service
-        self.items_count = items_count
+        self.files = files
         self.current_path = current_path
 
         self.dialog = ui.dialog().props(self.dialog_props)
@@ -352,8 +357,13 @@ class MoveDialog(Dialog):
                 if parent:
                     path = path.parent
 
-                self.title_label.text = _("Move {} items to {}").format(
-                    self.items_count, str(path)
+                self.title_label.text = _("Move {} to {}").format(
+                    (
+                        f"{len(self.files)} items"
+                        if len(self.files) > 1
+                        else self.files[0]
+                    ),
+                    str(path),
                 )
                 dir_table_rows = []
                 for meta_data in self.file_service.list_files(str(path)):
@@ -386,3 +396,188 @@ class MoveDialog(Dialog):
 
         r = await self.dialog
         return r
+
+
+class FileInfoDialog(Dialog):
+    def __init__(
+        self,
+        current_path: Path,
+        metadata: FileMetadata,
+        file_service: StorageManager,
+        refresh_browser_func: Callable,
+    ):
+        super().__init__()
+        self.current_path = current_path
+        self.metadata = metadata
+        self.file_service = file_service
+        self.refresh_browser = refresh_browser_func
+
+        self.user_timezone = get_user_timezone()
+
+        self.dialog = ui.dialog().props(self.dialog_props)
+
+    async def open(self):
+        with self.dialog, ui.card().classes("w-full"):
+            with ui.row().classes("w-full justify-between"):
+                ui.label(_("File info")).classes(self.title_class)
+                ui.button(
+                    icon="close", on_click=lambda: self.dialog.submit(None)
+                ).props("flat dense")
+
+            with ui.card().props("bordered flat").classes("w-full"):
+                with ui.list().props("dense separator").classes("w-full"):
+                    for k, v in {
+                        _("File name"): self.metadata.name,
+                        _("File path"): self.metadata.path,
+                        _("File type"): self.metadata.type,
+                        _(
+                            "File size"
+                        ): f"{bytes_to_human_readable(self.metadata.size)} ({self.metadata.size} bytes)",
+                        _("File extension"): self.metadata.extension,
+                        _("File created at"): timestamp_to_human_readable(
+                            self.metadata.created_at, self.user_timezone
+                        ),
+                        _("File updated at"): timestamp_to_human_readable(
+                            self.metadata.updated_at, self.user_timezone
+                        ),
+                    }.items():
+                        with ui.item():
+                            with ui.row(wrap=False).classes("w-full items-center"):
+                                ui.label(k).classes("font-bold w-2/7 text-nowrap")
+                                ui.label(v).classes("w-5/7")
+
+            with ui.grid(columns=3).classes("w-full justify-between"):
+                ui.button(
+                    _("Delete"),
+                    icon="delete_forever",
+                    on_click=self.on_delete_button_click,
+                    color="red",
+                )
+                ui.button(
+                    _("Move"),
+                    icon="drive_file_move",
+                    on_click=self.on_move_button_click,
+                    color="amber",
+                )
+                ui.button(
+                    _("Rename"),
+                    icon="drive_file_rename_outline",
+                    on_click=self.on_rename_button_click,
+                    color="gray-400",
+                )
+            with ui.grid(columns=2).classes("w-full justify-between"):
+                ui.button(
+                    _("Share"),
+                    icon="share",
+                    on_click=self.on_share_button_click,
+                    color="cyan",
+                )
+                ui.button(
+                    _("Download"),
+                    icon="download",
+                    on_click=self.on_download_button_click,
+                    color="blue",
+                )
+
+        r = await self.dialog
+        return r
+
+    async def on_delete_button_click(self):
+        confirm = await ConfirmDialog(
+            _("Delete {}").format(self.metadata.name),
+            _("Are you sure you want to delete this file?"),
+            warning=True,
+        ).open()
+        if confirm:
+            try:
+                self.file_service.delete_file(self.metadata.path)
+                notify.success(_("Delete successful"))
+            except Exception as e:
+                notify.error(e)
+        else:
+            return
+        await self.refresh_browser()
+
+    async def on_rename_button_click(self):
+        new_name = await RenameDialog(old_name=self.metadata.name).open()
+        if new_name:
+            new_path = Path(self.metadata.path).parent / new_name
+            if self.file_service.exists(new_path):
+                notify.warning(
+                    _(
+                        "A file or folder with this name already exists. Please choose a different name."
+                    )
+                )
+                return
+            try:
+                self.file_service.move_file(self.metadata.path, new_path)
+                notify.success(_("Rename successful"))
+            except Exception as e:
+                notify.error(e)
+        else:
+            return
+        await self.refresh_browser()
+
+    async def on_move_button_click(self):
+        target_path = await MoveDialog(
+            self.file_service, [self.metadata.name], self.current_path
+        ).open()
+        if target_path:
+            if target_path == self.current_path:
+                notify.error(
+                    _(
+                        "Cannot move items to the same folder. Please select a different destination."
+                    )
+                )
+                return
+
+            try:
+                self.file_service.move_file(
+                    self.metadata.path, target_path / self.metadata.name
+                )
+                notify.success(
+                    _("Move successful to {}").format(target_path / self.metadata.name)
+                )
+            except Exception as e:
+                notify.error(e)
+        else:
+            return
+
+        await self.refresh_browser()
+
+    async def on_share_button_click(self):
+        expire_define = await ShareDialog(file_name=self.metadata.name).open()
+        if expire_define:
+            download_url = generate_download_url(
+                self.metadata.path,
+                self.metadata.name,
+                "share",
+                expire_define["expire_datetime_utc"],
+                expire_define["expire_days"],
+            )
+            if not download_url:
+                return
+            copy_to_clipboard(
+                download_url, message=_("Share link copied to clipboard.")
+            )
+        return
+
+    async def on_download_button_click(self):
+        confirm = await ConfirmDialog(
+            _("Download {}").format(self.metadata.name),
+            _("Do you want to download this file?"),
+        ).open()
+        if confirm:
+            download_url = generate_download_url(
+                self.metadata.path, self.metadata.name, "download"
+            )
+            if not download_url:
+                return
+            ui.navigate.to(download_url)
+            return
+        else:
+            return
+
+
+class DirectoryInfoDialog(Dialog):
+    pass
