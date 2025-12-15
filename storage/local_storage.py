@@ -49,6 +49,8 @@ def parse_path_stat(stat: os.stat_result) -> PathStat:
     # 部分 Linux（statx / 新内核）
     elif hasattr(stat, "st_btime"):
         created_at = stat.st_btime
+    elif hasattr(stat, "st_ctime"):
+        created_at = stat.st_ctime
 
     # Windows：st_ctime 即创建时间
     elif platform.system() == "Windows":
