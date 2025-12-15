@@ -1,3 +1,4 @@
+import platform
 from datetime import timedelta, timezone
 from typing import Literal, Any, ClassVar
 
@@ -14,12 +15,15 @@ class Config(BaseSettings):
     _PROJECT_AUTHOR_EMAIL: str = "me@qqays.xyz"
     _PROJECT_LICENSE: str = "MIT"
 
+    _SYSTEM_NAME: str = platform.system()
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_prefix=f"{_PROJECT_NAME_ENV}_",
         env_file_encoding="utf-8",
         case_sensitive=True,
     )
+    SYSTEM_NAME: str = _SYSTEM_NAME
 
     # 请勿在生产环境打开DEBUG，将可能暴露文件结构
     DEBUG: bool = False
