@@ -62,7 +62,7 @@ class Config(BaseSettings):
         init_logger.setLevel("DEBUG")
         init_logger.addHandler(StreamHandler())
 
-        init_logger.info(f"{self._PROJECT_NAME} {self.APP_VERSION}")
+        init_logger.info(f"{self._PROJECT_NAME} v{self.APP_VERSION} {self.SYSTEM_NAME}")
 
         if self.DEBUG:
             init_logger.debug("DEBUG mode is enabled, LOG_LEVEL is set to DEBUG.")

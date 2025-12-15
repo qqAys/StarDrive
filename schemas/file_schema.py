@@ -26,6 +26,9 @@ class FileMetadataBase(BaseModel):
     status_changed_at: Optional[float] = Field(
         default=None, description=_("Last status change timestamp")
     )
+    custom_updated_at: Optional[float] = Field(
+        default=None, description=_("Custom update timestamp")
+    )
 
     class Config:
         extra = "ignore"

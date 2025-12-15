@@ -33,6 +33,9 @@ class PathStat(NamedTuple):
     # 最后状态更改时间（仅在 Unix/Linux 上有明确含义，Windows 上可能为None）
     status_changed_at: Optional[float]
 
+    # 自定义更新时间
+    custom_updated_at: Optional[float]
+
 
 def parse_path_stat(stat: os.stat_result) -> PathStat:
 
@@ -44,6 +47,7 @@ def parse_path_stat(stat: os.stat_result) -> PathStat:
     # 初始化 created_at 和 status_changed_at 为 None
     created_at = None
     status_changed_at = None
+    custom_updated_at = None
 
     # --- 跨平台逻辑判断 st_ctime 的含义 ---
 
@@ -52,12 +56,13 @@ def parse_path_stat(stat: os.stat_result) -> PathStat:
     if current_system == "Windows":
         # 在 Windows 上，st_ctime 明确表示文件创建时间
         created_at = stat.st_ctime
-        # status_changed_at 不明确，设为 None
+        custom_updated_at = accessed_at
 
-    elif current_system == "Linux" or current_system == "Darwin":  # Linux / macOS
+    elif current_system in ["Linux", "Darwin"]:  # Linux / macOS
         # 在 Unix/Linux/macOS 上：
         # - st_ctime 明确表示文件状态的最后更改时间（如权限、所有者变更等）
         status_changed_at = stat.st_ctime
+        custom_updated_at = stat.st_ctime
 
         # - Windows 上代表的创建时间，在 Unix-like 系统上通常通过 st_birthtime 访问
         #   Python 的 os.stat_result 在某些系统/版本上可能包含 st_birthtime 属性
@@ -76,6 +81,7 @@ def parse_path_stat(stat: os.stat_result) -> PathStat:
         modified_at=modified_at,
         created_at=created_at,
         status_changed_at=status_changed_at,
+        custom_updated_at=custom_updated_at,
     )
 
 
@@ -236,6 +242,7 @@ class LocalStorage(StorageBackend):
                         modified_at=stat_info.modified_at,
                         created_at=stat_info.created_at,
                         status_changed_at=stat_info.status_changed_at,
+                        custom_updated_at=stat_info.custom_updated_at,
                         num_children=len(list(entry_path.iterdir())),
                     )
                 else:
@@ -248,6 +255,7 @@ class LocalStorage(StorageBackend):
                         modified_at=stat_info.modified_at,
                         created_at=stat_info.created_at,
                         status_changed_at=stat_info.status_changed_at,
+                        custom_updated_at=stat_info.custom_updated_at,
                     )
 
                 metadata_list.append(metadata)
@@ -363,6 +371,7 @@ class LocalStorage(StorageBackend):
                 modified_at=stat_info.modified_at,
                 created_at=stat_info.created_at,
                 status_changed_at=stat_info.status_changed_at,
+                custom_updated_at=stat_info.custom_updated_at,
                 num_children=len(list(full_path.iterdir())),
             )
         else:
@@ -375,6 +384,7 @@ class LocalStorage(StorageBackend):
                 modified_at=stat_info.modified_at,
                 created_at=stat_info.created_at,
                 status_changed_at=stat_info.status_changed_at,
+                custom_updated_at=stat_info.custom_updated_at,
             )
 
     async def get_directory_size(self, remote_path: str) -> int:
@@ -548,6 +558,7 @@ class LocalStorage(StorageBackend):
                             modified_at=stat_info.modified_at,
                             created_at=stat_info.created_at,
                             status_changed_at=stat_info.status_changed_at,
+                            custom_updated_at=stat_info.custom_updated_at,
                         )
                     else:
                         return FileMetadata(
@@ -559,6 +570,7 @@ class LocalStorage(StorageBackend):
                             modified_at=stat_info.modified_at,
                             created_at=stat_info.created_at,
                             status_changed_at=stat_info.status_changed_at,
+                            custom_updated_at=stat_info.custom_updated_at,
                         )
                 except Exception as e:
                     # 捕获任何 stat 错误（如文件被删除或权限改变）

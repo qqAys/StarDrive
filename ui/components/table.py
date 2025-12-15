@@ -338,12 +338,7 @@ class FileBrowserTable:
                     ),
                     "updated_at": (
                         timestamp_to_human_readable(
-                            (
-                                p.accessed_at
-                                if settings.SYSTEM_NAME == "Windows"
-                                else p.modified_at
-                            ),
-                            self.user_timezone,
+                            p.custom_updated_at, self.user_timezone
                         )
                     ),
                 }
