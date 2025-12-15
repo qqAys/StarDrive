@@ -29,13 +29,19 @@ async def index():
 
     file_manager = globals.get_storage_manager()
 
-    with (
-        ui.dialog().props("seamless position='bottom'") as upload_dialog,
-        ui.upload(label=_("Upload files"), multiple=True, auto_upload=True)
-        .props("hide-upload-btn no-thumbnails")
-        .classes("max-w-full") as upload_component,
-    ):
-        upload_component.set_visibility(True)
+    with ui.dialog().props("seamless position='bottom'") as upload_dialog:
+        with ui.card().tight():
+            dialog_close_button = (
+                ui.button(icon="close")
+                .props("dense square unelevated")
+                .classes("w-full")
+            )
+            upload_component = (
+                ui.upload(label=_("Upload files"), multiple=True, auto_upload=True)
+                .props("hide-upload-btn no-thumbnails")
+                .classes("max-w-full")
+            )
+            upload_component.set_visibility(True)
 
     user_last_path = get_user_last_path()
 
@@ -44,5 +50,6 @@ async def index():
         target_path="" if user_last_path is None else f"./{user_last_path}",
         upload_component=upload_component,
         upload_dialog=upload_dialog,
+        upload_dialog_close_button=dialog_close_button,
     )
     await file_browser_component.refresh()

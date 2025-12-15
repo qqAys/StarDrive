@@ -168,7 +168,7 @@ class ConfirmDialog(Dialog):
 class RenameDialog(InputDialog):
     def __init__(self, old_name: str):
         super().__init__(
-            title=_("Confirm Rename"),
+            title=_("Rename file"),
             input_label=_("New name"),
             input_value=old_name,
         )
@@ -191,7 +191,7 @@ class RenameDialog(InputDialog):
             def is_same(a, b):
                 return a == b
 
-            def on_confirm():
+            async def on_confirm():
                 new_val = input_component.value.strip()
                 if not new_val:
                     notify.warning(_("New name cannot be empty"))
@@ -208,7 +208,16 @@ class RenameDialog(InputDialog):
                     notify.warning(_("File name cannot end with a dot"))
                     return None
 
-                return self.dialog.submit(new_val)
+                confirm = await ConfirmDialog(
+                    title=_("Confirm Rename"),
+                    message=_(
+                        "Are you sure you want to rename **`{}`** to **`{}`** ?"
+                    ).format(self.old_name, new_val),
+                ).open()
+
+                if confirm:
+                    return self.dialog.submit(new_val)
+                return None
 
             with ui.row().classes("w-full justify-between"):
                 ui.button(_("Confirm"), on_click=on_confirm, color="green")
@@ -507,7 +516,9 @@ class FileInfoDialog(Dialog):
                         _(
                             "File size"
                         ): f"{bytes_to_human_readable(self.metadata.size)} ({self.metadata.size} bytes)",
-                        _("File extension"): self.metadata.extension,
+                        _(
+                            "File extension"
+                        ): f"{self.metadata.extension} ({get_file_icon(self.metadata.type, self.metadata.extension)})",
                         _("File created at"): timestamp_to_human_readable(
                             self.metadata.created_at, self.user_timezone
                         ),
@@ -518,7 +529,7 @@ class FileInfoDialog(Dialog):
                         with ui.item():
                             with ui.row(wrap=False).classes("w-full items-center"):
                                 ui.label(k).classes("font-bold w-2/7 text-nowrap")
-                                ui.label(v).classes("w-5/7")
+                                ui.markdown(f"`{v}`").classes("w-5/7")
 
             with ui.grid(columns=3).classes("w-full justify-between"):
                 ui.button(

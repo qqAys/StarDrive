@@ -50,6 +50,7 @@ class FileBrowserTable:
         target_path: str = "",
         upload_component: ui.upload = None,
         upload_dialog: ui.dialog = None,
+        upload_dialog_close_button: ui.button = None,
     ):
 
         self.file_service = file_service
@@ -65,8 +66,8 @@ class FileBrowserTable:
         }
 
         self.is_select_mode = False
-        self.edit_button_icon_open = "keyboard_arrow_left"
-        self.edit_button_icon_close = "keyboard_arrow_right"
+        self.edit_button_icon_open = "check_box"
+        self.edit_button_icon_close = "check_box_outline_blank"
         self.search_input: Optional[ui.input] = None
         self.edit_button: Optional[ui.button] = None
         self.delete_button: Optional[ui.button] = None
@@ -78,6 +79,8 @@ class FileBrowserTable:
         self.upload_component = upload_component
         self.upload_component.on_multi_upload(self.handle_upload)
         self.upload_dialog = upload_dialog
+        self.upload_dialog_close_button = upload_dialog_close_button
+        self.upload_dialog_close_button.on_click(self.handle_upload_button_click)
         self.on_upload = False
 
         self.file_list = []
@@ -237,14 +240,6 @@ class FileBrowserTable:
 
             with self.browser_table.add_slot("top-right"):
                 with ui.row().classes("items-center gap-4"):
-                    self.new_directory_button = (
-                        ui.button(
-                            icon="create_new_folder",
-                            on_click=self.handle_new_directory_button_click,
-                        )
-                        .props("flat dense")
-                        .tooltip(_("New Directory"))
-                    )
                     self.upload_button = (
                         ui.button(
                             icon="cloud_upload",
@@ -252,6 +247,14 @@ class FileBrowserTable:
                         )
                         .props("flat dense")
                         .tooltip(_("Upload"))
+                    )
+                    self.new_directory_button = (
+                        ui.button(
+                            icon="create_new_folder",
+                            on_click=self.handle_new_directory_button_click,
+                        )
+                        .props("flat dense")
+                        .tooltip(_("New Directory"))
                     )
                     self.delete_button = (
                         ui.button(
@@ -261,14 +264,6 @@ class FileBrowserTable:
                         .props("flat dense")
                         .tooltip(_("Delete"))
                     )
-                    self.move_button = (
-                        ui.button(
-                            icon="drive_file_move",
-                            on_click=self.handle_move_button_click,
-                        )
-                        .props("flat dense")
-                        .tooltip(_("Move"))
-                    )
                     self.download_button = (
                         ui.button(
                             icon="cloud_download",
@@ -276,6 +271,14 @@ class FileBrowserTable:
                         )
                         .props("flat dense")
                         .tooltip(_("Download"))
+                    )
+                    self.move_button = (
+                        ui.button(
+                            icon="drive_file_move",
+                            on_click=self.handle_move_button_click,
+                        )
+                        .props("flat dense")
+                        .tooltip(_("Move"))
                     )
 
                     self.edit_button = (
@@ -288,7 +291,7 @@ class FileBrowserTable:
                             on_click=self.handle_edit_button_click,
                         )
                         .props("flat dense")
-                        .tooltip(_("More Actions"))
+                        .tooltip(_("Batch Actions"))
                     )
                     self.search_button = (
                         ui.button(
@@ -517,7 +520,7 @@ class FileBrowserTable:
         self.is_select_mode = not self.is_select_mode
 
         if self.is_select_mode:
-            notify.info(_("Selection mode enabled"))
+            notify.info(_("Multiple selection enabled"))
 
         self.browser_table.set_selection("multiple" if self.is_select_mode else None)
         self.browser_table.selected = []
