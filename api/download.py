@@ -7,9 +7,9 @@ from fastapi.exceptions import HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 
 import globals
-from api import download_file_form_browser_url_prefix
+from api import download_form_browser_url_prefix
 from security import verify_jwt_secret
-from services.file_service import get_download_info
+from services.file_service import get_download_info, FileDownloadInfo
 
 
 # 依赖函数：用于解析和验证令牌
@@ -27,50 +27,33 @@ async def verify_download_token(jwt_token: str):
             status_code=401, detail="Invalid download link or has expired."
         )
 
-    file_path = download_info["path"]
-    file_name = download_info["name"]
-    base_dir_path = download_info["base_path"]
-
-    if not file_path or not file_name:
-        raise HTTPException(status_code=401, detail="Download link is invalid.")
-
-    if isinstance(file_path, str) and isinstance(file_name, str):
-        is_multi_file = False
-    elif isinstance(file_path, list) and isinstance(file_name, list):
-        is_multi_file = True
-    else:
-        raise HTTPException(status_code=401, detail="Download link is invalid.")
-
-    return is_multi_file, file_path, file_name, base_dir_path
+    return download_info
 
 
 router = APIRouter(prefix="/api")
 
 
-@router.get("/" + download_file_form_browser_url_prefix + "/{jwt_token}")
-async def download_file_form_browser_api(
-    validated_data: Annotated[
-        tuple[bool, str | list[str], str | list[str], str],
-        Depends(verify_download_token),
-    ],
+@router.get("/" + download_form_browser_url_prefix + "/{jwt_token}")
+async def download_form_browser_api(
+    validated_data: Annotated[FileDownloadInfo, Depends(verify_download_token)],
 ):
     file_manager = globals.get_storage_manager()
 
-    is_multi_file, full_path, file_name, base_dir_path = validated_data
+    is_multi_file = isinstance(validated_data.name, list)
 
     if not is_multi_file:
-        if not file_manager.exists(str(full_path)):
+        if not file_manager.exists(str(validated_data.path)):
             raise HTTPException(status_code=404, detail="File not found")
 
-        mime_type, _ = mimetypes.guess_type(file_name)
+        mime_type, _ = mimetypes.guess_type(validated_data.name)
 
         return FileResponse(
-            path=file_manager.get_full_path(str(full_path)),
-            filename=file_name,
+            path=file_manager.get_full_path(str(validated_data.path)),
+            filename=validated_data.name,
             media_type=mime_type or "application/octet-stream",
         )
     else:
-        relative_paths = full_path
+        relative_paths = validated_data.path
         if not relative_paths:
             raise HTTPException(status_code=400, detail="No files or folders provided.")
 
@@ -83,7 +66,7 @@ async def download_file_form_browser_api(
 
         return StreamingResponse(
             content=file_manager.download_file_with_compressed_stream(
-                relative_paths, base_dir_path
+                relative_paths, validated_data.base_path
             ),
             media_type="application/gzip",
             headers=headers,

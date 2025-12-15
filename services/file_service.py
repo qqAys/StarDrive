@@ -1,6 +1,7 @@
 import asyncio
 import sys
 import tarfile
+from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import (
@@ -16,7 +17,7 @@ from uuid import uuid4
 
 from nicegui import app
 
-from api import download_file_form_browser_url_prefix
+from api import download_form_browser_url_prefix
 from config import settings
 from schemas.file_schema import FileMetadata, DirMetadata
 from security import generate_jwt_secret
@@ -117,6 +118,18 @@ def get_file_icon(type_: str, extension: str):
     # --- 通用/未知文件---
     else:
         return "❓"
+
+
+@dataclass(frozen=True)
+class FileDownloadInfo:
+    name: str | list
+    type: Literal["file", "dir", "mixed"]
+    path: str | list
+    base_path: str
+    user: str
+    source: str
+    exp: str
+    url: str
 
 
 class AsyncStreamWriter:
@@ -335,7 +348,7 @@ def generate_download_url(
     target_path: str | list[str],
     name: str | list[str],
     type_: Literal["file", "dir", "mixed"],
-    from_: Literal["download", "share"],
+    source: Literal["download", "share"],
     expire_datetime_utc: Optional[datetime] = None,
     expire_days: Optional[int] = None,
 ) -> str | None:
@@ -370,7 +383,7 @@ def generate_download_url(
         "path": target_path,
         "base_path": app.storage.user["last_path"],
         "user": app.storage.user["username"],
-        "from": from_,
+        "source": source,
         "exp": this_url_ttl.isoformat() if this_url_ttl else None,
     }
 
@@ -381,32 +394,35 @@ def generate_download_url(
     if this_url_ttl:
         payload.update({"exp": int(this_url_ttl.timestamp())})
 
-    if from_ == "download":
+    if source == "download":
         url = (
             app.storage.general["service_url"]
-            + f"/api/{download_file_form_browser_url_prefix}/{generate_jwt_secret(payload)}"
+            + f"/api/{download_form_browser_url_prefix}/{generate_jwt_secret(payload)}"
         )
-    elif from_ == "share":
+    elif source == "share":
         url = (
             app.storage.general["service_url"]
             + f"/share/{generate_jwt_secret(payload)}"
         )
     else:
-        raise ValueError(_("Invalid from parameter."))
+        raise ValueError(_("Invalid source parameter."))
 
     download_info.update({"url": url})
     app.storage.general[storage_key][download_id] = download_info
     return url
 
 
-def get_download_info(download_id: str) -> dict | None:
+def get_download_info(download_id: str) -> Optional[FileDownloadInfo]:
     """
     获取下载链接信息。
     """
     if storage_key not in app.storage.general:
         app.storage.general[storage_key] = {}
 
-    return app.storage.general[storage_key].get(download_id, None)
+    if download_id not in app.storage.general[storage_key]:
+        return None
+
+    return FileDownloadInfo(**app.storage.general[storage_key][download_id])
 
 
 def delete_download_link(download_id: str):
@@ -469,7 +485,7 @@ def get_user_share_links(file_name: str | None = None) -> list[dict]:
 
     for download_id, download_info in app.storage.general[storage_key].items():
         if app.storage.user["username"] == download_info["user"]:
-            if download_info["from"] == "share":
+            if download_info["source"] == "share":
                 if file_name is None or file_name == download_info["name"]:
                     share_links.append({"id": download_id, "info": download_info})
 
