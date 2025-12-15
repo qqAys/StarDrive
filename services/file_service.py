@@ -32,6 +32,9 @@ def get_file_icon(type_: str, extension: str):
     if type_ == "dir":
         return "📁"  # 文件夹
 
+    if not extension:
+        return "❓"
+
     if not extension.strip():
         return "❓"
     else:
@@ -317,6 +320,10 @@ class StorageManager:
         backend = self._get_current_backend()
         return backend.get_file_metadata(remote_path)
 
+    async def get_directory_size(self, remote_path: str) -> int:
+        backend = self._get_current_backend()
+        return await backend.get_directory_size(remote_path)
+
     async def search(
         self, query: str, search_path: str
     ) -> list[FileMetadata | DirMetadata]:
@@ -326,7 +333,8 @@ class StorageManager:
 
 def generate_download_url(
     target_path: str | list[str],
-    file_name: str | list[str],
+    name: str | list[str],
+    type_: Literal["file", "dir", "mixed"],
     from_: Literal["download", "share"],
     expire_datetime_utc: Optional[datetime] = None,
     expire_days: Optional[int] = None,
@@ -357,10 +365,11 @@ def generate_download_url(
 
     download_id = uuid4().hex[:12]
     download_info = {
-        "user": app.storage.user["username"],
-        "base_path": app.storage.user["last_path"],
+        "name": name,
+        "type": type_,
         "path": target_path,
-        "name": file_name,
+        "base_path": app.storage.user["last_path"],
+        "user": app.storage.user["username"],
         "from": from_,
         "exp": this_url_ttl.isoformat() if this_url_ttl else None,
     }

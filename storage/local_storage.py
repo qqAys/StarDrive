@@ -1,7 +1,9 @@
 import asyncio
+import os
+import platform
 import shutil
 from pathlib import Path
-from typing import AsyncIterator, List
+from typing import AsyncIterator, List, NamedTuple
 
 import aiofiles
 
@@ -16,6 +18,47 @@ from .base import (
     StoragePermissionError,
     StorageError,
 )
+
+
+class PathStat(NamedTuple):
+    size: int
+    created_at: float | None  # 文件创建时间（可能不存在）
+    updated_at: float  # 文件内容最后修改时间
+
+
+def parse_path_stat(stat: os.stat_result) -> PathStat:
+    """
+    提取文件的大小（size）、创建时间（created_at）和最后修改时间（updated_at）。
+
+    规则：
+    - updated_at 始终使用 st_mtime（内容修改时间）
+    - created_at 优先使用真实创建时间（birth time）
+    - 若平台不支持创建时间，则返回 None
+    """
+
+    # 内容最后修改时间（跨平台语义一致）
+    updated_at = stat.st_mtime
+
+    # 文件创建时间（并非所有系统都支持）
+    created_at = None
+
+    # macOS / BSD
+    if hasattr(stat, "st_birthtime"):
+        created_at = stat.st_birthtime
+
+    # 部分 Linux（statx / 新内核）
+    elif hasattr(stat, "st_btime"):
+        created_at = stat.st_btime
+
+    # Windows：st_ctime 即创建时间
+    elif platform.system() == "Windows":
+        created_at = stat.st_ctime
+
+    return PathStat(
+        size=stat.st_size,
+        created_at=created_at,
+        updated_at=updated_at,
+    )
 
 
 class LocalStorage(StorageBackend):
@@ -163,7 +206,7 @@ class LocalStorage(StorageBackend):
                 entry_remote_path = entry_path.relative_to(self.root_path).as_posix()
 
                 # 获取 stat 信息
-                stat_info = entry_path.stat()
+                stat_info = parse_path_stat(entry_path.stat())
                 is_dir = entry_path.is_dir()
 
                 if is_dir:
@@ -171,18 +214,18 @@ class LocalStorage(StorageBackend):
                         name=entry_path.name,
                         path=entry_remote_path,
                         size=0,
-                        created_at=stat_info.st_mtime,
-                        updated_at=stat_info.st_ctime,
+                        created_at=stat_info.created_at,
+                        updated_at=stat_info.updated_at,
                         num_children=len(list(entry_path.iterdir())),
                     )
                 else:
                     metadata = FileMetadata(
                         name=entry_path.name,
                         path=entry_remote_path,
-                        extension=entry_path.suffix,
-                        size=stat_info.st_size,
-                        created_at=stat_info.st_mtime,
-                        updated_at=stat_info.st_ctime,
+                        extension=entry_path.suffix if entry_path.suffix else None,
+                        size=stat_info.size,
+                        created_at=stat_info.created_at,
+                        updated_at=stat_info.updated_at,
                     )
 
                 metadata_list.append(metadata)
@@ -286,7 +329,7 @@ class LocalStorage(StorageBackend):
                 _("File or directory does not exist: {}").format(remote_path)
             )
 
-        stat_info = full_path.stat()
+        stat_info = parse_path_stat(full_path.stat())
         is_dir = full_path.is_dir()
 
         if is_dir:
@@ -294,19 +337,65 @@ class LocalStorage(StorageBackend):
                 name=full_path.name,
                 path=remote_path,
                 size=0,
-                created_at=stat_info.st_mtime,
-                updated_at=stat_info.st_ctime,
+                created_at=stat_info.created_at,
+                updated_at=stat_info.updated_at,
                 num_children=len(list(full_path.iterdir())),
             )
         else:
             return FileMetadata(
                 name=full_path.name,
                 path=remote_path,
-                extension=full_path.suffix,
-                size=stat_info.st_size,
-                created_at=stat_info.st_mtime,
-                updated_at=stat_info.st_ctime,
+                extension=full_path.suffix if full_path.suffix else None,
+                size=stat_info.size,
+                created_at=stat_info.created_at,
+                updated_at=stat_info.updated_at,
             )
+
+    async def get_directory_size(self, remote_path: str) -> int:
+        """
+        异步递归计算目录大小（字节）
+        """
+        full_path = self._get_full_path(remote_path)
+
+        if not full_path.exists():
+            raise StorageFileNotFoundError(
+                _("Directory does not exist: {}").format(remote_path)
+            )
+        if not full_path.is_dir():
+            raise StorageNotADirectoryError(
+                _("Path points to a file, not a directory: {}").format(remote_path)
+            )
+
+        async def _get_size(path: Path) -> int:
+            total_size = 0
+            try:
+                # listdir 是耗时操作，放到线程池
+                entries = await asyncio.to_thread(list, path.iterdir())
+            except PermissionError:
+                return 0  # 无权限则忽略
+            except Exception as e:
+                logger.warning(f"Failed to list directory {path}: {e}")
+                return 0
+
+            for entry in entries:
+                if entry.name.startswith("."):
+                    continue  # 忽略隐藏文件
+                try:
+                    if entry.is_file():
+                        stat_info = await asyncio.to_thread(entry.stat)
+                        total_size += stat_info.st_size
+                    elif entry.is_dir():
+                        # 递归调用
+                        size = await _get_size(entry)
+                        total_size += size
+                except PermissionError:
+                    continue
+                except Exception as e:
+                    logger.warning(f"Failed to access {entry}: {e}")
+            return total_size
+
+        size = await _get_size(full_path)
+        return size
 
     # 辅助函数：在线程中同步地递归搜索文件
     @staticmethod
@@ -421,7 +510,7 @@ class LocalStorage(StorageBackend):
 
                 try:
                     # stat() 操作是 I/O 阻塞的
-                    stat_info = path.stat()
+                    stat_info = parse_path_stat(path.stat())
                     is_dir = path.is_dir()
 
                     if is_dir:
@@ -429,17 +518,17 @@ class LocalStorage(StorageBackend):
                             name=path.name,
                             path=remote_path_str,
                             size=0,
-                            created_at=stat_info.st_mtime,
-                            updated_at=stat_info.st_ctime,
+                            created_at=stat_info.created_at,
+                            updated_at=stat_info.updated_at,
                         )
                     else:
                         return FileMetadata(
                             name=path.name,
                             path=remote_path_str,
-                            extension=path.suffix,
-                            size=stat_info.st_size,
-                            created_at=stat_info.st_mtime,
-                            updated_at=stat_info.st_ctime,
+                            extension=path.suffix if path.suffix else None,
+                            size=stat_info.size,
+                            created_at=stat_info.created_at,
+                            updated_at=stat_info.updated_at,
                         )
                 except Exception as e:
                     # 捕获任何 stat 错误（如文件被删除或权限改变）

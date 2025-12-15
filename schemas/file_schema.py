@@ -41,9 +41,3 @@ class DirMetadata(FileMetadataBase):
 # 文件元数据
 class FileMetadata(FileMetadataBase):
     type: Literal["file"] = "file"
-
-
-# 符号链接
-class Symlink(FileMetadataBase):
-    type: Literal["link"] = "link"
-    target_path: str = Field(description=_("Target path of the symbolic link"))

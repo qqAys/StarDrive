@@ -99,6 +99,10 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
+    async def get_directory_size(self, remote_path: str) -> int:
+        pass
+
+    @abstractmethod
     async def search(
         self, query: str, search_path: str
     ) -> list[FileMetadata | DirMetadata]:
