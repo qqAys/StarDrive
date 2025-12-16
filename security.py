@@ -1,3 +1,4 @@
+import fnmatch
 import random
 import string
 
@@ -12,19 +13,36 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # 不需要认证的页面
 unrestricted_page_routes = (
     # 静态资源
-    "/favicon.ico",
-    "/apple-touch-icon.png",
-    "/favicon-16x16.png",
-    "/favicon-32x32.png",
-    "/android-chrome-192x192.png",
-    "/android-chrome-512x512.png",
-    "/site.webmanifest",
+    "/*.ico",  # 匹配 /favicon.ico
+    "/*.png",  # 匹配所有 .png 图标文件
+    "/*.webmanifest",  # 匹配 /site.webmanifest
+    "/apple-touch-icon*",  # 确保匹配 /apple-touch-icon.png
     # 登录页面
-    "/login/",
-    "/login",
+    "/login*",
+    "/share*",
 )
 
 JWT_ALGORITHM = "HS256"
+
+
+def is_route_unrestricted(
+    route: str, patterns: tuple = unrestricted_page_routes
+) -> bool:
+    """
+    判断给定的 route 是否匹配 patterns 中的任一通配符模式。
+
+    Args:
+        route: 要检查的字符串（如 URL 路径）。
+        patterns: 包含通配符模式的元组/列表。
+
+    Returns:
+        如果匹配任一模式，返回 True；否则返回 False。
+    """
+    for pattern in patterns:
+        # 使用 fnmatch.fnmatch 进行通配符匹配
+        if fnmatch.fnmatch(route, pattern):
+            return True
+    return False
 
 
 class HashingManager:

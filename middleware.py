@@ -5,7 +5,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
-from security import unrestricted_page_routes
+from security import is_route_unrestricted
 from utils import logger, _
 
 
@@ -31,10 +31,9 @@ class AuthLoggerMiddleware(BaseHTTPMiddleware):
         logger.debug(request_data)
 
         if not app.storage.user.get("authenticated", False):
-            if (
-                not request.url.path.startswith("/_nicegui")
-                and request.url.path not in unrestricted_page_routes
-            ):
+            if not request.url.path.startswith(
+                "/_nicegui"
+            ) and not is_route_unrestricted(request.url.path):
                 logger.warning(
                     _("Unauthorized access to {}, request_uuid: {}").format(
                         request.url, str(request.state.request_uuid)
