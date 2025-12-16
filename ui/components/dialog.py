@@ -131,9 +131,9 @@ class SearchDialog(Dialog):
 
         with self.results_list:
             for item in results:
-                with ui.item(on_click=lambda item_=item: self.dialog.submit(item_)).props(
-                    "clickable"
-                ):
+                with ui.item(
+                    on_click=lambda item_=item: self.dialog.submit(item_)
+                ).props("clickable"):
                     with ui.item_section():
                         ui.html(
                             f"{get_file_icon(item.type, item.extension)} <b>{item.name}</b>",
@@ -741,12 +741,24 @@ class MetadataDialog(Dialog):
         return
 
     async def on_download_button_click(self):
-        confirm = await ConfirmDialog(
-            _("Confirm Download"),
-            _("Are you sure you want to download **`{}`**? ").format(
-                self.metadata.name
-            ),
-        ).open()
+        if self.metadata.is_dir:
+            confirm = await ConfirmDialog(
+                _("Confirm Download"),
+                _(
+                    "You selected a folder. It will be compressed into a **single tar.gz file** for download. "
+                )
+                + _("Are you sure you want to download **`{}`**? ").format(
+                    self.metadata.name
+                ),
+            ).open()
+        else:
+            confirm = await ConfirmDialog(
+                _("Confirm Download"),
+                _("Are you sure you want to download **`{}`**? ").format(
+                    self.metadata.name
+                ),
+            ).open()
+
         if confirm:
             download_url = generate_download_url(
                 self.metadata.path, self.metadata.name, self.metadata.type, "download"
