@@ -113,20 +113,7 @@ class SearchDialog(Dialog):
             self.has_more = False
             self.loading = False
 
-            with self.results_list:
-                with ui.item().props("disabled"):
-                    with ui.column().classes("w-full items-center gap-1"):
-                        ui.button(text=_("No more results."), icon="search_off").props(
-                            "flat no-caps"
-                        )
-                        ui.markdown(
-                            _(
-                                "If you still can't find it, try searching in a **different directory**."
-                            )
-                        ).classes("text-xs my-0 py-0")
-                        ui.markdown(
-                            _("Current directory: **{}**").format(self.current_path)
-                        ).classes("text-xs my-0 py-0")
+            self.render_no_more_results()
             return
 
         with self.results_list:
@@ -142,7 +129,28 @@ class SearchDialog(Dialog):
                         ui.markdown(f"`{item.path}`").classes("text-xs")
 
         self.offset += len(results)
+
+        if len(results) < self.PAGE_SIZE:
+            self.has_more = False
+            self.render_no_more_results()
+
         self.loading = False
+
+    def render_no_more_results(self):
+        with self.results_list:
+            with ui.item().props("disabled"):
+                with ui.column().classes("w-full items-center gap-1"):
+                    ui.button(text=_("No more results."), icon="search_off").props(
+                        "flat no-caps"
+                    )
+                    ui.markdown(
+                        _(
+                            "If you still can't find it, try searching in a **different directory**."
+                        )
+                    ).classes("text-xs my-0 py-0")
+                    ui.markdown(
+                        _("Current directory: **{}**").format(self.current_path)
+                    ).classes("text-xs my-0 py-0")
 
     async def on_scroll(self, e: events.ScrollEventArguments):
         if e.vertical_percentage == 1:
