@@ -22,11 +22,6 @@ class Header:
     <link rel="manifest" href="/site.webmanifest" />"""
         )
 
-        # eva-icons
-        # ui.add_head_html(
-        #     '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />'
-        # )
-
         self.header = ui.header
 
     @staticmethod
@@ -54,7 +49,7 @@ class Header:
 
         ui.page_title(title)
 
-        with self.header().classes("items-center p-2 no-wrap"):
+        with self.header().classes("fixed h-12 p-2 flex items-center gap-4 z-50") as self.header:
             with ui.link(target="/home/").classes("text-white no-underline"):
                 ui.label("StarDrive").classes("font-bold")
 
@@ -62,3 +57,6 @@ class Header:
 
             fake_button(_("Console"), icon="dashboard", link="/console")
             fake_button(_("Logout"), icon="logout", func=self.logout)
+
+    def inject(self):
+        return self.header

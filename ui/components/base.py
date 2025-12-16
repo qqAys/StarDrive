@@ -46,10 +46,14 @@ class BaseLayout:
         if args is None:
             args = {}
 
+        header_el, footer_el = None, None
+
         if header:
             self.header_component.render(**args)
-
-        yield
+            header_el = self.header_component
 
         if footer:
             self.footer_component.render(**args)
+            footer_el = self.footer_component
+
+        yield header_el, footer_el

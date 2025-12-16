@@ -12,7 +12,7 @@ from middleware import AuthLoggerMiddleware
 from services.file_service import StorageManager
 from services.local_db_service import init_local_db, close_local_db
 from storage.local_storage import LocalStorage
-from ui.pages import login, browser, console, profile
+from ui.pages import login, browser, console, profile, share
 from ui.pages.error_page import render_404, render_50x
 from utils import return_file_response, logger, static_path
 
@@ -72,6 +72,7 @@ async def on_app_startup():
 
     app.include_router(login.router)
     app.include_router(browser.router)
+    app.include_router(share.router)
     app.include_router(profile.router)
     app.include_router(console.router)
 
