@@ -1,6 +1,7 @@
 import mimetypes
 import time
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
@@ -41,26 +42,26 @@ async def download_form_browser_api(
 
     is_multi_file = isinstance(validated_data.name, list)
 
-    if not is_multi_file:
-        if not file_manager.exists(str(validated_data.path)):
-            raise HTTPException(status_code=404, detail="File not found")
+    def multi_download(source_is_single_dir: bool = False):
+        if source_is_single_dir:
+            relative_paths = [validated_data.path]
+        else:
+            relative_paths = validated_data.path
 
-        mime_type, _ = mimetypes.guess_type(validated_data.name)
-
-        return FileResponse(
-            path=file_manager.get_full_path(str(validated_data.path)),
-            filename=validated_data.name,
-            media_type=mime_type or "application/octet-stream",
-        )
-    else:
-        relative_paths = validated_data.path
         if not relative_paths:
             raise HTTPException(status_code=400, detail="No files or folders provided.")
 
-        filename_as = f"download_{int(time.time())}.tar.gz"
+        timestamp = int(time.time())
+
+        if source_is_single_dir:
+            filename_as = f"{validated_data.name}_archive_{timestamp}.tar.gz"
+        else:
+            filename_as = f"bulk_download_{timestamp}.tar.gz"
+
+        quoted_filename_as = quote(filename_as)
 
         headers = {
-            "Content-Disposition": f'attachment; filename="{filename_as}"',
+            "Content-Disposition": f'attachment; filename="{quoted_filename_as}"',
             "Cache-Control": "no-store",
         }
 
@@ -71,3 +72,23 @@ async def download_form_browser_api(
             media_type="application/gzip",
             headers=headers,
         )
+
+    def single_download():
+        if not file_manager.exists(str(validated_data.path)):
+            raise HTTPException(status_code=404, detail="File not found")
+
+        mime_type, _ = mimetypes.guess_type(validated_data.name)
+
+        return FileResponse(
+            path=file_manager.get_full_path(str(validated_data.path)),
+            filename=validated_data.name,
+            media_type=mime_type or "application/octet-stream",
+        )
+
+    if not is_multi_file:
+        if validated_data.type == "dir":
+            return multi_download(source_is_single_dir=True)
+        else:
+            return single_download()
+    else:
+        return multi_download()
