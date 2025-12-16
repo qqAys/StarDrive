@@ -338,10 +338,10 @@ class StorageManager:
         return await backend.get_directory_size(remote_path)
 
     async def search(
-        self, query: str, search_path: str
+        self, query: str, remote_path: str, offset: int, limit: int
     ) -> list[FileMetadata | DirMetadata]:
         backend = self._get_current_backend()
-        return await backend.search(query, search_path)
+        return await backend.search(query, remote_path, offset, limit)
 
 
 def generate_download_url(

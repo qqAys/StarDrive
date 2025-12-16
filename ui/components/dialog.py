@@ -3,7 +3,7 @@ from datetime import datetime, timezone, date, time
 from pathlib import Path
 from typing import Optional, Callable
 
-from nicegui import ui, events, background_tasks
+from nicegui import ui, events
 
 from schemas.file_schema import FILE_NAME_FORBIDDEN_CHARS, FileMetadata, DirMetadata
 from services.file_service import (
@@ -15,7 +15,6 @@ from services.file_service import (
 )
 from services.user_service import get_user_timezone
 from ui.components.clipboard import copy_to_clipboard
-from ui.components.link import link
 from ui.components.notify import notify
 from utils import _, bytes_to_human_readable, timestamp_to_human_readable
 
@@ -33,6 +32,9 @@ class Dialog:
 
 
 class SearchDialog(Dialog):
+
+    PAGE_SIZE = 30
+
     def __init__(self, file_service: StorageManager, current_path: Path):
         super().__init__()
         self.search_input: Optional[ui.input] = None
@@ -40,15 +42,22 @@ class SearchDialog(Dialog):
         self.current_path = current_path
 
         self.last_query: Optional[str] = None
-        self.results: Optional[ui.element] = None
+        self.results_list: Optional[ui.list] = None
 
-    async def open(self):
+        self.last_query: Optional[str] = None
+        self.offset = 0
+        self.loading = False
+        self.has_more = True
+
+        self.search_task: Optional[asyncio.Task] = None
+
+    async def open(self) -> Optional[FileMetadata | DirMetadata | None]:
         with self.dialog, ui.card().tight().classes("w-[800px] h-[600px]"):
             with ui.row().classes("w-full items-center px-4"):
                 self.search_input = (
                     ui.input(
-                        label=_("Search in {}").format(self.current_path.name),
-                        on_change=self.on_search_input_value_change,
+                        label=f"Search in {self.current_path.name}",
+                        on_change=self.on_input_change,
                     )
                     .classes("flex-grow")
                     .props("autofocus")
@@ -56,46 +65,88 @@ class SearchDialog(Dialog):
                 with self.search_input.add_slot("append"):
                     ui.icon("search")
 
-                self.results = ui.element("q-list").classes("w-full").props("separator")
+            with ui.scroll_area(on_scroll=self.on_scroll).classes("w-full h-full"):
+                self.results_list = (
+                    ui.list()
+                    .classes("w-full h-full overflow-auto")
+                    .props("bordered separator")
+                )
 
         r = await self.dialog
         return r
 
-    async def search(self, query: str):
-        return await self.file_service.search(query, str(self.current_path))
+    async def on_input_change(self):
+        await asyncio.sleep(0.6)
 
-    async def on_search_input_value_change(self):
-        async def handle_input():
-            with self.results:
-                # Debouncing: Wait for the input to finish typing
-                await asyncio.sleep(1)
+        query = self.search_input.value.strip()
 
-                query = self.search_input.value.strip()
-                if query == self.last_query:
-                    return
+        if query == self.last_query:
+            return
 
-                self.results.clear()
+        self.last_query = query
+        self.offset = 0
+        self.has_more = True
+        self.results_list.clear()
 
-                if not query:
-                    return
+        if self.search_task:
+            self.search_task.cancel()
 
-                self.last_query = query
-                results = await self.search(query)
+        if not query:
+            return
 
-                if not results:
-                    ui.label(_("No results found")).classes("text-center")
-                    return
-                else:
-                    with ui.list().props("bordered separator"):
-                        for result_item in results:
-                            with ui.item().props("clickable"):
-                                with ui.item_section():
-                                    with link("").on("click", self.dialog.close):
-                                        ui.item_label(result_item.name)
-                                        with ui.item_label().props("caption"):
-                                            ui.markdown(f"`{result_item.path}`")
+        self.search_task = asyncio.create_task(self.load_more())
 
-        background_tasks.create_lazy(handle_input(), name="handle_search_input")
+    async def load_more(self):
+        if self.loading or not self.has_more:
+            return
+
+        self.loading = True
+
+        results = await self.file_service.search(
+            query=self.last_query,
+            remote_path=str(self.current_path),
+            offset=self.offset,
+            limit=self.PAGE_SIZE,
+        )
+
+        if not results:
+            self.has_more = False
+            self.loading = False
+
+            with self.results_list:
+                with ui.item().props("disabled"):
+                    with ui.column().classes("w-full items-center gap-1"):
+                        ui.button(text=_("No more results."), icon="search_off").props(
+                            "flat no-caps"
+                        )
+                        ui.markdown(
+                            _(
+                                "If you still can't find it, try searching in a **different directory**."
+                            )
+                        ).classes("text-xs my-0 py-0")
+                        ui.markdown(
+                            _("Current directory: **{}**").format(self.current_path)
+                        ).classes("text-xs my-0 py-0")
+            return
+
+        with self.results_list:
+            for item in results:
+                with ui.item(on_click=lambda item_=item: self.dialog.submit(item_)).props(
+                    "clickable"
+                ):
+                    with ui.item_section():
+                        ui.html(
+                            f"{get_file_icon(item.type, item.extension)} <b>{item.name}</b>",
+                            sanitize=False,
+                        )
+                        ui.markdown(f"`{item.path}`").classes("text-xs")
+
+        self.offset += len(results)
+        self.loading = False
+
+    async def on_scroll(self, e: events.ScrollEventArguments):
+        if e.vertical_percentage == 1:
+            await self.load_more()
 
 
 class InputDialog(Dialog):

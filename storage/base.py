@@ -104,6 +104,6 @@ class StorageBackend(ABC):
 
     @abstractmethod
     async def search(
-        self, query: str, search_path: str
+        self, query: str, remote_path: str, offset: int, limit: int
     ) -> list[FileMetadata | DirMetadata]:
         pass

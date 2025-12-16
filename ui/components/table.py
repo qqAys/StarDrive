@@ -65,6 +65,7 @@ class FileBrowserTable:
         }
 
         self.is_select_mode = False
+        self.pending_display_metadata_path: Optional[str] = None
         self.edit_button_icon_open = "check_box"
         self.edit_button_icon_close = "check_box_outline_blank"
         self.search_input: Optional[ui.input] = None
@@ -352,6 +353,10 @@ class FileBrowserTable:
 
             self.browser_table.update()
 
+            if self.pending_display_metadata_path is not None:
+                await self._open_metadata_by_path(self.pending_display_metadata_path)
+                self.pending_display_metadata_path = None
+
             return self.browser_table
 
         self.refresh_func = browser_content
@@ -359,11 +364,11 @@ class FileBrowserTable:
         ui.timer(0.1, self.refresh_func, once=True)
 
     @property
-    def current_path(self):
+    def current_path(self) -> Path:
         return self._current_path
 
     @current_path.setter
-    def current_path(self, new_path):
+    def current_path(self, new_path: Path):
         old_path = self._current_path
 
         if old_path != new_path:
@@ -632,15 +637,41 @@ class FileBrowserTable:
         await self.refresh()
 
     async def handle_search_button_click(self):
-        await SearchDialog(self.file_service, self.current_path).open()
+        select_result = await SearchDialog(self.file_service, self.current_path).open()
 
-    async def handle_info_button_click(self, e: events.GenericEventArguments):
-        item_metadata = self.file_service.get_file_metadata(e.args["path"])
+        if not select_result:
+            return
+        else:
+            select_path = Path(select_result.path)
 
-        if type(item_metadata) in (DirMetadata, FileMetadata):
+        if select_result.is_dir:
+            self.current_path = select_path
+        else:
+            self.current_path = select_path.parent
+            self.pending_display_metadata_path = str(select_path)
+
+        await self.refresh()
+
+    async def handle_info_button_click(
+        self,
+        e: events.GenericEventArguments,
+    ):
+        path = e.args.get("path")
+        if not path:
+            notify.error(_("Missing path"))
+            return
+
+        await self._open_metadata_by_path(path)
+
+    async def _open_metadata_by_path(self, path: str):
+        item_metadata = self.file_service.get_file_metadata(path)
+
+        if isinstance(item_metadata, (DirMetadata, FileMetadata)):
             await MetadataDialog(
-                self.current_path, item_metadata, self.file_service, self.refresh
+                self.current_path,
+                item_metadata,
+                self.file_service,
+                self.refresh,
             ).open()
         else:
             notify.error(_("Failed to get file metadata"))
-            return
