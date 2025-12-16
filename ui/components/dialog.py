@@ -517,9 +517,7 @@ class MetadataDialog(Dialog):
                         _("Name"): self.metadata.name,
                         _("Path"): self.metadata.path,
                         _("Type"): self.metadata.type,
-                        _(
-                            "Size"
-                        ): f"{bytes_to_human_readable(self.metadata.size)} ({self.metadata.size} bytes)",
+                        _("Size"): bytes_to_human_readable(self.metadata.size),
                         **(
                             {_("Direct children"): self.metadata.num_children}
                             if self.is_dir
@@ -551,7 +549,6 @@ class MetadataDialog(Dialog):
 
                                     self.calc_btn = (
                                         ui.button(
-                                            _("Calculate"),
                                             icon="calculate",
                                             color="green",
                                             on_click=self.calculate_dir_size,
@@ -607,7 +604,7 @@ class MetadataDialog(Dialog):
     async def calculate_dir_size(self):
         self.size_label.text = _("Calculating...")
         dir_size = await self.file_service.get_directory_size(self.metadata.path)
-        self.size_label.text = f"{bytes_to_human_readable(dir_size)} ({dir_size} bytes)"
+        self.size_label.text = bytes_to_human_readable(dir_size)
 
     async def on_delete_button_click(self):
         confirm = await ConfirmDialog(
