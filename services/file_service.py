@@ -1,7 +1,6 @@
 import asyncio
 import sys
 import tarfile
-from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import (
@@ -9,18 +8,19 @@ from typing import (
     Optional,
     Generator,
     AsyncIterator,
-    Literal,
     List,
     AsyncGenerator,
 )
-from uuid import uuid4
 
+import ulid
 from nicegui import app
 
 from api import download_form_browser_url_prefix
 from config import settings
-from schemas.file_schema import FileMetadata, DirMetadata
+from models.file_download_model import FileDownloadInfo
+from schemas.file_schema import FileMetadata, DirMetadata, FileType, FileSource
 from security import generate_jwt_secret
+from services.local_db_service import async_session
 from storage.base import StorageBackend
 from storage.local_storage import LocalStorage
 from ui.components.notify import notify
@@ -118,18 +118,6 @@ def get_file_icon(type_: str, extension: str):
     # --- 通用/未知文件---
     else:
         return "❓"
-
-
-@dataclass(frozen=True)
-class FileDownloadInfo:
-    name: str | list
-    type: Literal["file", "dir", "mixed"]
-    path: str | list
-    base_path: str
-    user: str
-    source: str
-    exp: str
-    url: str
 
 
 class AsyncStreamWriter:
@@ -344,11 +332,11 @@ class StorageManager:
         return await backend.search(query, remote_path, offset, limit)
 
 
-def generate_download_url(
+async def generate_download_url(
     target_path: str | list[str],
     name: str | list[str],
-    type_: Literal["file", "dir", "mixed"],
-    source: Literal["download", "share"],
+    type_: FileType,
+    source: FileSource,
     expire_datetime_utc: Optional[datetime] = None,
     expire_days: Optional[int] = None,
 ) -> str | None:
@@ -376,7 +364,7 @@ def generate_download_url(
         # 既没有指定时间，也没有指定天数，使用配置文件中的默认 TTL
         this_url_ttl = current_time_utc + settings.DEFAULT_DOWNLOAD_LINK_TTL
 
-    download_id = uuid4().hex[:12]
+    download_id = ulid.new().str
     download_info = {
         "name": name,
         "type": type_,
@@ -384,7 +372,7 @@ def generate_download_url(
         "base_path": app.storage.user["last_path"],
         "user": app.storage.user["username"],
         "source": source,
-        "exp": this_url_ttl.isoformat() if this_url_ttl else None,
+        "exp": this_url_ttl,
     }
 
     if storage_key not in app.storage.general:
@@ -408,6 +396,16 @@ def generate_download_url(
         raise ValueError(_("Invalid source parameter."))
 
     download_info.update({"url": url})
+
+    download_info_db = FileDownloadInfo(
+        download_id=download_id,
+        **download_info,
+    )
+
+    async with async_session() as session:
+        async with session.begin():
+            session.add(download_info_db)
+
     app.storage.general[storage_key][download_id] = download_info
     return url
 

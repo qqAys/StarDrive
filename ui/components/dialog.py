@@ -5,7 +5,12 @@ from typing import Optional, Callable
 
 from nicegui import ui, events
 
-from schemas.file_schema import FILE_NAME_FORBIDDEN_CHARS, FileMetadata, DirMetadata
+from schemas.file_schema import (
+    FILE_NAME_FORBIDDEN_CHARS,
+    FileMetadata,
+    DirMetadata,
+    FileSource,
+)
 from services.file_service import (
     get_user_share_links,
     delete_download_link,
@@ -733,11 +738,11 @@ class MetadataDialog(Dialog):
     async def on_share_button_click(self):
         expire_define = await ShareDialog(file_name=self.metadata.name).open()
         if expire_define:
-            download_url = generate_download_url(
+            download_url = await generate_download_url(
                 self.metadata.path,
                 self.metadata.name,
                 self.metadata.type,
-                "share",
+                FileSource.SHARE,
                 expire_define["expire_datetime_utc"],
                 expire_define["expire_days"],
             )
@@ -768,8 +773,11 @@ class MetadataDialog(Dialog):
             ).open()
 
         if confirm:
-            download_url = generate_download_url(
-                self.metadata.path, self.metadata.name, self.metadata.type, "download"
+            download_url = await generate_download_url(
+                self.metadata.path,
+                self.metadata.name,
+                self.metadata.type,
+                FileSource.DOWNLOAD,
             )
             if not download_url:
                 return

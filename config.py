@@ -39,6 +39,9 @@ class Config(BaseSettings):
     APP_DEFAULT_LANGUAGE: str = "en-US"
     APP_PRIMARY_COLOR: str = "#424242"
 
+    LOCAL_DB_DSN: str = "sqlite+aiosqlite:///data/db.sqlite3"
+    LOCAL_DB_ECHO: bool = DEBUG
+
     STORAGE_SECRET: str = None
     NICEGUI_RECONNECT_TIMEOUT: int = 5
     NICEGUI_TIMER_INTERVAL: float = 2

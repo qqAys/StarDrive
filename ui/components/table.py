@@ -5,7 +5,7 @@ from nicegui import ui, events
 from starlette.formparsers import MultiPartParser
 
 from config import settings
-from schemas.file_schema import DirMetadata, FileMetadata
+from schemas.file_schema import DirMetadata, FileMetadata, FileType, FileSource
 from services.file_service import (
     StorageManager,
     get_file_icon,
@@ -429,8 +429,8 @@ class FileBrowserTable:
                 ).format(file_name),
             ).open()
             if confirm:
-                download_url = generate_download_url(
-                    target_path, file_name, "file", "download"
+                download_url = await generate_download_url(
+                    target_path, file_name, FileType.FILE, FileSource.DOWNLOAD
                 )
                 if not download_url:
                     return
@@ -559,11 +559,11 @@ class FileBrowserTable:
         ).open()
 
         if confirm:
-            download_url = generate_download_url(
+            download_url = await generate_download_url(
                 [s["path"] for s in self.browser_table.selected],
                 [s["raw_name"] for s in self.browser_table.selected],
-                "mixed",
-                "download",
+                FileType.MIXED,
+                FileSource.DOWNLOAD,
             )
             if not download_url:
                 return
