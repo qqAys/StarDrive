@@ -12,6 +12,7 @@ from services.file_service import (
     generate_download_url,
     set_user_last_path,
     validate_filename,
+    get_user_last_path,
 )
 from services.user_service import get_user_timezone
 from ui.components import max_w
@@ -86,6 +87,8 @@ class FileBrowserTable:
         self.file_list = []
 
         self._current_path: Path = Path(initial_path, target_path)
+        if not get_user_last_path():
+            set_user_last_path(self._current_path)
 
         if not self.file_service.exists(str(self.current_path)):
             notify.error(_("Path not exists, will go to home dir."))

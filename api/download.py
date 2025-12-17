@@ -17,18 +17,14 @@ from services.file_service import get_download_info, FileDownloadInfo
 async def verify_download_token(jwt_token: str):
     payload = verify_jwt_secret(jwt_token)
     if not payload:
-        raise HTTPException(
-            status_code=401, detail="Invalid download link or has expired."
-        )
+        return None
 
     download_info = get_download_info(payload.get("download_id"))
 
     if not download_info:
-        raise HTTPException(
-            status_code=401, detail="Invalid download link or has expired."
-        )
-
-    return download_info
+        return None
+    else:
+        return download_info
 
 
 router = APIRouter(prefix="/api")
@@ -38,6 +34,11 @@ router = APIRouter(prefix="/api")
 async def download_form_browser_api(
     validated_data: Annotated[FileDownloadInfo, Depends(verify_download_token)],
 ):
+    if not validated_data:
+        raise HTTPException(
+            status_code=401, detail="Invalid download link or has expired."
+        )
+
     file_manager = globals.get_storage_manager()
 
     is_multi_file = isinstance(validated_data.name, list)

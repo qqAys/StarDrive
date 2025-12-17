@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 from nicegui import app, ui
 from pydantic import EmailStr
 
+from config import settings
 from schemas.user_schema import (
     StoredUser,
     UserRegister,
@@ -34,7 +35,7 @@ class UserManager:
 
         if len(self.users) == 0:
             # 初始化管理员
-            initial_email = "admin@stardrive.abc"
+            initial_email = settings.APP_INIT_USER
             initial_password = generate_random_password()
             self.create(
                 UserRegister(
@@ -55,6 +56,26 @@ class UserManager:
         检查用户是否已登录
         """
         return app.storage.user.get("authenticated", False)
+
+    def is_active(self, email: EmailStr = None) -> bool:
+        """
+        检查用户是否已激活
+        """
+        if not email:
+            email = app.storage.user.get("username")
+            if not email:
+                return False
+        return self.users[email]["is_active"]
+
+    def is_superuser(self, email: EmailStr = None) -> bool:
+        """
+        检查用户是否是超级用户
+        """
+        if not email:
+            email = app.storage.user.get("username")
+            if not email:
+                return False
+        return self.users[email]["is_superuser"]
 
     def exists(self, email: EmailStr) -> bool:
         """

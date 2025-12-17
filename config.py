@@ -2,6 +2,7 @@ import platform
 from datetime import timedelta, timezone
 from typing import Literal, Any, ClassVar
 
+from pydantic import EmailStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,6 +39,8 @@ class Config(BaseSettings):
     APP_TITLE: str = _PROJECT_NAME
     APP_DEFAULT_LANGUAGE: str = "en-US"
     APP_PRIMARY_COLOR: str = "#424242"
+
+    APP_INIT_USER: EmailStr = "admin@stardrive.abc"
 
     LOCAL_DB_DSN: str = "sqlite+aiosqlite:///data/db.sqlite3"
     LOCAL_DB_ECHO: bool = DEBUG

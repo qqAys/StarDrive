@@ -10,7 +10,8 @@ from api import download
 from config import settings
 from middleware import AuthLoggerMiddleware
 from services.file_service import StorageManager
-from services.local_db_service import init_local_db, close_local_db
+
+# from services.local_db_service import init_local_db, close_local_db
 from storage.local_storage import LocalStorage
 from ui.pages import login, browser, console, profile, share
 from ui.pages.error_page import render_404, render_50x
@@ -42,7 +43,9 @@ def timeout_error_page(exception: Exception) -> None:
 
 @app.on_startup
 async def on_app_startup():
-    await init_local_db()
+    # ULID 在 python 字典中作为 key 的性能还是非常好的
+    # 同时考虑到 app.storage.general 使用本地文件持久化，所以此处暂时不用数据库存储
+    # await init_local_db()
     local_storage_manager = StorageManager()
     local_storage_manager.set_current_backend(LocalStorage.name)
     globals.set_storage_manager(local_storage_manager)
@@ -93,9 +96,9 @@ async def on_app_startup():
     logger.info(f"App started at http://{settings.APP_HOST}:{settings.APP_PORT}")
 
 
-@app.on_shutdown
-async def on_app_shutdown():
-    await close_local_db()
+# @app.on_shutdown
+# async def on_app_shutdown():
+#     await close_local_db()
 
 
 if __name__ in {"__main__", "__mp_main__"}:

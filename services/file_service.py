@@ -20,7 +20,6 @@ from config import settings
 from models.file_download_model import FileDownloadInfo
 from schemas.file_schema import FileMetadata, DirMetadata, FileType, FileSource
 from security import generate_jwt_secret
-from services.local_db_service import async_session
 from storage.base import StorageBackend
 from storage.local_storage import LocalStorage
 from ui.components.notify import notify
@@ -397,14 +396,16 @@ async def generate_download_url(
 
     download_info.update({"url": url})
 
-    download_info_db = FileDownloadInfo(
-        download_id=download_id,
-        **download_info,
-    )
-
-    async with async_session() as session:
-        async with session.begin():
-            session.add(download_info_db)
+    # ULID 在 python 字典中作为 key 的性能还是非常好的
+    # 同时考虑到 app.storage.general 使用本地文件持久化，所以此处暂时不用数据库存储
+    #
+    # download_info_db = FileDownloadInfo(
+    #     download_id=download_id,
+    #     **download_info,
+    # )
+    # async with async_session() as session:
+    #     async with session.begin():
+    #         session.add(download_info_db)
 
     app.storage.general[storage_key][download_id] = download_info
     return url

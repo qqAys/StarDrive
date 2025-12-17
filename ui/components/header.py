@@ -1,10 +1,13 @@
 from nicegui import ui, app
 
 from config import settings
+from services import user_service
 from ui.components.dialog import ConfirmDialog
 from ui.components.fake_button import fake_button
 from ui.components.notify import notify
 from utils import _
+
+user = user_service.UserManager()
 
 
 class Header:
@@ -49,14 +52,20 @@ class Header:
 
         ui.page_title(title)
 
-        with self.header().classes("fixed h-12 p-2 flex items-center gap-4 z-50") as self.header:
+        with self.header().classes(
+            "fixed h-12 p-2 flex items-center gap-4 z-50"
+        ) as self.header:
             with ui.link(target="/home/").classes("text-white no-underline"):
                 ui.label("StarDrive").classes("font-bold")
 
             ui.space()
 
-            fake_button(_("Console"), icon="dashboard", link="/console")
-            fake_button(_("Logout"), icon="logout", func=self.logout)
+            if user.is_superuser():
+                fake_button(_("Console"), icon="dashboard", link="/console")
+            if user.is_login():
+                fake_button(_("Logout"), icon="logout", func=self.logout)
+            else:
+                fake_button(_("Login"), icon="login", link="/login")
 
     def inject(self):
         return self.header
