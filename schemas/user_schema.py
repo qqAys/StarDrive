@@ -1,49 +1,43 @@
-from pydantic import BaseModel, EmailStr
+from datetime import datetime
+
+from sqlmodel import SQLModel
 
 
-# --- 用户数据模型 ---
-
-
-# 存储在 NiceGUI app.storage.general 中的用户信息模型
-class StoredUser(BaseModel):
-    id: int
-    username: str
-    email: EmailStr
-    is_active: bool = True
-    is_superuser: bool = False
-
-    password_hash: str
-
-
-# --- API 输入模型 ---
-
-
-# 用户注册
-class UserRegister(BaseModel):
-    username: str
-    email: EmailStr
-    password: str  # 在业务逻辑层会被哈希
-
-
-# 用户登录
-class UserLogin(BaseModel):
-    email: EmailStr
+class UserLogin(SQLModel):
+    email: str
     password: str
 
 
-# 用户修改密码
-class UserModifyPassword(BaseModel):
+class UserRegister(SQLModel):
+    email: str
+    password: str
+
+
+class UserModifyPassword(SQLModel):
     current_password: str
     new_password: str
 
 
-# --- API 输出模型 ---
+class UserResetPasswordRequest(SQLModel):
+    email: str
 
 
-# 用户信息
-class UserRead(BaseModel):
+class UserResetPasswordConfirm(SQLModel):
+    token: str
+    new_password: str
+
+
+class UserRead(SQLModel):
     id: int
     username: str
-    email: EmailStr
+    email: str
     is_active: bool
     is_superuser: bool
+    created_at: datetime
+
+
+class UserUpdate(SQLModel):
+    username: str | None = None
+    email: str | None = None
+    is_active: bool | None = None
+    is_superuser: bool | None = None

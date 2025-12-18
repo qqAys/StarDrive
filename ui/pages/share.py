@@ -7,13 +7,13 @@ from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
 import globals
-from api.download import verify_download_token
+from core.i18n import _
 from models.file_download_model import FileDownloadInfo
 from schemas.file_schema import FileMetadata, DirMetadata
+from services.download_service import verify_download_token
 from services.file_service import get_file_icon
 from ui.components.base import BaseLayout
 from ui.pages.error_page import render_404
-from utils import _
 
 this_page_routes = "/share"
 
@@ -45,7 +45,9 @@ async def index(
         )
         return
 
-    with BaseLayout().render(header=True, footer=True, args={"title": _("Share")}):
+    async with BaseLayout().render(
+        header=True, footer=True, args={"title": _("Share")}
+    ):
 
         file_manager = globals.get_storage_manager()
 

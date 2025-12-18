@@ -1,18 +1,17 @@
-from nicegui import ui, app
+from nicegui import ui
 
+import globals
 from config import settings
-from services import user_service
+from core.i18n import _
 from ui.components.dialog import ConfirmDialog
 from ui.components.fake_button import fake_button
 from ui.components.notify import notify
-from utils import _
-
-user = user_service.UserManager()
 
 
 class Header:
 
     def __init__(self):
+        self.user_manager = globals.get_user_manager()
         ui.colors(primary=settings.APP_PRIMARY_COLOR)
 
         # favicon
@@ -27,8 +26,7 @@ class Header:
 
         self.header = ui.header
 
-    @staticmethod
-    async def logout():
+    async def logout(self):
         confirm = await ConfirmDialog(
             title=_("Logout"),
             message=_("Are you sure you want to logout?"),
@@ -36,15 +34,18 @@ class Header:
         ).open()
 
         if confirm:
-            app.storage.user.update({"authenticated": False})
-            notify.success(_("Logged out"))
-            ui.timer(
-                settings.NICEGUI_TIMER_INTERVAL,
-                lambda: ui.navigate.to("/login"),
-                once=True,
-            )
+            if await self.user_manager.logout():
+                notify.success(_("Logged out"))
+                ui.timer(
+                    settings.NICEGUI_TIMER_INTERVAL,
+                    lambda: ui.navigate.to("/login"),
+                    once=True,
+                )
+            else:
+                notify.error(_("Logout failed"))
+                return
 
-    def render(self, title=None, *args, **kwargs):
+    async def render(self, title=None, *args, **kwargs):
         if title is None:
             title = settings.APP_NAME
         else:
@@ -60,9 +61,9 @@ class Header:
 
             ui.space()
 
-            if user.is_superuser():
+            if await self.user_manager.is_superuser():
                 fake_button(_("Console"), icon="dashboard", link="/console")
-            if user.is_login():
+            if await self.user_manager.is_login():
                 fake_button(_("Logout"), icon="logout", func=self.logout)
             else:
                 fake_button(_("Login"), icon="login", link="/login")

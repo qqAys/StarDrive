@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from utils import _
+from core.i18n import _
 
 FILE_NAME_FORBIDDEN_CHARS = r'\/:*?"<>|'
 

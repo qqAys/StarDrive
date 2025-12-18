@@ -1,233 +1,221 @@
-from typing import Optional
 from zoneinfo import ZoneInfo
 
 from nicegui import app, ui
 from pydantic import EmailStr
 
 from config import settings
-from schemas.user_schema import (
-    StoredUser,
-    UserRegister,
-    UserRead,
-    UserModifyPassword,
-    UserLogin,
-)
-from security import HashingManager, generate_random_password
-from utils import logger, _
-
-ALL_USERS_KEY = "all_users"
+from core.i18n import _
+from core.logging import logger
+from crud.user_crud import UserCRUD
+from schemas.user_schema import UserLogin
+from security.password import generate_random_password
 
 
 class UserManager:
     """
-    处理 NiceGUI app.storage.general 中的用户数据。
+    NiceGUI 用户管理（DB 驱动）
     """
 
-    storage = app.storage.general
+    def __init__(
+        self,
+        *,
+        user_crud: type[UserCRUD],
+        db_context,
+    ):
+        self.user_crud = user_crud
+        self.db_context = db_context
 
-    def __init__(self):
+    # --------------------------
+    # 初始化：创建初始管理员
+    # --------------------------
+    async def initialize(self):
+        async with self.db_context() as session:
+            users = await self.user_crud.list(session=session, limit=1)
+            if users:
+                return
 
-        # 用户信息存储初始化
-        if ALL_USERS_KEY not in self.storage:
-            self.storage[ALL_USERS_KEY] = {}
+            email = settings.APP_INIT_USER
+            password = generate_random_password()
 
-        self.users = self.storage[ALL_USERS_KEY]
-
-        if len(self.users) == 0:
-            # 初始化管理员
-            initial_email = settings.APP_INIT_USER
-            initial_password = generate_random_password()
-            self.create(
-                UserRegister(
-                    username="admin", email=initial_email, password=initial_password
-                ),
-                bypass_exists_check=True,
+            await self.user_crud.create(
+                session=session,
+                email=email,
+                password=password,
+                is_superuser=True,
             )
-            self.make_superuser(initial_email)
-            logger.info(
+
+            logger.warning(
                 _("Administrator account created. Email: {}, Password: {}").format(
-                    initial_email, initial_password
+                    email, password
                 )
             )
 
-    @staticmethod
-    def is_login() -> bool:
-        """
-        检查用户是否已登录
-        """
-        return app.storage.user.get("authenticated", False)
+    # --------------------------
+    # 会话状态
+    # --------------------------
+    async def is_login(self) -> bool:
+        return bool(await self.current_user())
 
-    def is_active(self, email: EmailStr = None) -> bool:
-        """
-        检查用户是否已激活
-        """
+    async def current_user(self):
+        return await self._get_user(None)
+
+    async def _get_user(self, email: EmailStr | None):
+        email = email or app.storage.user.get("email")
         if not email:
-            email = app.storage.user.get("username")
-            if not email:
-                return False
-        return self.users[email]["is_active"]
+            return None
 
-    def is_superuser(self, email: EmailStr = None) -> bool:
-        """
-        检查用户是否是超级用户
-        """
-        if not email:
-            email = app.storage.user.get("username")
-            if not email:
-                return False
-        return self.users[email]["is_superuser"]
+        async with self.db_context() as session:
+            user = await self.user_crud.get_by_email(session, email)
 
-    def exists(self, email: EmailStr) -> bool:
-        """
-        检查用户是否存在
-        """
-        return email in self.users
+        if not user:
+            return None
 
-    def login(self, user_in: UserLogin) -> UserRead:
-        """
-        用户登录
-        """
-        if not HashingManager.verify_password(
-            user_in.password, self.users[user_in.email]["password_hash"]
-        ):
-            message = _("Invalid password or email")
-            logger.warning(message)
-            raise ValueError(message)
+        if not user.is_active:
+            app.storage.user.clear()
+            return None
 
-        app.storage.user.update({"username": user_in.email, "authenticated": True})
-        return self.get(user_in.email)
+        if app.storage.user.get("token_version") != user.token_version:
+            # 吊销会话
+            app.storage.user.clear()
+            return None
 
-    def create(
-        self, user_in: UserRegister, bypass_exists_check: bool = False
-    ) -> StoredUser:
-        """
-        创建用户
-        """
+        return user
 
-        if not bypass_exists_check and self.exists(user_in.email):
-            message = _("User already exists")
-            logger.warning(message)
-            raise ValueError(message)
+    async def is_active(self, email: EmailStr | None = None) -> bool:
+        user = await self._get_user(email)
+        return bool(user and user.is_active)
 
-        # 生成 user_id
-        new_user_id = len(self.users) + 1
+    async def is_superuser(self, email: EmailStr | None = None) -> bool:
+        user = await self._get_user(email)
+        return bool(user and user.is_superuser)
 
-        new_user_data = StoredUser(
-            id=new_user_id,
-            username=user_in.username,
-            email=user_in.email,
-            password_hash=HashingManager.hash_password(user_in.password),
-        )
-
-        # 存储到 app.storage.general
-        self.users[new_user_data.email] = new_user_data.model_dump()
-        self.storage[ALL_USERS_KEY] = self.users  # 确保存储更新
-
-        return new_user_data
-
-    def get(self, email: EmailStr) -> Optional[UserRead]:
-        """
-        获取用户信息
-        """
-        if not self.exists(email):
-            message = _("User does not exist")
-            logger.warning(message)
-            raise ValueError(message)
-
-        return UserRead(**self.users[email])
-
-    def modify_password(self, user_in: UserModifyPassword) -> bool:
-        """
-        修改用户密码
-        """
-        if not self.exists(user_in.email):
-            message = _("User does not exist")
-            logger.warning(message)
-            raise ValueError(message)
-
-        self.users[user_in.email]["password_hash"] = HashingManager.hash_password(
-            user_in.new_password
-        )
-        self.storage[ALL_USERS_KEY] = self.users  # 确保存储更新
-
-        try:
-            return HashingManager.verify_password(
-                user_in.new_password, self.users[user_in.email]["password_hash"]
+    # --------------------------
+    # 登录 / 登出
+    # --------------------------
+    async def login(self, user_login: UserLogin):
+        async with self.db_context() as session:
+            user = await self.user_crud.authenticate(
+                session=session,
+                email=user_login.email,
+                password=user_login.password,
             )
-        except Exception as e:
-            message = _("Password modification failed")
-            logger.error(message)
-            raise ValueError(message) from e
 
-    def active_change(self, email: EmailStr, is_active: bool) -> bool:
-        """
-        用户状态切换
-        """
-        if not self.exists(email):
-            message = _("User does not exist")
-            logger.warning(message)
-            raise ValueError(message)
+            if not user:
+                raise ValueError(_("Invalid email or password"))
 
-        self.users[email]["is_active"] = is_active
-        self.storage[ALL_USERS_KEY] = self.users  # 确保存储更新
+            tz = await get_user_timezone_from_browser()
 
-        return True
+            app.storage.user.update(
+                {
+                    "user_id": user.id,
+                    "email": user.email,
+                    "token_version": user.token_version,
+                    "timezone": tz,
+                }
+            )
 
-    def superuser_change(self, email: EmailStr, is_superuser: bool) -> bool:
-        """
-        超级用户权限切换
-        """
-        if not self.exists(email):
-            message = _("User does not exist")
-            logger.warning(message)
-            raise ValueError(message)
+            return user
 
-        self.users[email]["is_superuser"] = is_superuser
-        self.storage[ALL_USERS_KEY] = self.users  # 确保存储更新
+    async def logout(self) -> bool:
+        async with self.db_context() as session:
+            try:
+                user = await self.current_user()
+                if user:
+                    user.token_version += 1
+                    session.add(user)
+                    await session.commit()
+                app.storage.user.clear()
+                return True
+            except Exception:
+                return False
 
-        return True
+    # --------------------------
+    # 用户管理
+    # --------------------------
+    async def create_user(
+        self,
+        *,
+        email: str,
+        password: str,
+        is_superuser: bool = False,
+    ):
+        async with self.db_context() as session:
+            existing = await UserCRUD.get_by_email(session, email)
+            if existing:
+                message = _("User already exists")
+                logger.warning(message)
+                raise ValueError(message)
 
-    def disable(self, email: EmailStr) -> bool:
-        """
-        禁用用户
-        """
-        return self.active_change(email, False)
+            return await UserCRUD.create(
+                session=session,
+                email=email,
+                password=password,
+                is_superuser=is_superuser,
+            )
 
-    def enable(self, email: EmailStr) -> bool:
-        """
-        启用用户
-        """
-        return self.active_change(email, True)
+    async def change_password(
+        self,
+        *,
+        email: str,
+        new_password: str,
+    ) -> None:
+        async with self.db_context() as session:
+            user = await UserCRUD.get_by_email(session, email)
+            if not user:
+                message = _("User does not exist")
+                logger.warning(message)
+                raise ValueError(message)
 
-    def make_superuser(self, email: EmailStr) -> bool:
-        """
-        将用户设为超级用户
-        """
-        return self.superuser_change(email, True)
+            await UserCRUD.update_password(
+                session=session,
+                user=user,
+                new_password=new_password,
+                revoke_tokens=True,
+            )
 
-    def remove_superuser(self, email: EmailStr) -> bool:
-        """
-        取消超级用户权限
-        """
-        return self.superuser_change(email, False)
+    async def set_active(
+        self,
+        *,
+        email: str,
+        is_active: bool,
+    ) -> None:
+        async with self.db_context() as session:
+            user = await UserCRUD.get_by_email(session, email)
+            if not user:
+                raise ValueError(_("User does not exist"))
+
+            await UserCRUD.update_status(
+                session=session,
+                user=user,
+                is_active=is_active,
+            )
+
+    async def set_superuser(
+        self,
+        *,
+        email: str,
+        is_superuser: bool,
+    ) -> None:
+        async with self.db_context() as session:
+            user = await UserCRUD.get_by_email(session, email)
+            if not user:
+                raise ValueError(_("User does not exist"))
+
+            user.is_superuser = is_superuser
+            session.add(user)
+            await session.commit()
 
 
 async def get_user_timezone_from_browser():
     try:
-        user_timezone_name = await ui.run_javascript(
-            """
-            try {
-                const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                return timezone;
-            } catch (e) {
-                return ""; 
-            }""",
+        tz = await ui.run_javascript(
+            "Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';"
         )
+        app.storage.user["timezone"] = tz
+        return tz
     except Exception as e:
         logger.error(_("Error getting user timezone: {}").format(e))
-        user_timezone_name = "UTC"
-
-    return user_timezone_name
+        return "UTC"
 
 
 def get_user_timezone():

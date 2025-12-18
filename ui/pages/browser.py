@@ -2,10 +2,11 @@ from fastapi.responses import RedirectResponse
 from nicegui import APIRouter, app, ui
 
 import globals
+from core.i18n import _
+from security.guards import require_user
 from services.file_service import get_user_last_path
-from ui.components.base import base_layout
+from ui.components.base import BaseLayout
 from ui.components.table import FileBrowserTable
-from utils import _
 
 this_page_routes = "/home"
 
@@ -24,32 +25,37 @@ router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
-@base_layout(header=True, footer=True, args={"title": _("Home")})
+@require_user()
 async def index():
+    async with BaseLayout().render(header=True, footer=True, args={"title": _("Home")}):
 
-    file_manager = globals.get_storage_manager()
+        file_manager = globals.get_storage_manager()
+        user_manager = globals.get_user_manager()
 
-    with ui.dialog().props("seamless position='bottom'") as upload_dialog:
-        with ui.card().tight():
-            dialog_close_button = (
-                ui.button(icon="close")
-                .props("dense square unelevated")
-                .classes("w-full")
-            )
-            upload_component = (
-                ui.upload(label=_("Upload files"), multiple=True, auto_upload=True)
-                .props("hide-upload-btn no-thumbnails")
-                .classes("max-w-full")
-            )
-            upload_component.set_visibility(True)
+        current_user = await user_manager.current_user()
 
-    user_last_path = get_user_last_path()
+        with ui.dialog().props("seamless position='bottom'") as upload_dialog:
+            with ui.card().tight():
+                dialog_close_button = (
+                    ui.button(icon="close")
+                    .props("dense square unelevated")
+                    .classes("w-full")
+                )
+                upload_component = (
+                    ui.upload(label=_("Upload files"), multiple=True, auto_upload=True)
+                    .props("hide-upload-btn no-thumbnails")
+                    .classes("max-w-full")
+                )
+                upload_component.set_visibility(True)
 
-    file_browser_component = FileBrowserTable(
-        file_service=file_manager,
-        target_path="" if user_last_path is None else f"./{user_last_path}",
-        upload_component=upload_component,
-        upload_dialog=upload_dialog,
-        upload_dialog_close_button=dialog_close_button,
-    )
-    await file_browser_component.refresh()
+        user_last_path = get_user_last_path()
+
+        file_browser_component = FileBrowserTable(
+            file_manager=file_manager,
+            current_user=current_user,
+            target_path="" if user_last_path is None else f"./{user_last_path}",
+            upload_component=upload_component,
+            upload_dialog=upload_dialog,
+            upload_dialog_close_button=dialog_close_button,
+        )
+        await file_browser_component.refresh()

@@ -1,7 +1,7 @@
 from nicegui import ui
 
+from core.i18n import _
 from ui.components.notify import notify
-from utils import _
 
 
 def copy_to_clipboard(link: str, message: str) -> bool:

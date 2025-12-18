@@ -1,0 +1,45 @@
+from functools import wraps
+
+from nicegui import ui
+
+import globals
+from config import settings
+from core.i18n import _
+from ui.components.notify import notify
+
+
+def navigate_to(custom_url: str = None):
+    ui.timer(
+        settings.NICEGUI_TIMER_INTERVAL,
+        lambda: ui.navigate.to(custom_url or "/login"),
+        once=True,
+    )
+
+
+def require_user(*, superuser: bool = False, active: bool = True):
+    def decorator(page_func):
+        @wraps(page_func)
+        async def wrapper(*args, **kwargs):
+            um = globals.get_user_manager()
+            user = await um.current_user()
+
+            if not user:
+                notify.error(_("You need to sign in to access this page."))
+                navigate_to()
+                return None
+
+            if active and not user.is_active:
+                notify.error(_("Your account has been disabled."))
+                navigate_to()
+                return None
+
+            if superuser and not user.is_superuser:
+                notify.error(_("You don’t have access to this page."))
+                navigate_to("/home/")
+                return None
+
+            return await page_func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
