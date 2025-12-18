@@ -2,9 +2,10 @@ from fastapi.responses import RedirectResponse
 from nicegui import ui, APIRouter, app
 
 from config import settings
+from core.i18n import _, SUPPORTED_LANGUAGES
+from security.guards import require_user
 from ui.components.base import BaseLayout
 from ui.components.notify import notify
-from utils import _, SUPPORTED_LANGUAGES
 
 this_page_routes = "/profile"
 
@@ -23,8 +24,11 @@ router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
+@require_user()
 async def index():
-    async with BaseLayout().render(header=True, footer=True, args={"title": _("Profile")}):
+    async with BaseLayout().render(
+        header=True, footer=True, args={"title": _("Profile")}
+    ):
 
         def change_language(lang_code):
             current_lang_code = app.storage.user.get("default_lang", "en_US")
@@ -38,4 +42,6 @@ async def index():
 
         with ui.dropdown_button(icon="translate", auto_close=True):
             for lang in SUPPORTED_LANGUAGES:
-                ui.item(lang, on_click=lambda lang_code=lang: change_language(lang_code))
+                ui.item(
+                    lang, on_click=lambda lang_code=lang: change_language(lang_code)
+                )

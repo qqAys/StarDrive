@@ -12,23 +12,22 @@ from typing import (
     AsyncGenerator,
 )
 
-import ulid
 from nicegui import app
 from sqlalchemy import select
 
 from api import download_form_browser_url_prefix
 from config import settings
+from core.i18n import _
+from core.logging import logger
 from crud.file_download_crud import FileDownloadCRUD
 from models.file_download_model import FileDownloadInfo
 from models.user_model import User
 from schemas.file_schema import FileMetadata, DirMetadata, FileType, FileSource
-from security import create_token
+from security.tokens import create_token
 from services.local_db_service import get_db_context
-from services.user_service import UserManager
 from storage.base import StorageBackend
 from storage.local_storage import LocalStorage
 from ui.components.notify import notify
-from utils import logger, _
 
 
 # storage_key = "temp_public_download_key"
@@ -368,22 +367,8 @@ async def generate_download_url(
 
     elif expire_datetime_utc is None and expire_days is None:
         # 既没有指定时间，也没有指定天数，使用配置文件中的默认 TTL
+        # 下载是不传入过期时间的，所以使用默认的 TTL，分享不是。
         this_url_ttl = current_time_utc + settings.DEFAULT_DOWNLOAD_LINK_TTL
-
-    # download_info = {
-    #     "name": name,
-    #     "type": type_,
-    #     "path": target_path,
-    #     "base_path": app.storage.user["last_path"],
-    #     "user": app.storage.user["username"],
-    #     "source": source,
-    #     "exp": this_url_ttl,
-    # }
-    #
-    # if storage_key not in app.storage.general:
-    #     app.storage.general[storage_key] = {}
-
-    # download_info.update({"url": url})
 
     async with get_db_context() as session:
         download_info = await FileDownloadCRUD.create(
@@ -394,30 +379,37 @@ async def generate_download_url(
             base_path=app.storage.user["last_path"],
             user=current_user.id,
             source=source,
-            expires_at=this_url_ttl
+            expires_at=this_url_ttl,
         )
     payload = {"download_id": download_info.id}
 
+    expires_delta = None
     if this_url_ttl:
-        payload.update({"exp": int(this_url_ttl.timestamp())})
+        expires_delta = this_url_ttl - current_time_utc
 
-    if source == "download":
-        url = (
-            app.storage.general["service_url"]
-            + f"/api/{download_form_browser_url_prefix}/{create_token(payload)}"
+    server_url_prefix = app.storage.general["service_url"]
+
+    if source == FileSource.DOWNLOAD:
+        token = create_token(
+            payload,
+            expires_delta=expires_delta or settings.DEFAULT_DOWNLOAD_LINK_TTL,
         )
-    elif source == "share":
-        url = (
-            app.storage.general["service_url"]
-            + f"/share/{create_token(payload)}"
+        url = f"{server_url_prefix}/api/{download_form_browser_url_prefix}/{token}"
+
+    elif source == FileSource.SHARE:
+        token = create_token(
+            payload,
+            expires_delta=expires_delta,
         )
+        url = f"{server_url_prefix}/share/{token}"
     else:
-        raise ValueError(_("Invalid source parameter."))
+        raise ValueError("Invalid source")
 
     async with get_db_context() as session:
-        await FileDownloadCRUD.update_url(session=session, file_download_id=download_info.id, url=url)
+        await FileDownloadCRUD.update_url(
+            session=session, file_download_id=download_info.id, url=url
+        )
 
-    # app.storage.general[storage_key][download_id] = download_info
     return url
 
 
@@ -440,7 +432,9 @@ async def delete_download_link(download_id: str):
     return True
 
 
-async def get_user_share_links(current_user: User, file_name: str | None = None) -> list[FileDownloadInfo]:
+async def get_user_share_links(
+    current_user: User, file_name: str | None = None
+) -> list[FileDownloadInfo]:
     """
     获取用户分享链接。
     """
@@ -450,7 +444,7 @@ async def get_user_share_links(current_user: User, file_name: str | None = None)
             select(FileDownloadInfo).where(
                 FileDownloadInfo.user_id == current_user.id,
                 FileDownloadInfo.source == FileSource.SHARE,
-                FileDownloadInfo.name == file_name
+                FileDownloadInfo.name == file_name,
             )
         )
 

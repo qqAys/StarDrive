@@ -1,11 +1,11 @@
-from nicegui import ui, app
+from nicegui import ui
 
 import globals
 from config import settings
+from core.i18n import _
 from ui.components.dialog import ConfirmDialog
 from ui.components.fake_button import fake_button
 from ui.components.notify import notify
-from utils import _
 
 
 class Header:
@@ -26,8 +26,7 @@ class Header:
 
         self.header = ui.header
 
-    @staticmethod
-    async def logout():
+    async def logout(self):
         confirm = await ConfirmDialog(
             title=_("Logout"),
             message=_("Are you sure you want to logout?"),
@@ -35,13 +34,16 @@ class Header:
         ).open()
 
         if confirm:
-            app.storage.user.update({"authenticated": False})
-            notify.success(_("Logged out"))
-            ui.timer(
-                settings.NICEGUI_TIMER_INTERVAL,
-                lambda: ui.navigate.to("/login"),
-                once=True,
-            )
+            if await self.user_manager.logout():
+                notify.success(_("Logged out"))
+                ui.timer(
+                    settings.NICEGUI_TIMER_INTERVAL,
+                    lambda: ui.navigate.to("/login"),
+                    once=True,
+                )
+            else:
+                notify.error(_("Logout failed"))
+                return
 
     async def render(self, title=None, *args, **kwargs):
         if title is None:

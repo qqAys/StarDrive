@@ -1,13 +1,11 @@
 from datetime import datetime
-from typing import Optional, Sequence
+from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from models.file_download_model import FileDownloadInfo
-from models.user_model import User, Role, UserRoleLink
 from schemas.file_schema import FileType, FileSource
-from security import HashingManager
 
 
 class FileDownloadCRUD:
@@ -23,7 +21,7 @@ class FileDownloadCRUD:
         base_path: str,
         user: str,
         source: FileSource,
-        expires_at: datetime
+        expires_at: datetime,
     ) -> FileDownloadInfo:
         file_download = FileDownloadInfo(
             name=name,
@@ -32,7 +30,7 @@ class FileDownloadCRUD:
             base_path=base_path,
             user_id=user,
             source=source,
-            expires_at=expires_at
+            expires_at=expires_at,
         )
         session.add(file_download)
         await session.commit()
@@ -60,9 +58,7 @@ class FileDownloadCRUD:
     # 读取
     @staticmethod
     async def get(
-        session: AsyncSession,
-        *,
-        file_download_id: str
+        session: AsyncSession, *, file_download_id: str
     ) -> Optional[FileDownloadInfo]:
         file_download = select(FileDownloadInfo).where(
             FileDownloadInfo.id == file_download_id

@@ -41,4 +41,3 @@ class UserUpdate(SQLModel):
     email: str | None = None
     is_active: bool | None = None
     is_superuser: bool | None = None
-

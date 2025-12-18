@@ -49,7 +49,7 @@ class Config(BaseSettings):
     NICEGUI_RECONNECT_TIMEOUT: int = 5
     NICEGUI_TIMER_INTERVAL: float = 2
 
-    DEFAULT_DOWNLOAD_LINK_TTL: ClassVar[timedelta] = timedelta(seconds=60)
+    DEFAULT_DOWNLOAD_LINK_TTL: ClassVar[timedelta] = timedelta(seconds=30)
 
     SYSTEM_DEFAULT_TIMEZONE: ClassVar[timezone] = timezone.utc
 

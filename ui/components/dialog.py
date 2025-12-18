@@ -5,6 +5,7 @@ from typing import Optional, Callable
 
 from nicegui import ui, events
 
+from core.i18n import _
 from models.user_model import User
 from schemas.file_schema import (
     FILE_NAME_FORBIDDEN_CHARS,
@@ -19,10 +20,11 @@ from services.file_service import (
     get_file_icon,
     generate_download_url,
 )
-from services.user_service import get_user_timezone, UserManager
+from services.user_service import get_user_timezone
 from ui.components.clipboard import copy_to_clipboard
 from ui.components.notify import notify
-from utils import _, bytes_to_human_readable, timestamp_to_human_readable
+from utils.size import bytes_to_human_readable
+from utils.time import timestamp_to_human_readable
 
 
 class Dialog:
@@ -298,14 +300,16 @@ class ShareDialog(Dialog):
         self.title = _("Share {}").format(file_name)
         self.file_name = file_name
         self.current_user = current_user
-        
+
         self.dialog = ui.dialog().props(self.dialog_props)
 
     async def open(self):
         with self.dialog, ui.card().classes("w-full"):
             ui.label(self.title).classes(self.title_class)
 
-            user_share_links = await get_user_share_links(self.current_user, self.file_name)
+            user_share_links = await get_user_share_links(
+                self.current_user, self.file_name
+            )
             if user_share_links:
                 ui.separator()
                 ui.label(_("Valid sharing links")).classes("text-base font-bold")
@@ -329,11 +333,9 @@ class ShareDialog(Dialog):
                 with ui.row().classes("w-full justify-between"):
                     for share_link in user_share_links:
                         link_url = share_link.type
-                        link_expire_time = (
-                            share_link.expires_at
-                            .astimezone(get_user_timezone())
-                            .strftime("%Y-%m-%d %H:%M:%S")
-                        )
+                        link_expire_time = share_link.expires_at.astimezone(
+                            get_user_timezone()
+                        ).strftime("%Y-%m-%d %H:%M:%S")
                         with (
                             ui.dropdown_button(
                                 _("EXP: {}").format(link_expire_time),
@@ -359,11 +361,11 @@ class ShareDialog(Dialog):
                                 ui.button(
                                     _("Delete"),
                                     icon="delete",
-                                    on_click=lambda d_id=share_link.id: delete_share_link(d_id),
+                                    on_click=lambda d_id=share_link.id: delete_share_link(
+                                        d_id
+                                    ),
                                 ).classes("w-full").props("flat dense")
-                        all_share_link_dropdown_button[share_link.id] = (
-                            dropdown_button
-                        )
+                        all_share_link_dropdown_button[share_link.id] = dropdown_button
 
                 ui.separator()
                 ui.label(_("Create new sharing link")).classes("text-base font-bold")
@@ -738,7 +740,9 @@ class MetadataDialog(Dialog):
         await self.refresh_browser()
 
     async def on_share_button_click(self):
-        expire_define = await ShareDialog(file_name=self.metadata.name, current_user=self.current_user).open()
+        expire_define = await ShareDialog(
+            file_name=self.metadata.name, current_user=self.current_user
+        ).open()
         if expire_define:
             download_url = await generate_download_url(
                 self.current_user,

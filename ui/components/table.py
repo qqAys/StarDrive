@@ -5,6 +5,7 @@ from nicegui import ui, events
 from starlette.formparsers import MultiPartParser
 
 from config import settings
+from core.i18n import _
 from models.user_model import User
 from schemas.file_schema import DirMetadata, FileMetadata, FileType, FileSource
 from services.file_service import (
@@ -15,7 +16,7 @@ from services.file_service import (
     validate_filename,
     get_user_last_path,
 )
-from services.user_service import get_user_timezone, UserManager
+from services.user_service import get_user_timezone
 from ui.components import max_w
 from ui.components.clipboard import copy_to_clipboard
 from ui.components.dialog import (
@@ -26,7 +27,8 @@ from ui.components.dialog import (
     MetadataDialog,
 )
 from ui.components.notify import notify
-from utils import _, bytes_to_human_readable, timestamp_to_human_readable
+from utils.size import bytes_to_human_readable
+from utils.time import timestamp_to_human_readable
 
 size_sort_js = """(a, b, rowA, rowB) => {
     const isDirA = rowA.type === 'dir';
@@ -435,7 +437,13 @@ class FileBrowserTable:
                 ).format(file_name),
             ).open()
             if confirm:
-                download_url = await generate_download_url(self.current_user, target_path, file_name, FileType.FILE, FileSource.DOWNLOAD)
+                download_url = await generate_download_url(
+                    self.current_user,
+                    target_path,
+                    file_name,
+                    FileType.FILE,
+                    FileSource.DOWNLOAD,
+                )
                 if not download_url:
                     return
                 ui.navigate.to(download_url)

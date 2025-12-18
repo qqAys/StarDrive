@@ -10,23 +10,8 @@ from fastapi.responses import FileResponse, StreamingResponse
 import globals
 from api import download_form_browser_url_prefix
 from schemas.file_schema import FileType
-from security import decode_token
-from services.file_service import get_download_info, FileDownloadInfo
-
-
-# 依赖函数：用于解析和验证令牌
-async def verify_download_token(jwt_token: str) -> FileDownloadInfo | None:
-    payload = decode_token(jwt_token)
-    if not payload:
-        return None
-
-    download_info = await get_download_info(payload.get("download_id"))
-
-    if not download_info:
-        return None
-    else:
-        return download_info
-
+from services.download_service import verify_download_token
+from services.file_service import FileDownloadInfo
 
 router = APIRouter(prefix="/api")
 

@@ -7,11 +7,12 @@ from nicegui import Client, ui, app, APIRouter
 from starlette.responses import RedirectResponse
 
 from config import settings
+from core.i18n import _
+from security.guards import require_user
 from ui.components.base import BaseLayout
 from ui.components.dialog import ConfirmDialog
 from ui.components.json_edit import style
 from ui.components.notify import notify
-from utils import _
 
 this_page_routes = "/console"
 
@@ -55,8 +56,11 @@ def get_system_metrics():
 
 
 @router.page("/")
+@require_user(superuser=True)
 async def console_page(request: Request, client: Client):
-    async with BaseLayout().render(header=True, footer=True, args={"title": _("Console")}):
+    async with BaseLayout().render(
+        header=True, footer=True, args={"title": _("Console")}
+    ):
         with ui.column().classes("w-full"):
             ui.input(_("Service URL")).bind_value(app.storage.general, "service_url")
 
@@ -86,7 +90,9 @@ async def console_page(request: Request, client: Client):
                 ui.button("主动执行FULL GC", on_click=gc.collect)
                 ui.button(
                     "查看引用计数统计",
-                    on_click=lambda: notify.info(f"对象引用计数: {len(gc.get_objects())}"),
+                    on_click=lambda: notify.info(
+                        f"对象引用计数: {len(gc.get_objects())}"
+                    ),
                 )
 
                 app_reload_button = ui.button("APP RELOAD", color="red")

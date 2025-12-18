@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from models.user_model import User, Role, UserRoleLink
-from security import HashingManager
+from security.hashing import HashingManager
 
 
 class UserCRUD:

@@ -3,11 +3,12 @@ from starlette.responses import RedirectResponse
 
 import globals
 from config import settings
+from core.i18n import _
 from schemas.user_schema import UserLogin
+from security.validators import is_valid_email
 from services.user_service import get_user_timezone_from_browser
 from ui.components.base import BaseLayout
 from ui.components.notify import notify
-from utils import _, is_valid_email
 
 this_page_routes = "/login"
 
@@ -22,7 +23,9 @@ router = APIRouter(prefix=this_page_routes)
 
 @router.page("/")
 async def login_page(redirect_to: str = None):
-    async with BaseLayout().render(header=False, footer=True, args={"from_login_page": True}):
+    async with BaseLayout().render(
+        header=False, footer=True, args={"from_login_page": True}
+    ):
         user_manager = globals.get_user_manager()
 
         def redirect():
@@ -48,7 +51,9 @@ async def login_page(redirect_to: str = None):
                     )
 
                 async def try_login():
-                    pre_login_user = UserLogin(email=email.value, password=password.value)
+                    pre_login_user = UserLogin(
+                        email=email.value, password=password.value
+                    )
                     try:
                         login_user = await user_manager.login(pre_login_user)
                     except Exception as e:
@@ -71,7 +76,9 @@ async def login_page(redirect_to: str = None):
                     ui.input(
                         _("Email"),
                         validation=lambda value: (
-                            None if is_valid_email(value) else _("Invalid email address")
+                            None
+                            if is_valid_email(value)
+                            else _("Invalid email address")
                         ),
                     )
                     .on("keyup.enter", try_login)

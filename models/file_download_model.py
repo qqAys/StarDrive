@@ -1,12 +1,12 @@
 # 文件下载信息
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import datetime
 
 from sqlalchemy import Column, DateTime, Enum, text
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field
 
-from security import generate_ulid
 from schemas.file_schema import FileType, FileSource
+from security.ids import generate_ulid
+from utils.time import utc_now
 
 
 class FileDownloadInfo(SQLModel, table=True):
@@ -38,12 +38,10 @@ class FileDownloadInfo(SQLModel, table=True):
 
     url: str | None = Field(default_factory=None, max_length=256)
 
-    expires_at: datetime = Field(
-        sa_column=Column(DateTime(timezone=True), index=True)
-    )
+    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), index=True))
 
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: utc_now(),
         sa_column=Column(
             DateTime(timezone=True),
             server_default=text("CURRENT_TIMESTAMP"),

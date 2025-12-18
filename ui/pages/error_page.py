@@ -3,7 +3,7 @@ import traceback
 from nicegui import ui
 
 from config import settings
-from utils import _
+from core.i18n import _
 
 
 def render_404(

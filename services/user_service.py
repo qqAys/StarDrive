@@ -4,16 +4,18 @@ from nicegui import app, ui
 from pydantic import EmailStr
 
 from config import settings
+from core.i18n import _
+from core.logging import logger
 from crud.user_crud import UserCRUD
 from schemas.user_schema import UserLogin
-from security import generate_random_password
-from utils import logger, _
+from security.password import generate_random_password
 
 
 class UserManager:
     """
     NiceGUI 用户管理（DB 驱动）
     """
+
     def __init__(
         self,
         *,
@@ -51,9 +53,8 @@ class UserManager:
     # --------------------------
     # 会话状态
     # --------------------------
-    @staticmethod
-    async def is_login() -> bool:
-        return app.storage.user.get("authenticated", False)
+    async def is_login(self) -> bool:
+        return bool(await self.current_user())
 
     async def current_user(self):
         return await self._get_user(None)
@@ -64,7 +65,21 @@ class UserManager:
             return None
 
         async with self.db_context() as session:
-            return await self.user_crud.get_by_email(session, email)
+            user = await self.user_crud.get_by_email(session, email)
+
+        if not user:
+            return None
+
+        if not user.is_active:
+            app.storage.user.clear()
+            return None
+
+        if app.storage.user.get("token_version") != user.token_version:
+            # 吊销会话
+            app.storage.user.clear()
+            return None
+
+        return user
 
     async def is_active(self, email: EmailStr | None = None) -> bool:
         user = await self._get_user(email)
@@ -92,28 +107,37 @@ class UserManager:
 
             app.storage.user.update(
                 {
-                    "authenticated": True,
                     "user_id": user.id,
                     "email": user.email,
+                    "token_version": user.token_version,
                     "timezone": tz,
                 }
             )
 
             return user
 
-    @staticmethod
-    def logout():
-        app.storage.user.clear()
+    async def logout(self) -> bool:
+        async with self.db_context() as session:
+            try:
+                user = await self.current_user()
+                if user:
+                    user.token_version += 1
+                    session.add(user)
+                    await session.commit()
+                app.storage.user.clear()
+                return True
+            except Exception:
+                return False
 
     # --------------------------
     # 用户管理
     # --------------------------
     async def create_user(
-            self,
-            *,
-            email: str,
-            password: str,
-            is_superuser: bool = False,
+        self,
+        *,
+        email: str,
+        password: str,
+        is_superuser: bool = False,
     ):
         async with self.db_context() as session:
             existing = await UserCRUD.get_by_email(session, email)
@@ -130,10 +154,10 @@ class UserManager:
             )
 
     async def change_password(
-            self,
-            *,
-            email: str,
-            new_password: str,
+        self,
+        *,
+        email: str,
+        new_password: str,
     ) -> None:
         async with self.db_context() as session:
             user = await UserCRUD.get_by_email(session, email)
@@ -150,10 +174,10 @@ class UserManager:
             )
 
     async def set_active(
-            self,
-            *,
-            email: str,
-            is_active: bool,
+        self,
+        *,
+        email: str,
+        is_active: bool,
     ) -> None:
         async with self.db_context() as session:
             user = await UserCRUD.get_by_email(session, email)
@@ -167,10 +191,10 @@ class UserManager:
             )
 
     async def set_superuser(
-            self,
-            *,
-            email: str,
-            is_superuser: bool,
+        self,
+        *,
+        email: str,
+        is_superuser: bool,
     ) -> None:
         async with self.db_context() as session:
             user = await UserCRUD.get_by_email(session, email)

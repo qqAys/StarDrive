@@ -2,10 +2,11 @@ from fastapi.responses import RedirectResponse
 from nicegui import APIRouter, app, ui
 
 import globals
+from core.i18n import _
+from security.guards import require_user
 from services.file_service import get_user_last_path
 from ui.components.base import BaseLayout
 from ui.components.table import FileBrowserTable
-from utils import _
 
 this_page_routes = "/home"
 
@@ -24,6 +25,7 @@ router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
+@require_user()
 async def index():
     async with BaseLayout().render(header=True, footer=True, args={"title": _("Home")}):
 

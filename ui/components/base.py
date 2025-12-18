@@ -1,6 +1,4 @@
-from asyncio import iscoroutinefunction
 from contextlib import asynccontextmanager
-from functools import wraps
 
 from ui.components.footer import Footer
 from ui.components.header import Header
@@ -13,7 +11,9 @@ class BaseLayout:
         self.footer_component = Footer()
 
     @asynccontextmanager
-    async def render(self, header: bool = False, footer: bool = False, args: dict = None):
+    async def render(
+        self, header: bool = False, footer: bool = False, args: dict = None
+    ):
 
         if args is None:
             args = {}
