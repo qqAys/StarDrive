@@ -1,7 +1,7 @@
 import asyncio
 import sys
 import tarfile
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import (
     Dict,
@@ -14,18 +14,24 @@ from typing import (
 
 import ulid
 from nicegui import app
+from sqlalchemy import select
 
 from api import download_form_browser_url_prefix
 from config import settings
+from crud.file_download_crud import FileDownloadCRUD
 from models.file_download_model import FileDownloadInfo
+from models.user_model import User
 from schemas.file_schema import FileMetadata, DirMetadata, FileType, FileSource
-from security import generate_jwt_secret
+from security import create_token
+from services.local_db_service import get_db_context
+from services.user_service import UserManager
 from storage.base import StorageBackend
 from storage.local_storage import LocalStorage
 from ui.components.notify import notify
 from utils import logger, _
 
-storage_key = "temp_public_download_key"
+
+# storage_key = "temp_public_download_key"
 
 
 def get_file_icon(type_: str, extension: str):
@@ -332,6 +338,7 @@ class StorageManager:
 
 
 async def generate_download_url(
+    current_user: User,
     target_path: str | list[str],
     name: str | list[str],
     type_: FileType,
@@ -363,132 +370,91 @@ async def generate_download_url(
         # 既没有指定时间，也没有指定天数，使用配置文件中的默认 TTL
         this_url_ttl = current_time_utc + settings.DEFAULT_DOWNLOAD_LINK_TTL
 
-    download_id = ulid.new().str
-    download_info = {
-        "name": name,
-        "type": type_,
-        "path": target_path,
-        "base_path": app.storage.user["last_path"],
-        "user": app.storage.user["username"],
-        "source": source,
-        "exp": this_url_ttl,
-    }
+    # download_info = {
+    #     "name": name,
+    #     "type": type_,
+    #     "path": target_path,
+    #     "base_path": app.storage.user["last_path"],
+    #     "user": app.storage.user["username"],
+    #     "source": source,
+    #     "exp": this_url_ttl,
+    # }
+    #
+    # if storage_key not in app.storage.general:
+    #     app.storage.general[storage_key] = {}
 
-    if storage_key not in app.storage.general:
-        app.storage.general[storage_key] = {}
+    # download_info.update({"url": url})
 
-    payload = {"download_id": download_id}
+    async with get_db_context() as session:
+        download_info = await FileDownloadCRUD.create(
+            session=session,
+            name=name,
+            type=type_,
+            path=target_path,
+            base_path=app.storage.user["last_path"],
+            user=current_user.id,
+            source=source,
+            expires_at=this_url_ttl
+        )
+    payload = {"download_id": download_info.id}
+
     if this_url_ttl:
         payload.update({"exp": int(this_url_ttl.timestamp())})
 
     if source == "download":
         url = (
             app.storage.general["service_url"]
-            + f"/api/{download_form_browser_url_prefix}/{generate_jwt_secret(payload)}"
+            + f"/api/{download_form_browser_url_prefix}/{create_token(payload)}"
         )
     elif source == "share":
         url = (
             app.storage.general["service_url"]
-            + f"/share/{generate_jwt_secret(payload)}"
+            + f"/share/{create_token(payload)}"
         )
     else:
         raise ValueError(_("Invalid source parameter."))
 
-    download_info.update({"url": url})
+    async with get_db_context() as session:
+        await FileDownloadCRUD.update_url(session=session, file_download_id=download_info.id, url=url)
 
-    # ULID 在 python 字典中作为 key 的性能还是非常好的
-    # 同时考虑到 app.storage.general 使用本地文件持久化，所以此处暂时不用数据库存储
-    #
-    # download_info_db = FileDownloadInfo(
-    #     download_id=download_id,
-    #     **download_info,
-    # )
-    # async with async_session() as session:
-    #     async with session.begin():
-    #         session.add(download_info_db)
-
-    app.storage.general[storage_key][download_id] = download_info
+    # app.storage.general[storage_key][download_id] = download_info
     return url
 
 
-def get_download_info(download_id: str) -> Optional[FileDownloadInfo]:
+async def get_download_info(download_id: str) -> Optional[FileDownloadInfo]:
     """
     获取下载链接信息。
     """
-    if storage_key not in app.storage.general:
-        app.storage.general[storage_key] = {}
-
-    if download_id not in app.storage.general[storage_key]:
-        return None
-
-    return FileDownloadInfo(**app.storage.general[storage_key][download_id])
+    async with get_db_context() as session:
+        return await FileDownloadCRUD.get(session=session, file_download_id=download_id)
 
 
-def delete_download_link(download_id: str):
+async def delete_download_link(download_id: str):
     """
     删除下载链接。
     """
-    if storage_key not in app.storage.general:
-        app.storage.general[storage_key] = {}
-
-    if download_id in app.storage.general[storage_key]:
-        del app.storage.general[storage_key][download_id]
-
-
-def clear_expired_download_links():
-    """
-    清理过期的下载链接。
-    """
-
-    if storage_key not in app.storage.general:
-        app.storage.general[storage_key] = {}
-
-    download_keys_to_check = list(app.storage.general[storage_key].keys())
-
-    current_time_utc = datetime.now(timezone.utc)
-
-    result = {
-        "expired": [],
-        "valid": [],
-    }
-
-    for download_id in download_keys_to_check:
-        if download_id not in app.storage.general[storage_key]:
-            continue
-
-        download_info = app.storage.general[storage_key][download_id]
-        exp_datetime = datetime.fromisoformat(download_info["exp"])
-
-        if exp_datetime < current_time_utc:
-            result["expired"].append(download_id)
-
-            delete_download_link(download_id)
-        else:
-            result["valid"].append(download_id)
-
-    notify.info(
-        _("Cleaned up expired download links, Valid: {}, Expired: {}").format(
-            len(result["valid"]), len(result["expired"])
+    async with get_db_context() as session:
+        session.delete(
+            FileDownloadInfo.where(FileDownloadInfo.download_id == download_id)
         )
-    )
+    return True
 
 
-def get_user_share_links(file_name: str | None = None) -> list[dict]:
+async def get_user_share_links(current_user: User, file_name: str | None = None) -> list[FileDownloadInfo]:
     """
     获取用户分享链接。
     """
-    if storage_key not in app.storage.general:
-        app.storage.general[storage_key] = {}
 
-    share_links = []
+    async with get_db_context() as session:
+        share_links_db = await session.execute(
+            select(FileDownloadInfo).where(
+                FileDownloadInfo.user_id == current_user.id,
+                FileDownloadInfo.source == FileSource.SHARE,
+                FileDownloadInfo.name == file_name
+            )
+        )
 
-    for download_id, download_info in app.storage.general[storage_key].items():
-        if app.storage.user["username"] == download_info["user"]:
-            if download_info["source"] == "share":
-                if file_name is None or file_name == download_info["name"]:
-                    share_links.append({"id": download_id, "info": download_info})
-
-    return share_links
+        return share_links_db.scalars().all()
 
 
 def set_user_last_path(path):

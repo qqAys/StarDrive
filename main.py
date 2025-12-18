@@ -8,9 +8,11 @@ from nicegui import ui, app
 import globals
 from api import download
 from config import settings
+from crud.user_crud import UserCRUD
 from middleware import AuthLoggerMiddleware
 from services.file_service import StorageManager
-
+from services.local_db_service import init_local_db, close_local_db, get_db_context
+from services.user_service import UserManager
 # from services.local_db_service import init_local_db, close_local_db
 from storage.local_storage import LocalStorage
 from ui.pages import login, browser, console, profile, share
@@ -43,12 +45,14 @@ def timeout_error_page(exception: Exception) -> None:
 
 @app.on_startup
 async def on_app_startup():
-    # ULID 在 python 字典中作为 key 的性能还是非常好的
-    # 同时考虑到 app.storage.general 使用本地文件持久化，所以此处暂时不用数据库存储
-    # await init_local_db()
+    await init_local_db()
     local_storage_manager = StorageManager()
     local_storage_manager.set_current_backend(LocalStorage.name)
     globals.set_storage_manager(local_storage_manager)
+
+    user_manager = UserManager(user_crud=UserCRUD, db_context=get_db_context)
+    await user_manager.initialize()
+    globals.set_user_manager(user_manager)
 
     app.add_static_files("/static", Path(static_path))
 
@@ -96,9 +100,9 @@ async def on_app_startup():
     logger.info(f"App started at http://{settings.APP_HOST}:{settings.APP_PORT}")
 
 
-# @app.on_shutdown
-# async def on_app_shutdown():
-#     await close_local_db()
+@app.on_shutdown
+async def on_app_shutdown():
+    await close_local_db()
 
 
 if __name__ in {"__main__", "__mp_main__"}:

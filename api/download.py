@@ -9,17 +9,18 @@ from fastapi.responses import FileResponse, StreamingResponse
 
 import globals
 from api import download_form_browser_url_prefix
-from security import verify_jwt_secret
+from schemas.file_schema import FileType
+from security import decode_token
 from services.file_service import get_download_info, FileDownloadInfo
 
 
 # 依赖函数：用于解析和验证令牌
-async def verify_download_token(jwt_token: str):
-    payload = verify_jwt_secret(jwt_token)
+async def verify_download_token(jwt_token: str) -> FileDownloadInfo | None:
+    payload = decode_token(jwt_token)
     if not payload:
         return None
 
-    download_info = get_download_info(payload.get("download_id"))
+    download_info = await get_download_info(payload.get("download_id"))
 
     if not download_info:
         return None
@@ -87,7 +88,7 @@ async def download_form_browser_api(
         )
 
     if not is_multi_file:
-        if validated_data.type == "dir":
+        if validated_data.type == FileType.DIR:
             return multi_download(source_is_single_dir=True)
         else:
             return single_download()

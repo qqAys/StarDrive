@@ -45,7 +45,7 @@ async def index(
         )
         return
 
-    with BaseLayout().render(header=True, footer=True, args={"title": _("Share")}):
+    async with BaseLayout().render(header=True, footer=True, args={"title": _("Share")}):
 
         file_manager = globals.get_storage_manager()
 

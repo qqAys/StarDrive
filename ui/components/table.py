@@ -5,6 +5,7 @@ from nicegui import ui, events
 from starlette.formparsers import MultiPartParser
 
 from config import settings
+from models.user_model import User
 from schemas.file_schema import DirMetadata, FileMetadata, FileType, FileSource
 from services.file_service import (
     StorageManager,
@@ -14,7 +15,7 @@ from services.file_service import (
     validate_filename,
     get_user_last_path,
 )
-from services.user_service import get_user_timezone
+from services.user_service import get_user_timezone, UserManager
 from ui.components import max_w
 from ui.components.clipboard import copy_to_clipboard
 from ui.components.dialog import (
@@ -45,7 +46,8 @@ MultiPartParser.spool_max_size = settings.MULTIPARTPARSER_SPOOL_MAX_SIZE
 class FileBrowserTable:
     def __init__(
         self,
-        file_service: StorageManager,
+        file_manager: StorageManager,
+        current_user: User,
         initial_path: str = ".",
         target_path: str = "",
         upload_component: ui.upload = None,
@@ -53,7 +55,8 @@ class FileBrowserTable:
         upload_dialog_close_button: ui.button = None,
     ):
 
-        self.file_service = file_service
+        self.file_manager = file_manager
+        self.current_user = current_user
         self.user_timezone = get_user_timezone()
 
         self.browser_table: Optional[ui.table] = None
@@ -90,13 +93,13 @@ class FileBrowserTable:
         if not get_user_last_path():
             set_user_last_path(self._current_path)
 
-        if not self.file_service.exists(str(self.current_path)):
+        if not self.file_manager.exists(str(self.current_path)):
             notify.error(_("Path not exists, will go to home dir."))
             self._current_path: Path = Path(initial_path)
 
         @ui.refreshable
         async def browser_content():
-            self.file_list = self.file_service.list_files(str(self.current_path))
+            self.file_list = self.file_manager.list_files(str(self.current_path))
 
             columns = [
                 {
@@ -432,9 +435,7 @@ class FileBrowserTable:
                 ).format(file_name),
             ).open()
             if confirm:
-                download_url = await generate_download_url(
-                    target_path, file_name, FileType.FILE, FileSource.DOWNLOAD
-                )
+                download_url = await generate_download_url(self.current_user, target_path, file_name, FileType.FILE, FileSource.DOWNLOAD)
                 if not download_url:
                     return
                 ui.navigate.to(download_url)
@@ -459,7 +460,7 @@ class FileBrowserTable:
                 return
 
             new_directory = self.current_path / new_directory_name
-            if self.file_service.exists(new_directory):
+            if self.file_manager.exists(new_directory):
                 notify.warning(
                     _(
                         "A directory with the same name already exists. Please choose another name."
@@ -467,7 +468,7 @@ class FileBrowserTable:
                 )
             else:
                 try:
-                    self.file_service.create_directory(new_directory)
+                    self.file_manager.create_directory(new_directory)
                 except Exception as e:
                     notify.error(_("Failed to create new directory: {}").format(str(e)))
                     return
@@ -502,7 +503,7 @@ class FileBrowserTable:
     async def handle_upload(self, e: events.MultiUploadEventArguments):
         for f in e.files:
 
-            if self.file_service.exists(str(self.current_path / f.name)):
+            if self.file_manager.exists(str(self.current_path / f.name)):
                 confirm = await ConfirmDialog(
                     _("File Exists: {}").format(f.name),
                     _("This file already exists. Do you want to overwrite it?"),
@@ -513,7 +514,7 @@ class FileBrowserTable:
                     continue
 
             try:
-                await self.file_service.upload_file(
+                await self.file_manager.upload_file(
                     f.iterate(), str(self.current_path / f.name)
                 )
             except Exception as up_e:
@@ -563,6 +564,7 @@ class FileBrowserTable:
 
         if confirm:
             download_url = await generate_download_url(
+                self.current_user,
                 [s["path"] for s in self.browser_table.selected],
                 [s["raw_name"] for s in self.browser_table.selected],
                 FileType.MIXED,
@@ -579,7 +581,7 @@ class FileBrowserTable:
             return
 
         confirm = await MoveDialog(
-            self.file_service,
+            self.file_manager,
             [f["raw_name"] for f in self.browser_table.selected],
             self.current_path,
         ).open()
@@ -596,7 +598,7 @@ class FileBrowserTable:
             result = []
             for item in self.browser_table.selected:
                 try:
-                    self.file_service.move_file(
+                    self.file_manager.move_file(
                         item["path"], confirm / item["raw_name"]
                     )
                     result.append({"action": "delete", "raw": item, "result": True})
@@ -627,9 +629,9 @@ class FileBrowserTable:
             try:
                 for item in self.browser_table.selected:
                     if item["type"] == "dir":
-                        self.file_service.delete_directory(item["path"])
+                        self.file_manager.delete_directory(item["path"])
                     else:
-                        self.file_service.delete_file(item["path"])
+                        self.file_manager.delete_file(item["path"])
                     result.append({"action": "delete", "raw": item, "result": True})
                 notify.success(_("Deleted {} items").format(len(result)))
             except Exception as e:
@@ -640,7 +642,7 @@ class FileBrowserTable:
         await self.refresh()
 
     async def handle_search_button_click(self):
-        select_result = await SearchDialog(self.file_service, self.current_path).open()
+        select_result = await SearchDialog(self.file_manager, self.current_path).open()
 
         if not select_result:
             return
@@ -667,13 +669,14 @@ class FileBrowserTable:
         await self._open_metadata_by_path(path)
 
     async def _open_metadata_by_path(self, path: str):
-        item_metadata = self.file_service.get_file_metadata(path)
+        item_metadata = self.file_manager.get_file_metadata(path)
 
         if isinstance(item_metadata, (DirMetadata, FileMetadata)):
             await MetadataDialog(
-                self.current_path,
+                self.current_user,
+                self.file_manager,
                 item_metadata,
-                self.file_service,
+                self.current_path,
                 self.refresh,
             ).open()
         else:

@@ -1,3 +1,6 @@
+from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
@@ -20,6 +23,17 @@ async def init_local_db():
 
 async def close_local_db():
     await async_engine.dispose()
+
+
+async def get_db() -> AsyncGenerator[Any, Any]:
+    async with async_session() as session:
+        yield session
+
+
+@asynccontextmanager
+async def get_db_context() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session() as session:
+        yield session
 
 
 if __name__ == "__main__":

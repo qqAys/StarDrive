@@ -61,7 +61,7 @@ def create_handler(filename: Path, formatter: logging.Formatter) -> RotatingFile
     return file_handler
 
 
-no_need_output_log = ["python_multipart.multipart"]
+no_need_output_log = ["python_multipart.multipart", "aiosqlite"]
 
 # 创建 Handler
 shared_formatter = CustomFormatter()

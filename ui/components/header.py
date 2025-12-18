@@ -1,18 +1,17 @@
 from nicegui import ui, app
 
+import globals
 from config import settings
-from services import user_service
 from ui.components.dialog import ConfirmDialog
 from ui.components.fake_button import fake_button
 from ui.components.notify import notify
 from utils import _
 
-user = user_service.UserManager()
-
 
 class Header:
 
     def __init__(self):
+        self.user_manager = globals.get_user_manager()
         ui.colors(primary=settings.APP_PRIMARY_COLOR)
 
         # favicon
@@ -44,7 +43,7 @@ class Header:
                 once=True,
             )
 
-    def render(self, title=None, *args, **kwargs):
+    async def render(self, title=None, *args, **kwargs):
         if title is None:
             title = settings.APP_NAME
         else:
@@ -60,9 +59,9 @@ class Header:
 
             ui.space()
 
-            if user.is_superuser():
+            if await self.user_manager.is_superuser():
                 fake_button(_("Console"), icon="dashboard", link="/console")
-            if user.is_login():
+            if await self.user_manager.is_login():
                 fake_button(_("Logout"), icon="logout", func=self.logout)
             else:
                 fake_button(_("Login"), icon="login", link="/login")

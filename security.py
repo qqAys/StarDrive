@@ -1,9 +1,11 @@
 import fnmatch
 import random
 import string
+from datetime import datetime, timezone, timedelta
 
 import bcrypt
 import jwt
+import ulid
 from passlib.context import CryptContext
 
 from config import settings
@@ -25,8 +27,12 @@ unrestricted_page_routes = (
 JWT_ALGORITHM = "HS256"
 
 
+def generate_ulid():
+    return str(ulid.new())
+
+
 def is_route_unrestricted(
-    route: str, patterns: tuple = unrestricted_page_routes
+        route: str, patterns: tuple = unrestricted_page_routes
 ) -> bool:
     """
     判断给定的 route 是否匹配 patterns 中的任一通配符模式。
@@ -87,23 +93,46 @@ def generate_random_password() -> str:
     return password
 
 
-def generate_jwt_secret(payload: dict) -> str:
+def create_token(data: dict, expires_delta: timedelta = None):
     """
-    生成 JWT 密钥
+    创建 JWT
     """
+    to_encode = data.copy()
 
-    token = jwt.encode(payload, settings.STORAGE_SECRET, algorithm=JWT_ALGORITHM)
+    if "exp" not in to_encode:
+        if not expires_delta:
+            raise ValueError("Expire delta must be provided")
+        expire = datetime.now(timezone.utc) + expires_delta
+        to_encode.update({"exp": expire})
 
-    return token
+    return jwt.encode(data, settings.STORAGE_SECRET, algorithm=JWT_ALGORITHM)
 
 
-def verify_jwt_secret(token: str) -> dict | None:
+def decode_token(token: str):
     """
-    验证 JWT 密钥
+    解码 JWT
     """
-
     try:
-        payload = jwt.decode(token, settings.STORAGE_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload
-    except (jwt.ExpiredSignatureError, jwt.DecodeError, jwt.InvalidTokenError):
+        return jwt.decode(token, settings.STORAGE_SECRET, algorithms=[JWT_ALGORITHM])
+    except Exception:
         return None
+
+
+def create_access_token(data: dict, expires_minutes=15):
+    """
+    创建访问令牌
+    :param data:
+    :param expires_minutes:
+    :return:
+    """
+    return create_token(data, timedelta(minutes=expires_minutes))
+
+
+def create_refresh_token(data: dict, expires_days=7):
+    """
+    创建刷新令牌
+    :param data:
+    :param expires_days:
+    :return:
+    """
+    return create_token(data, timedelta(days=expires_days))

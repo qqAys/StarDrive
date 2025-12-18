@@ -5,6 +5,7 @@ from typing import Optional, Callable
 
 from nicegui import ui, events
 
+from models.user_model import User
 from schemas.file_schema import (
     FILE_NAME_FORBIDDEN_CHARS,
     FileMetadata,
@@ -18,7 +19,7 @@ from services.file_service import (
     get_file_icon,
     generate_download_url,
 )
-from services.user_service import get_user_timezone
+from services.user_service import get_user_timezone, UserManager
 from ui.components.clipboard import copy_to_clipboard
 from ui.components.notify import notify
 from utils import _, bytes_to_human_readable, timestamp_to_human_readable
@@ -43,7 +44,7 @@ class SearchDialog(Dialog):
     def __init__(self, file_service: StorageManager, current_path: Path):
         super().__init__()
         self.search_input: Optional[ui.input] = None
-        self.file_service = file_service
+        self.file_manager = file_service
         self.current_path = current_path
 
         self.last_query: Optional[str] = None
@@ -107,7 +108,7 @@ class SearchDialog(Dialog):
 
         self.loading = True
 
-        results = await self.file_service.search(
+        results = await self.file_manager.search(
             query=self.last_query,
             remote_path=str(self.current_path),
             offset=self.offset,
@@ -292,18 +293,19 @@ class RenameDialog(InputDialog):
 
 
 class ShareDialog(Dialog):
-    def __init__(self, file_name: str):
+    def __init__(self, file_name: str, current_user: User):
         super().__init__()
         self.title = _("Share {}").format(file_name)
         self.file_name = file_name
-
+        self.current_user = current_user
+        
         self.dialog = ui.dialog().props(self.dialog_props)
 
     async def open(self):
         with self.dialog, ui.card().classes("w-full"):
             ui.label(self.title).classes(self.title_class)
 
-            user_share_links = get_user_share_links(self.file_name)
+            user_share_links = await get_user_share_links(self.current_user, self.file_name)
             if user_share_links:
                 ui.separator()
                 ui.label(_("Valid sharing links")).classes("text-base font-bold")
@@ -326,9 +328,9 @@ class ShareDialog(Dialog):
 
                 with ui.row().classes("w-full justify-between"):
                     for share_link in user_share_links:
-                        link_url = share_link["info"]["url"]
+                        link_url = share_link.type
                         link_expire_time = (
-                            datetime.fromisoformat(share_link["info"]["exp"])
+                            share_link.expires_at
                             .astimezone(get_user_timezone())
                             .strftime("%Y-%m-%d %H:%M:%S")
                         )
@@ -357,11 +359,9 @@ class ShareDialog(Dialog):
                                 ui.button(
                                     _("Delete"),
                                     icon="delete",
-                                    on_click=lambda d_id=share_link[
-                                        "id"
-                                    ]: delete_share_link(d_id),
+                                    on_click=lambda d_id=share_link.id: delete_share_link(d_id),
                                 ).classes("w-full").props("flat dense")
-                        all_share_link_dropdown_button[share_link["id"]] = (
+                        all_share_link_dropdown_button[share_link.id] = (
                             dropdown_button
                         )
 
@@ -464,7 +464,7 @@ class MoveDialog(Dialog):
         super().__init__()
         self.title_label: Optional[ui.label] = None
 
-        self.file_service = file_service
+        self.file_manager = file_service
         self.files = files
         self.current_path = current_path
 
@@ -513,7 +513,7 @@ class MoveDialog(Dialog):
                     str(path),
                 )
                 dir_table_rows = []
-                for meta_data in self.file_service.list_files(str(path)):
+                for meta_data in self.file_manager.list_files(str(path)):
                     if meta_data.is_dir:
                         dir_table_rows.append(
                             {
@@ -548,16 +548,18 @@ class MoveDialog(Dialog):
 class MetadataDialog(Dialog):
     def __init__(
         self,
-        current_path: Path,
+        current_user: User,
+        file_manager: StorageManager,
         metadata: FileMetadata | DirMetadata,
-        file_service: StorageManager,
+        current_path: Path,
         refresh_browser_func: Callable,
     ):
         super().__init__()
         self.current_path = current_path
         self.metadata = metadata
         self.is_dir = self.metadata.is_dir
-        self.file_service = file_service
+        self.file_manager = file_manager
+        self.current_user = current_user
         self.refresh_browser = refresh_browser_func
 
         self.size_label: ui.label | None = None
@@ -667,7 +669,7 @@ class MetadataDialog(Dialog):
 
     async def calculate_dir_size(self):
         self.size_label.text = _("Calculating...")
-        dir_size = await self.file_service.get_directory_size(self.metadata.path)
+        dir_size = await self.file_manager.get_directory_size(self.metadata.path)
         self.size_label.text = bytes_to_human_readable(dir_size)
 
     async def on_delete_button_click(self):
@@ -678,7 +680,7 @@ class MetadataDialog(Dialog):
         ).open()
         if confirm:
             try:
-                self.file_service.delete_file(self.metadata.path)
+                self.file_manager.delete_file(self.metadata.path)
                 notify.success(_("Delete successful"))
             except Exception as e:
                 notify.error(e)
@@ -692,7 +694,7 @@ class MetadataDialog(Dialog):
         ).open()
         if new_name:
             new_path = Path(self.metadata.path).parent / new_name
-            if self.file_service.exists(new_path):
+            if self.file_manager.exists(new_path):
                 notify.warning(
                     _(
                         "A file or folder with this name already exists. Please choose a different name."
@@ -700,7 +702,7 @@ class MetadataDialog(Dialog):
                 )
                 return
             try:
-                self.file_service.move_file(self.metadata.path, new_path)
+                self.file_manager.move_file(self.metadata.path, new_path)
                 notify.success(_("Rename successful"))
             except Exception as e:
                 notify.error(e)
@@ -710,7 +712,7 @@ class MetadataDialog(Dialog):
 
     async def on_move_button_click(self):
         target_path = await MoveDialog(
-            self.file_service, [self.metadata.name], self.current_path
+            self.file_manager, [self.metadata.name], self.current_path
         ).open()
         if target_path:
             if target_path == self.current_path:
@@ -722,7 +724,7 @@ class MetadataDialog(Dialog):
                 return
 
             try:
-                self.file_service.move_file(
+                self.file_manager.move_file(
                     self.metadata.path, target_path / self.metadata.name
                 )
                 notify.success(
@@ -736,9 +738,10 @@ class MetadataDialog(Dialog):
         await self.refresh_browser()
 
     async def on_share_button_click(self):
-        expire_define = await ShareDialog(file_name=self.metadata.name).open()
+        expire_define = await ShareDialog(file_name=self.metadata.name, current_user=self.current_user).open()
         if expire_define:
             download_url = await generate_download_url(
+                self.current_user,
                 self.metadata.path,
                 self.metadata.name,
                 self.metadata.type,
@@ -774,6 +777,7 @@ class MetadataDialog(Dialog):
 
         if confirm:
             download_url = await generate_download_url(
+                self.current_user,
                 self.metadata.path,
                 self.metadata.name,
                 self.metadata.type,
