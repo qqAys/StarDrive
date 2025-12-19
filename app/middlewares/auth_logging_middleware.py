@@ -21,11 +21,16 @@ class AuthLoggingMiddleware(BaseHTTPMiddleware):
         # 公共日志信息
         request_uuid = uuid4()
         request.state.request_uuid = request_uuid
+        client_ip = (
+            request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+            or request.headers.get("x-real-ip")
+            or request.client.host
+        )
         log_ctx = {
             "request_uuid": str(request_uuid),
             "method": request.method,
             "url": str(request.url),
-            "client": f"{request.client.host}:{request.client.port}",
+            "client": f"{client_ip}:{request.client.port}",
         }
 
         # 白名单路由放行
