@@ -4,7 +4,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./data:/opt/stardrive/data
+      - ./data:/opt/stardrive/app_data
     environment:
       - STARDRIVE_APP_SECRET="your-secret-here"
     restart: always
