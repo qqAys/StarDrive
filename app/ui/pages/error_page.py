@@ -6,8 +6,13 @@ from app.config import settings
 from app.core.i18n import _
 
 
+@ui.page("/404")
+def not_found_page():
+    render_404()
+
+
 def render_404(
-    request_uuid: str,
+    request_uuid: str = None,
     exception: str = _("Page not found"),
     custom_note: str = None,
     back_button: bool = True,
@@ -39,7 +44,8 @@ def render_404(
                     "You have reached a place where there is no one, but you are still in {}. 🧐"
                 ).format(settings.APP_NAME)
             ).classes("text-base")
-        ui.markdown(_("request_uuid = `{}`").format(request_uuid)).classes("text-xs")
+        if request_uuid:
+            ui.markdown(_("request_uuid = `{}`").format(request_uuid)).classes("text-xs")
         with ui.row().classes("mt-4 gap-4"):
             if back_button:
                 ui.button(_("Back"), icon="arrow_back", on_click=ui.navigate.back)

@@ -1,5 +1,6 @@
 from fastapi.requests import Request
 from nicegui import ui, app
+from starlette.responses import RedirectResponse
 
 from app.api import download
 from app.core.logging import logger
@@ -16,15 +17,6 @@ def setup_routes():
     app.include_router(console.router)
     app.include_router(download.router)
 
-    @ui.page("/{_:path}")
-    def not_found_page(request: Request):
-        request_uuid = request.state.request_uuid
-        logger.info(
-            {
-                "request_uuid": str(request_uuid),
-                "path": request.url.path,
-                "app_storage": app.storage.user,
-            }
-        )
-        render_404(request.state.request_uuid)
-        return
+    @app.exception_handler(404)
+    def not_found_page(*args, **kwargs):
+        return RedirectResponse("/404")
