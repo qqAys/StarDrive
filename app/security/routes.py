@@ -1,10 +1,12 @@
 import fnmatch
 
 UNRESTRICTED_PAGE_ROUTES = (
+    # 静态资源
     "/*.ico",
     "/*.png",
     "/*.webmanifest",
     "/apple-touch-icon*",
+    # 公开路由
     "/login*",
     "/share*",
 )

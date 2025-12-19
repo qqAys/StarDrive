@@ -2,8 +2,11 @@ import gettext
 
 from nicegui import app
 
+from app.config import settings
 from app.core.logging import logger
 from app.core.paths import LOCALES_DIR
+
+APP_DEFAULT_LANGUAGE = settings.APP_DEFAULT_LANGUAGE.replace("-", "_")
 
 # 支持的语言列表
 # 从 locales 目录下加载
@@ -42,10 +45,10 @@ def dynamic_gettext(message: str, lang_code: str = None) -> str:
     if lang_code is None:
         try:
             # 尝试从 NiceGUI 用户存储中获取
-            lang_code = app.storage.user.get("default_lang", "en_US")
+            lang_code = app.storage.user.get("default_lang", APP_DEFAULT_LANGUAGE)
         except RuntimeError:
             # 如在初始化时，使用默认语言
-            lang_code = "en_US"
+            lang_code = APP_DEFAULT_LANGUAGE
     # 查找对应的 Translation 对象
     translator = translations.get(lang_code)
 

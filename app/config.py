@@ -26,7 +26,7 @@ class Config(BaseSettings):
         env_file=".env",
         env_prefix=f"{_PROJECT_NAME_ENV}_",
         env_file_encoding="utf-8",
-        # case_sensitive=True,
+        case_sensitive=True,
     )
     SYSTEM_NAME: str = _SYSTEM_NAME
 
@@ -40,7 +40,8 @@ class Config(BaseSettings):
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8080
 
-    APP_TITLE: str = _PROJECT_NAME
+    APP_SECRET: str = None
+
     APP_DEFAULT_LANGUAGE: str = "en-US"
     APP_PRIMARY_COLOR: str = "#424242"
 
@@ -49,7 +50,6 @@ class Config(BaseSettings):
     LOCAL_DB_DSN: str = f"sqlite+aiosqlite:///{(DB_DIR / "local.db").as_posix()}"
     LOCAL_DB_ECHO: bool = DEBUG
 
-    STORAGE_SECRET: str = None
     NICEGUI_RECONNECT_TIMEOUT: int = 5
     NICEGUI_TIMER_INTERVAL: float = 2
 

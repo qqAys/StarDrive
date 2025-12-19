@@ -11,8 +11,6 @@ ENV STARDRIVE_APP_VERSION=0.1.0
 ENV STARDRIVE_APP_DEFAULT_LANGUAGE=en-US
 ENV STARDRIVE_APP_DATA_DIR=app_data
 
-ENV TZ=Asia/Shanghai
-
 # 镜像加速
 ENV UV_DEFAULT_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple
 

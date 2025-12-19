@@ -1,9 +1,7 @@
 from nicegui import app
 
-from app.middlewares.auth_middleware import AuthMiddleware
-from app.middlewares.logging_middleware import RequestLoggingMiddleware
+from app.middlewares.auth_logging_middleware import AuthLoggingMiddleware
 
 
 def setup_middlewares():
-    app.add_middleware(RequestLoggingMiddleware)
-    app.add_middleware(AuthMiddleware)
+    app.add_middleware(AuthLoggingMiddleware)

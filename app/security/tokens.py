@@ -14,7 +14,7 @@ def create_token(data: dict, expires_delta: timedelta):
 
     return jwt.encode(
         to_encode,
-        settings.STORAGE_SECRET,
+        settings.APP_SECRET,
         algorithm=JWT_ALGORITHM,
     )
 
@@ -23,7 +23,7 @@ def decode_token(token: str) -> dict | None:
     try:
         return jwt.decode(
             token,
-            settings.STORAGE_SECRET,
+            settings.APP_SECRET,
             algorithms=[JWT_ALGORITHM],
         )
     except Exception:
