@@ -1,8 +1,11 @@
+from typing import Optional
+
 from nicegui import ui
 
 from app import globals
 from app.config import settings
 from app.core.i18n import _
+from app.models.user_model import User
 from app.ui.components.dialog import ConfirmDialog
 from app.ui.components.fake_button import fake_button
 from app.ui.components.notify import notify
@@ -25,6 +28,7 @@ class Header:
         )
 
         self.header = ui.header
+        self.user: Optional[User] = None
 
     async def logout(self):
         confirm = await ConfirmDialog(
@@ -53,6 +57,8 @@ class Header:
 
         ui.page_title(title)
 
+        self.user = await self.user_manager.current_user()
+
         with self.header().classes(
             "fixed h-12 p-2 flex items-center gap-4 z-50"
         ) as self.header:
@@ -61,12 +67,13 @@ class Header:
 
             ui.space()
 
-            if await self.user_manager.is_superuser():
-                fake_button(_("Console"), icon="dashboard", link="/console")
-            if await self.user_manager.is_login():
+            if self.user:
+                if self.user.is_superuser:
+                    fake_button(_("Console"), icon="dashboard", link="/console")
+
                 fake_button(_("Logout"), icon="logout", func=self.logout)
             else:
                 fake_button(_("Login"), icon="login", link="/login")
 
-    def inject(self):
-        return self.header
+    def get_user(self):
+        return self.user
