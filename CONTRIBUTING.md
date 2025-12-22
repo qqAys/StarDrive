@@ -2,8 +2,6 @@
 
 We're thrilled you're interested in contributing to StarDrive!
 
-[简体中文](https://github.com/qqAys/StarDrive/blob/main/CONTRIBUTING.zh-CN.md)
-
 ## About the Project
 
 StarDrive is a cloud drive system developed based on the [NiceGUI](https://github.com/zauberzeug/nicegui) library, offering multi-backend storage and file management capabilities.
@@ -95,18 +93,18 @@ uv run pytest
 1. This project uses `pybabel` to create the translation file `.pot`:
 
     ```shell
-    uv run pybabel extract -F babel.cfg -o locales/messages.pot .
+    uv run pybabel extract -F babel.cfg -o app/locales/messages.pot .
     ```
 
 2. After initializing the `.pot` file, create the language file for the language you want to translate:
 
     ```shell
-    uv run pybabel init -i locales/messages.pot -d locales -l {your_language_code}
+    uv run pybabel init -i app/locales/messages.pot -d app/locales -l {your_language_code}
     ```
       
     > If you have already created a `.po` file, please use the following command to **update** them:
     > ```shell
-    > uv run pybabel update -i locales/messages.pot -d locales
+    > uv run pybabel update -i app/locales/messages.pot -d app/locales
     > ```
 
 3. Open the `.po` file with your favorite editor and fill in the translation in the `msgstr` field.
@@ -114,10 +112,10 @@ uv run pytest
 4. Generate the compiled language file `.mo` for testing:
 
     ```shell
-    uv run pybabel compile -d locales
+    uv run pybabel compile -d app/locales
     ```
 
-5. After successful testing, commit the `locales/{your_language_code}/LC_MESSAGES/messages.po` file to version control. Please note the `.gitignore` file and do not commit the `.pot` or `.mo` files.
+5. After successful testing, commit the `app/locales/{your_language_code}/LC_MESSAGES/messages.po` file to version control. Please note the `.gitignore` file and do not commit the `.pot` or `.mo` files.
 
 
 ### Creating a Pull Request (PR)

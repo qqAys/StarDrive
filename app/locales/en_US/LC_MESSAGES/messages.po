@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.0\n"
 "Report-Msgid-Bugs-To: me@qqays.xyz\n"
-"POT-Creation-Date: 2025-12-18 23:47+0800\n"
+"POT-Creation-Date: 2025-12-22 15:08+0800\n"
 "PO-Revision-Date: 2025-12-09 14:17+0800\n"
 "Last-Translator: Jinx <me@qqays.xyz>\n"
 "Language: en_US\n"
@@ -18,661 +18,669 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: middlewares/auth_middleware.py:31
-#, python-brace-format
-msgid "Unauthorized access to {}, request_uuid: {}"
-msgstr ""
-
-#: schemas/file_schema.py:24
+#: app/schemas/file_schema.py:24
 msgid "File name or Directory name"
 msgstr ""
 
-#: schemas/file_schema.py:25 ui/components/dialog.py:586
+#: app/schemas/file_schema.py:25 app/ui/components/dialog.py:586
 msgid "Path"
 msgstr ""
 
-#: schemas/file_schema.py:26
+#: app/schemas/file_schema.py:26
 msgid "File type"
 msgstr ""
 
-#: schemas/file_schema.py:27
+#: app/schemas/file_schema.py:27
 msgid "File extension"
 msgstr ""
 
-#: schemas/file_schema.py:28
+#: app/schemas/file_schema.py:28
 msgid "File size (bytes)"
 msgstr ""
 
-#: schemas/file_schema.py:30
+#: app/schemas/file_schema.py:30
 msgid "Last access timestamp"
 msgstr ""
 
-#: schemas/file_schema.py:33
+#: app/schemas/file_schema.py:33
 msgid "Last modified timestamp"
 msgstr ""
 
-#: schemas/file_schema.py:36
+#: app/schemas/file_schema.py:36
 msgid "Creation timestamp"
 msgstr ""
 
-#: schemas/file_schema.py:39
+#: app/schemas/file_schema.py:39
 msgid "Last status change timestamp"
 msgstr ""
 
-#: schemas/file_schema.py:42
+#: app/schemas/file_schema.py:42
 msgid "Custom update timestamp"
 msgstr ""
 
-#: schemas/file_schema.py:58
+#: app/schemas/file_schema.py:58
 msgid "Number of children in the directory"
 msgstr ""
 
-#: security/guards.py:27
+#: app/security/guards.py:27
 msgid "You need to sign in to access this page."
 msgstr ""
 
-#: security/guards.py:32
+#: app/security/guards.py:32
 msgid "Your account has been disabled."
 msgstr ""
 
-#: security/guards.py:37
+#: app/security/guards.py:37
 msgid "You don’t have access to this page."
 msgstr ""
 
-#: services/file_service.py:177
+#: app/services/file_service.py:177
 #, python-brace-format
 msgid "Object {} does not implement the StorageBackend interface."
 msgstr ""
 
-#: services/file_service.py:183
+#: app/services/file_service.py:183
 #, python-brace-format
 msgid "Storage backend '{}' already exists."
 msgstr ""
 
-#: services/file_service.py:186
+#: app/services/file_service.py:186
 #, python-brace-format
 msgid "Storage backend '{}' has been registered."
 msgstr ""
 
-#: services/file_service.py:198
+#: app/services/file_service.py:198
 #, python-brace-format
 msgid "Current storage has been switched to '{}'."
 msgstr ""
 
-#: services/file_service.py:201
+#: app/services/file_service.py:201
 #, python-brace-format
 msgid "Storage backend '{}' is not registered."
 msgstr ""
 
-#: services/file_service.py:212
+#: app/services/file_service.py:212
 msgid ""
 "The current storage backend is not set or cannot be found. Please call "
 "set_current_backend() first."
 msgstr ""
 
-#: services/file_service.py:354
+#: app/services/file_service.py:354
 msgid ""
 "Service URL is not set. Please set it in the console panel before sharing"
 " files."
 msgstr ""
 
-#: services/file_service.py:515
+#: app/services/file_service.py:515
 msgid "Name cannot be empty or only spaces."
 msgstr ""
 
-#: services/file_service.py:521
+#: app/services/file_service.py:521
 #, python-brace-format
 msgid "Name is too long (max {} characters)."
 msgstr ""
 
-#: services/file_service.py:530
+#: app/services/file_service.py:530
 msgid "Name cannot start with a path separator (must be a relative path)."
 msgstr ""
 
-#: services/file_service.py:537
+#: app/services/file_service.py:537
 msgid "Invalid path format."
 msgstr ""
 
-#: services/file_service.py:542
+#: app/services/file_service.py:542
 msgid "Name cannot contain '..' to traverse directories."
 msgstr ""
 
-#: services/file_service.py:547
+#: app/services/file_service.py:547
 msgid ""
 "Name cannot start with a path separator or drive letter (must be "
 "relative)."
 msgstr ""
 
-#: services/file_service.py:571
+#: app/services/file_service.py:571
 msgid "Name cannot contain '/' in Linux/Unix."
 msgstr ""
 
-#: services/file_service.py:578
+#: app/services/file_service.py:578
 #, python-brace-format
 msgid "Name cannot contain any of these characters: {}"
 msgstr ""
 
-#: services/file_service.py:584
+#: app/services/file_service.py:584
 #, python-brace-format
 msgid "Name segment '{}' is a reserved system name."
 msgstr ""
 
-#: services/file_service.py:588
+#: app/services/file_service.py:588
 msgid "Name segment cannot end with a dot or space."
 msgstr ""
 
-#: services/file_service.py:596
+#: app/services/file_service.py:596
 msgid "Name is valid."
 msgstr ""
 
-#: services/user_service.py:48
+#: app/services/user_service.py:48
 #, python-brace-format
 msgid "Administrator account created. Email: {}, Password: {}"
 msgstr ""
 
-#: services/user_service.py:104
+#: app/services/user_service.py:104
 msgid "Invalid email or password"
 msgstr ""
 
-#: services/user_service.py:145
+#: app/services/user_service.py:145
 msgid "User already exists"
 msgstr ""
 
-#: services/user_service.py:165 services/user_service.py:185
-#: services/user_service.py:202
+#: app/services/user_service.py:165 app/services/user_service.py:185
+#: app/services/user_service.py:202
 msgid "User does not exist"
 msgstr ""
 
-#: services/user_service.py:217
+#: app/services/user_service.py:217
 #, python-brace-format
 msgid "Error getting user timezone: {}"
 msgstr ""
 
-#: storage/local_storage.py:107
+#: app/storage/local_storage.py:108
 #, python-brace-format
 msgid "LocalStorage initialized, root directory: {}"
 msgstr ""
 
-#: storage/local_storage.py:122
+#: app/storage/local_storage.py:123
 #, python-brace-format
 msgid "Path parsing failed: {}"
 msgstr ""
 
-#: storage/local_storage.py:128
+#: app/storage/local_storage.py:129
 #, python-brace-format
 msgid "Path security check failed, path is outside root directory: {}"
 msgstr ""
 
-#: storage/local_storage.py:145 storage/local_storage.py:179
+#: app/storage/local_storage.py:146 app/storage/local_storage.py:180
 #, python-brace-format
 msgid "File does not exist, cannot download: {}"
 msgstr ""
 
-#: storage/local_storage.py:164
+#: app/storage/local_storage.py:165
 #, python-brace-format
 msgid "Permission denied to write file to {}"
 msgstr ""
 
-#: storage/local_storage.py:168
+#: app/storage/local_storage.py:169
 #, python-brace-format
 msgid "Could not write file to {}"
 msgstr ""
 
-#: storage/local_storage.py:183
+#: app/storage/local_storage.py:184
 #, python-brace-format
 msgid "Path points to a directory: {}"
 msgstr ""
 
-#: storage/local_storage.py:199
+#: app/storage/local_storage.py:200
 #, python-brace-format
 msgid "File does not exist, cannot delete: {}"
 msgstr ""
 
-#: storage/local_storage.py:203
+#: app/storage/local_storage.py:204
 #, python-brace-format
 msgid "Path points to a directory, please use delete_directory: {}"
 msgstr ""
 
-#: storage/local_storage.py:212
+#: app/storage/local_storage.py:213
 #, python-brace-format
 msgid "Permission denied to delete file: {}"
 msgstr ""
 
-#: storage/local_storage.py:220 storage/local_storage.py:402
+#: app/storage/local_storage.py:221 app/storage/local_storage.py:403
 #, python-brace-format
 msgid "Directory does not exist: {}"
 msgstr ""
 
-#: storage/local_storage.py:224 storage/local_storage.py:300
-#: storage/local_storage.py:406
+#: app/storage/local_storage.py:225 app/storage/local_storage.py:301
+#: app/storage/local_storage.py:407
 #, python-brace-format
 msgid "Path points to a file, not a directory: {}"
 msgstr ""
 
-#: storage/local_storage.py:268
+#: app/storage/local_storage.py:269
 #, python-brace-format
 msgid "Permission denied to read directory: {}"
 msgstr ""
 
-#: storage/local_storage.py:271
+#: app/storage/local_storage.py:272
 #, python-brace-format
 msgid "Failed to read directory: {}"
 msgstr ""
 
-#: storage/local_storage.py:281
+#: app/storage/local_storage.py:282
 #, python-brace-format
 msgid "Path is already occupied by a file: {}"
 msgstr ""
 
-#: storage/local_storage.py:288
+#: app/storage/local_storage.py:289
 #, python-brace-format
 msgid "Permission denied to create directory: {}"
 msgstr ""
 
-#: storage/local_storage.py:296
+#: app/storage/local_storage.py:297
 #, python-brace-format
 msgid "Directory does not exist, cannot delete: {}"
 msgstr ""
 
-#: storage/local_storage.py:308
+#: app/storage/local_storage.py:309
 #, python-brace-format
 msgid "Failed to delete directory: {}"
 msgstr ""
 
-#: storage/local_storage.py:316
+#: app/storage/local_storage.py:317
 #, python-brace-format
 msgid "Source file/directory does not exist: {}"
 msgstr ""
 
-#: storage/local_storage.py:327
+#: app/storage/local_storage.py:328
 #, python-brace-format
 msgid "Insufficient permissions for move operation: {} -> {}"
 msgstr ""
 
-#: storage/local_storage.py:332
+#: app/storage/local_storage.py:333
 #, python-brace-format
 msgid "Move operation failed: {}"
 msgstr ""
 
-#: storage/local_storage.py:341
+#: app/storage/local_storage.py:342
 #, python-brace-format
 msgid "Source file does not exist or is a directory: {}"
 msgstr ""
 
-#: storage/local_storage.py:351
+#: app/storage/local_storage.py:352
 #, python-brace-format
 msgid "Insufficient permissions for copy operation: {} -> {}"
 msgstr ""
 
-#: storage/local_storage.py:356
+#: app/storage/local_storage.py:357
 #, python-brace-format
 msgid "Copy operation failed: {}"
 msgstr ""
 
-#: storage/local_storage.py:363
+#: app/storage/local_storage.py:364
 #, python-brace-format
 msgid "File or directory does not exist: {}"
 msgstr ""
 
-#: ui/components/clipboard.py:12
+#: app/ui/components/clipboard.py:12
 #, python-brace-format
 msgid "Failed to copy to clipboard: {}"
 msgstr ""
 
-#: ui/components/dialog.py:151
+#: app/ui/components/dialog.py:67
+#, python-brace-format
+msgid "Search in {}"
+msgstr ""
+
+#: app/ui/components/dialog.py:151
 msgid "No more results."
 msgstr ""
 
-#: ui/components/dialog.py:156
+#: app/ui/components/dialog.py:156
 msgid "If you still can't find it, try searching in a **different directory**."
 msgstr ""
 
-#: ui/components/dialog.py:160
+#: app/ui/components/dialog.py:160
 #, python-brace-format
 msgid "Current directory: **{}**"
 msgstr ""
 
-#: ui/components/dialog.py:193 ui/components/dialog.py:225
-#: ui/components/dialog.py:290 ui/components/dialog.py:449
-#: ui/components/dialog.py:540
+#: app/ui/components/dialog.py:193 app/ui/components/dialog.py:225
+#: app/ui/components/dialog.py:290 app/ui/components/dialog.py:449
+#: app/ui/components/dialog.py:540
 msgid "Confirm"
 msgstr ""
 
-#: ui/components/dialog.py:197 ui/components/dialog.py:229
-#: ui/components/dialog.py:291 ui/components/dialog.py:453
-#: ui/components/dialog.py:544
+#: app/ui/components/dialog.py:197 app/ui/components/dialog.py:229
+#: app/ui/components/dialog.py:291 app/ui/components/dialog.py:453
+#: app/ui/components/dialog.py:544
 msgid "Cancel"
 msgstr ""
 
-#: ui/components/dialog.py:238
+#: app/ui/components/dialog.py:238
 #, python-brace-format
 msgid "Rename {}"
 msgstr ""
 
-#: ui/components/dialog.py:239
+#: app/ui/components/dialog.py:239
 msgid "New name"
 msgstr ""
 
-#: ui/components/dialog.py:248
+#: app/ui/components/dialog.py:248
 msgid "Current name"
 msgstr ""
 
-#: ui/components/dialog.py:264
+#: app/ui/components/dialog.py:264
 msgid "New name cannot be empty"
 msgstr ""
 
-#: ui/components/dialog.py:267
+#: app/ui/components/dialog.py:267
 msgid "New name cannot be the same as the current name"
 msgstr ""
 
-#: ui/components/dialog.py:275
+#: app/ui/components/dialog.py:275
 msgid "File name cannot end with a dot"
 msgstr ""
 
-#: ui/components/dialog.py:279
+#: app/ui/components/dialog.py:279
 msgid "Confirm Rename"
 msgstr ""
 
-#: ui/components/dialog.py:281
+#: app/ui/components/dialog.py:281
 #, python-brace-format
 msgid "Are you sure you want to rename **`{}`** to **`{}`** ?"
 msgstr ""
 
-#: ui/components/dialog.py:300
+#: app/ui/components/dialog.py:300
 #, python-brace-format
 msgid "Share {}"
 msgstr ""
 
-#: ui/components/dialog.py:315
+#: app/ui/components/dialog.py:315
 msgid "Valid sharing links"
 msgstr ""
 
-#: ui/components/dialog.py:325
+#: app/ui/components/dialog.py:325
 msgid "Share link deleted"
 msgstr ""
 
-#: ui/components/dialog.py:328
+#: app/ui/components/dialog.py:328
 #, python-brace-format
 msgid "Failed to delete share link: {}"
 msgstr ""
 
-#: ui/components/dialog.py:341
+#: app/ui/components/dialog.py:341
 #, python-brace-format
 msgid "EXP: {}"
 msgstr ""
 
-#: ui/components/dialog.py:354
+#: app/ui/components/dialog.py:354
 msgid "Copy"
 msgstr ""
 
-#: ui/components/dialog.py:358 ui/components/dialog.py:759
+#: app/ui/components/dialog.py:358 app/ui/components/dialog.py:759
 msgid "Share link copied to clipboard."
 msgstr ""
 
-#: ui/components/dialog.py:362 ui/components/dialog.py:638
-#: ui/components/table.py:273
+#: app/ui/components/dialog.py:362 app/ui/components/dialog.py:638
+#: app/ui/components/table.py:272
 msgid "Delete"
 msgstr ""
 
-#: ui/components/dialog.py:371
+#: app/ui/components/dialog.py:371
 msgid "Create new sharing link"
 msgstr ""
 
-#: ui/components/dialog.py:377 ui/components/dialog.py:406
-#: ui/components/dialog.py:411
+#: app/ui/components/dialog.py:377 app/ui/components/dialog.py:406
+#: app/ui/components/dialog.py:411
 msgid "Expire after"
 msgstr ""
 
-#: ui/components/dialog.py:377 ui/components/dialog.py:405
-#: ui/components/dialog.py:438
+#: app/ui/components/dialog.py:377 app/ui/components/dialog.py:405
+#: app/ui/components/dialog.py:438
 msgid "Expire after days"
 msgstr ""
 
-#: ui/components/dialog.py:382
+#: app/ui/components/dialog.py:382
 msgid "Expire date"
 msgstr ""
 
-#: ui/components/dialog.py:387
+#: app/ui/components/dialog.py:387
 msgid "Expire time"
 msgstr ""
 
-#: ui/components/dialog.py:394
+#: app/ui/components/dialog.py:394
 msgid "Expire days"
 msgstr ""
 
-#: ui/components/dialog.py:413
+#: app/ui/components/dialog.py:413
 msgid "Please select a valid expire time"
 msgstr ""
 
-#: ui/components/dialog.py:430
+#: app/ui/components/dialog.py:430
 msgid "Expire date cannot be before now"
 msgstr ""
 
-#: ui/components/dialog.py:479
+#: app/ui/components/dialog.py:479
 msgid "Directory"
 msgstr ""
 
-#: ui/components/dialog.py:495
+#: app/ui/components/dialog.py:495
 msgid "Back to parent directory"
 msgstr ""
 
-#: ui/components/dialog.py:500
+#: app/ui/components/dialog.py:500
 msgid "No directories found."
 msgstr ""
 
-#: ui/components/dialog.py:509
+#: app/ui/components/dialog.py:509
 #, python-brace-format
 msgid "Move {} to {}"
 msgstr ""
 
-#: ui/components/dialog.py:577
+#: app/ui/components/dialog.py:577
 msgid "Metadata info"
 msgstr ""
 
-#: ui/components/dialog.py:585 ui/components/table.py:109
+#: app/ui/components/dialog.py:585 app/ui/components/table.py:108
 msgid "Name"
 msgstr ""
 
-#: ui/components/dialog.py:587 ui/components/table.py:116 ui/pages/share.py:101
+#: app/ui/components/dialog.py:587 app/ui/components/table.py:115
+#: app/ui/pages/share.py:96
 msgid "Type"
 msgstr ""
 
-#: ui/components/dialog.py:588 ui/components/dialog.py:613
-#: ui/components/table.py:132 ui/pages/share.py:105
+#: app/ui/components/dialog.py:588 app/ui/components/dialog.py:613
+#: app/ui/components/table.py:131 app/ui/pages/share.py:100
 msgid "Size"
 msgstr ""
 
-#: ui/components/dialog.py:590
+#: app/ui/components/dialog.py:590
 msgid "Direct children"
 msgstr ""
 
-#: ui/components/dialog.py:595 ui/components/table.py:123 ui/pages/share.py:128
+#: app/ui/components/dialog.py:595 app/ui/components/table.py:122
+#: app/ui/pages/share.py:123
 msgid "Extension"
 msgstr ""
 
-#: ui/components/dialog.py:597
+#: app/ui/components/dialog.py:597
 msgid "Accessed At"
 msgstr ""
 
-#: ui/components/dialog.py:600 ui/components/table.py:141
+#: app/ui/components/dialog.py:600 app/ui/components/table.py:140
 msgid "Created At"
 msgstr ""
 
-#: ui/components/dialog.py:603
+#: app/ui/components/dialog.py:603
 msgid "Modified At"
 msgstr ""
 
-#: ui/components/dialog.py:606
+#: app/ui/components/dialog.py:606
 msgid "Status Changed At"
 msgstr ""
 
-#: ui/components/dialog.py:615
+#: app/ui/components/dialog.py:615
 msgid "Click to calculate"
 msgstr ""
 
-#: ui/components/dialog.py:628 ui/pages/share.py:119
+#: app/ui/components/dialog.py:628 app/ui/pages/share.py:114
 msgid "Calculate directory size"
 msgstr ""
 
-#: ui/components/dialog.py:632 ui/pages/share.py:125
+#: app/ui/components/dialog.py:632 app/ui/pages/share.py:120
 msgid "Directory is empty"
 msgstr ""
 
-#: ui/components/dialog.py:644 ui/components/table.py:289
+#: app/ui/components/dialog.py:644 app/ui/components/table.py:288
 msgid "Move"
 msgstr ""
 
-#: ui/components/dialog.py:650
+#: app/ui/components/dialog.py:650
 msgid "Rename"
 msgstr ""
 
-#: ui/components/dialog.py:657 ui/pages/share.py:49
+#: app/ui/components/dialog.py:657 app/ui/pages/share.py:44
 msgid "Share"
 msgstr ""
 
-#: ui/components/dialog.py:663 ui/components/table.py:281 ui/pages/share.py:156
+#: app/ui/components/dialog.py:663 app/ui/components/table.py:280
+#: app/ui/pages/share.py:151
 msgid "Download"
 msgstr ""
 
-#: ui/components/dialog.py:673 ui/pages/share.py:75
+#: app/ui/components/dialog.py:673 app/ui/pages/share.py:70
 msgid "Calculating..."
 msgstr ""
 
-#: ui/components/dialog.py:679
+#: app/ui/components/dialog.py:679
 msgid "Confirm Delete"
 msgstr ""
 
-#: ui/components/dialog.py:680
+#: app/ui/components/dialog.py:680
 #, python-brace-format
 msgid "Are you sure you want to delete **`{}`**"
 msgstr ""
 
-#: ui/components/dialog.py:686
+#: app/ui/components/dialog.py:686
 msgid "Delete successful"
 msgstr ""
 
-#: ui/components/dialog.py:702
+#: app/ui/components/dialog.py:702
 msgid ""
 "A file or folder with this name already exists. Please choose a different"
 " name."
 msgstr ""
 
-#: ui/components/dialog.py:708
+#: app/ui/components/dialog.py:708
 msgid "Rename successful"
 msgstr ""
 
-#: ui/components/dialog.py:723 ui/components/table.py:601
+#: app/ui/components/dialog.py:723 app/ui/components/table.py:600
 msgid ""
 "Cannot move items to the same folder. Please select a different "
 "destination."
 msgstr ""
 
-#: ui/components/dialog.py:733
+#: app/ui/components/dialog.py:733
 #, python-brace-format
 msgid "Move successful to {}"
 msgstr ""
 
-#: ui/components/dialog.py:766 ui/components/dialog.py:776
-#: ui/components/table.py:434
+#: app/ui/components/dialog.py:766 app/ui/components/dialog.py:776
+#: app/ui/components/table.py:433
 msgid "Confirm Download"
 msgstr ""
 
-#: ui/components/dialog.py:768
+#: app/ui/components/dialog.py:768
 msgid ""
 "You selected a folder. It will be compressed into a **single tar.gz "
 "file** for download. "
 msgstr ""
 
-#: ui/components/dialog.py:770 ui/components/dialog.py:777
+#: app/ui/components/dialog.py:770 app/ui/components/dialog.py:777
 #, python-brace-format
 msgid "Are you sure you want to download **`{}`**? "
 msgstr ""
 
-#: ui/components/header.py:31 ui/components/header.py:67
+#: app/ui/components/header.py:24 app/ui/components/header.py:77
 msgid "Logout"
 msgstr ""
 
-#: ui/components/header.py:32
+#: app/ui/components/header.py:25
 msgid "Are you sure you want to logout?"
 msgstr ""
 
-#: ui/components/header.py:38
+#: app/ui/components/header.py:31
 msgid "Logged out"
 msgstr ""
 
-#: ui/components/header.py:45
+#: app/ui/components/header.py:38
 msgid "Logout failed"
 msgstr ""
 
-#: ui/components/header.py:65 ui/pages/console.py:62
+#: app/ui/components/header.py:62 app/ui/pages/profile.py:25
+msgid "Profile"
+msgstr ""
+
+#: app/ui/components/header.py:70 app/ui/pages/console.py:57
 msgid "Console"
 msgstr ""
 
-#: ui/components/header.py:69 ui/pages/login.py:93
+#: app/ui/components/header.py:83 app/ui/pages/login.py:93
 msgid "Login"
 msgstr ""
 
-#: ui/components/table.py:68
+#: app/ui/components/table.py:67
 msgid "Action"
 msgstr ""
 
-#: ui/components/table.py:99
+#: app/ui/components/table.py:98
 msgid "Path not exists, will go to home dir."
 msgstr ""
 
-#: ui/components/table.py:149
+#: app/ui/components/table.py:148
 msgid "Updated At"
 msgstr ""
 
-#: ui/components/table.py:163
+#: app/ui/components/table.py:162
 msgid "File List"
 msgstr ""
 
-#: ui/components/table.py:181
+#: app/ui/components/table.py:180
 msgid "Empty Here."
 msgstr ""
 
-#: ui/components/table.py:188
+#: app/ui/components/table.py:187
 msgid "Back to Parent Directory"
 msgstr ""
 
-#: ui/components/table.py:193 ui/pages/browser.py:30 ui/pages/error_page.py:46
+#: app/ui/components/table.py:192 app/ui/pages/browser.py:30
+#: app/ui/pages/error_page.py:52
 msgid "Home"
 msgstr ""
 
-#: ui/components/table.py:196
+#: app/ui/components/table.py:195
 msgid "Back to Home Directory"
 msgstr ""
 
-#: ui/components/table.py:257
+#: app/ui/components/table.py:256
 msgid "Upload"
 msgstr ""
 
-#: ui/components/table.py:265 ui/components/table.py:454
+#: app/ui/components/table.py:264 app/ui/components/table.py:453
 msgid "New Directory"
 msgstr ""
 
-#: ui/components/table.py:302
+#: app/ui/components/table.py:301
 msgid "Batch Actions"
 msgstr ""
 
-#: ui/components/table.py:310
+#: app/ui/components/table.py:309
 msgid "Search in Current Directory (./)"
 msgstr ""
 
-#: ui/components/table.py:327
+#: app/ui/components/table.py:326
 msgid "Information"
 msgstr ""
 
-#: ui/components/table.py:391
+#: app/ui/components/table.py:390
 msgid "Already at the root directory. Cannot go back further."
 msgstr ""
 
-#: ui/components/table.py:408
+#: app/ui/components/table.py:407
 msgid "Path copied to clipboard."
 msgstr ""
 
-#: ui/components/table.py:436
+#: app/ui/components/table.py:435
 #, python-brace-format
 msgid ""
 "Are you sure you want to download **`{}`**? To **delete**, **move**, "
@@ -680,203 +688,263 @@ msgid ""
 "button(i) next to the file row."
 msgstr ""
 
-#: ui/components/table.py:456
+#: app/ui/components/table.py:455
 msgid ""
 "Please enter the name of the new directory.\n"
 "\n"
 "You can use `/` to create subfolders, e.g., `parent/child`."
 msgstr ""
 
-#: ui/components/table.py:459
+#: app/ui/components/table.py:458
 msgid "Directory Name"
 msgstr ""
 
-#: ui/components/table.py:474
+#: app/ui/components/table.py:473
 msgid "A directory with the same name already exists. Please choose another name."
 msgstr ""
 
-#: ui/components/table.py:481
+#: app/ui/components/table.py:480
 #, python-brace-format
 msgid "Failed to create new directory: {}"
 msgstr ""
 
-#: ui/components/table.py:484
+#: app/ui/components/table.py:483
 #, python-brace-format
 msgid "New directory created successfully: {}"
 msgstr ""
 
-#: ui/components/table.py:497
+#: app/ui/components/table.py:496
 msgid "Upload in Progress"
 msgstr ""
 
-#: ui/components/table.py:499
+#: app/ui/components/table.py:498
 msgid "Are you sure you want to cancel? This will stop the ongoing upload."
 msgstr ""
 
-#: ui/components/table.py:516
+#: app/ui/components/table.py:515
 #, python-brace-format
 msgid "File Exists: {}"
 msgstr ""
 
-#: ui/components/table.py:517
+#: app/ui/components/table.py:516
 msgid "This file already exists. Do you want to overwrite it?"
 msgstr ""
 
-#: ui/components/table.py:521
+#: app/ui/components/table.py:520
 #, python-brace-format
 msgid "Cancel overwrite: {}"
 msgstr ""
 
-#: ui/components/table.py:539
+#: app/ui/components/table.py:538
 msgid "Multiple selection enabled"
 msgstr ""
 
-#: ui/components/table.py:561 ui/components/table.py:588
-#: ui/components/table.py:623
+#: app/ui/components/table.py:560 app/ui/components/table.py:587
+#: app/ui/components/table.py:622
 msgid "Please select at least one file"
 msgstr ""
 
-#: ui/components/table.py:565
+#: app/ui/components/table.py:564
 msgid "Download Files"
 msgstr ""
 
-#: ui/components/table.py:567
+#: app/ui/components/table.py:566
 msgid ""
 "You selected multiple items or a folder. They will be compressed into a "
 "**single tar.gz file** for download. Do you want to continue?"
 msgstr ""
 
-#: ui/components/table.py:615
+#: app/ui/components/table.py:614
 #, python-brace-format
 msgid "Moved {} items"
 msgstr ""
 
-#: ui/components/table.py:627
+#: app/ui/components/table.py:626
 #, python-brace-format
 msgid "Delete {} items"
 msgstr ""
 
-#: ui/components/table.py:644
+#: app/ui/components/table.py:643
 #, python-brace-format
 msgid "Deleted {} items"
 msgstr ""
 
-#: ui/components/table.py:674
+#: app/ui/components/table.py:673
 msgid "Missing path"
 msgstr ""
 
-#: ui/components/table.py:691
+#: app/ui/components/table.py:690
 msgid "Failed to get file metadata"
 msgstr ""
 
-#: ui/pages/browser.py:45
+#: app/ui/pages/browser.py:43
 msgid "Upload files"
 msgstr ""
 
-#: ui/pages/console.py:65
+#: app/ui/pages/console.py:60
 msgid "Service URL"
 msgstr ""
 
-#: ui/pages/error_page.py:11
+#: app/ui/pages/console.py:69
+msgid "CPU Usage"
+msgstr ""
+
+#: app/ui/pages/console.py:72
+msgid "Memory Usage"
+msgstr ""
+
+#: app/ui/pages/console.py:75
+msgid "Disk Usage (Root Filesystem)"
+msgstr ""
+
+#: app/ui/pages/console.py:81
+msgid "Run Full GC"
+msgstr ""
+
+#: app/ui/pages/console.py:83
+msgid "Show Object Reference Count"
+msgstr ""
+
+#: app/ui/pages/console.py:85
+#, python-brace-format
+msgid "Object reference count: {count}"
+msgstr ""
+
+#: app/ui/pages/console.py:91 app/ui/pages/console.py:95
+msgid "APP RELOAD"
+msgstr ""
+
+#: app/ui/pages/console.py:96
+msgid "Are you sure you want to reload the application?"
+msgstr ""
+
+#: app/ui/pages/console.py:100
+#, python-brace-format
+msgid "Reloading {}..."
+msgstr ""
+
+#: app/ui/pages/console.py:128
+msgid "app.storage.general"
+msgstr ""
+
+#: app/ui/pages/console.py:134
+msgid "app.storage.user"
+msgstr ""
+
+#: app/ui/pages/console.py:140
+msgid "app.storage.client"
+msgstr ""
+
+#: app/ui/pages/console.py:146
+msgid "app.storage.browser"
+msgstr ""
+
+#: app/ui/pages/console.py:159
+#, python-brace-format
+msgid "{} Memory Usage: {} MB"
+msgstr ""
+
+#: app/ui/pages/console.py:162
+#, python-brace-format
+msgid "Host Load Average: {} {} {}"
+msgstr ""
+
+#: app/ui/pages/error_page.py:16
 msgid "Page not found"
 msgstr ""
 
-#: ui/pages/error_page.py:39
+#: app/ui/pages/error_page.py:44
 #, python-brace-format
 msgid "You have reached a place where there is no one, but you are still in {}. 🧐"
 msgstr ""
 
-#: ui/pages/error_page.py:42 ui/pages/error_page.py:81
+#: app/ui/pages/error_page.py:48 app/ui/pages/error_page.py:87
 #, python-brace-format
 msgid "request_uuid = `{}`"
 msgstr ""
 
-#: ui/pages/error_page.py:45 ui/pages/error_page.py:92
+#: app/ui/pages/error_page.py:51 app/ui/pages/error_page.py:98
 msgid "Back"
 msgstr ""
 
-#: ui/pages/error_page.py:70
+#: app/ui/pages/error_page.py:76
 msgid "# 500 - Server internal error"
 msgstr ""
 
-#: ui/pages/error_page.py:72
+#: app/ui/pages/error_page.py:78
 #, python-brace-format
 msgid "A problem {} couldn't handle occurred, great job. 😅"
 msgstr ""
 
-#: ui/pages/error_page.py:85
+#: app/ui/pages/error_page.py:91
 msgid ""
 "Please report this issue by opening a new issue on our GitHub repository."
 " ⬇️"
 msgstr ""
 
-#: ui/pages/error_page.py:94
+#: app/ui/pages/error_page.py:100
 msgid "Report"
 msgstr ""
 
-#: ui/pages/login.py:39
+#: app/ui/pages/login.py:39
 msgid "Logged in"
 msgstr ""
 
-#: ui/pages/login.py:49
+#: app/ui/pages/login.py:49
 #, python-brace-format
 msgid "Welcome to {}"
 msgstr ""
 
-#: ui/pages/login.py:63
+#: app/ui/pages/login.py:63
 msgid "User not found"
 msgstr ""
 
-#: ui/pages/login.py:66
+#: app/ui/pages/login.py:66
 msgid "Login successful"
 msgstr ""
 
-#: ui/pages/login.py:77
+#: app/ui/pages/login.py:77
 msgid "Email"
 msgstr ""
 
-#: ui/pages/login.py:81
+#: app/ui/pages/login.py:81
 msgid "Invalid email address"
 msgstr ""
 
-#: ui/pages/login.py:88
+#: app/ui/pages/login.py:88
 msgid "Password"
 msgstr ""
 
-#: ui/pages/profile.py:30
-msgid "Profile"
-msgstr ""
-
-#: ui/pages/profile.py:37
+#: app/ui/pages/profile.py:32
 #, python-brace-format
 msgid "Language changed to {}"
 msgstr ""
 
-#: ui/pages/share.py:42
+#: app/ui/pages/share.py:37
 msgid "This shared link is no longer available"
 msgstr ""
 
-#: ui/pages/share.py:43
+#: app/ui/pages/share.py:38
 msgid "It may have expired or the file was removed by the owner. 🧐"
 msgstr ""
 
-#: ui/pages/share.py:136
+#: app/ui/pages/share.py:131
 msgid "Created at"
 msgstr ""
 
-#: ui/pages/share.py:137
+#: app/ui/pages/share.py:132
 msgid "Modified at"
 msgstr ""
 
-#: ui/pages/share.py:138
+#: app/ui/pages/share.py:133
 msgid "Accessed at"
 msgstr ""
 
-#: ui/pages/share.py:140
+#: app/ui/pages/share.py:135
 msgid "Status changed at"
 msgstr ""
 
-#: ui/pages/share.py:149
+#: app/ui/pages/share.py:144
 msgid "Children"
 msgstr ""
 
@@ -896,5 +964,14 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "File"
+#~ msgstr ""
+
+#~ msgid "Unauthorized access to {}, request_uuid: {}"
+#~ msgstr ""
+
+#~ msgid "{app_name} Memory Usage: {memory} MB"
+#~ msgstr ""
+
+#~ msgid "Host Load Average: {l1:.2f} {l5:.2f} {l15:.2f}"
 #~ msgstr ""
 
