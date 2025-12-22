@@ -17,7 +17,6 @@ from app.services.file_service import (
     get_user_last_path,
 )
 from app.services.user_service import get_user_timezone
-from app.ui.components import max_w
 from app.ui.components.clipboard import copy_to_clipboard
 from app.ui.components.dialog import (
     ConfirmDialog,
@@ -166,7 +165,7 @@ class FileBrowserTable:
                     "sortable": True,
                     "align": "center",
                 },
-            ).classes("w-full h-full" + max_w)
+            ).classes("w-full h-full")
 
             self.browser_table.pagination = {
                 "sortBy": "type",

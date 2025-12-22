@@ -64,7 +64,7 @@ class SearchDialog(Dialog):
             with ui.row().classes("w-full items-center px-4"):
                 self.search_input = (
                     ui.input(
-                        label=f"Search in {self.current_path.name}",
+                        label=_("Search in {}").format(self.current_path.name),
                         on_change=self.on_input_change,
                     )
                     .classes("flex-grow")

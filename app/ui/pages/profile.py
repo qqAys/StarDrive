@@ -10,11 +10,6 @@ from app.ui.components.notify import notify
 this_page_routes = "/profile"
 
 
-@app.get("/")
-def index():
-    return RedirectResponse(this_page_routes + "/")
-
-
 @app.get(this_page_routes)
 def browser_index():
     return RedirectResponse(this_page_routes + "/")

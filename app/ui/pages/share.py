@@ -18,11 +18,6 @@ from app.ui.pages.error_page import render_404
 this_page_routes = "/share"
 
 
-@app.get("/")
-def index():
-    return RedirectResponse(this_page_routes + "/")
-
-
 @app.get(this_page_routes)
 def browser_index():
     return RedirectResponse(this_page_routes + "/")
