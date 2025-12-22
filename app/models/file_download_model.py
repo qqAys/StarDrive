@@ -25,8 +25,16 @@ class FileDownloadInfo(SQLModel, table=True):
     path: str = Field(max_length=512)
     base_path: str = Field(max_length=512)
 
-    user_id: str = Field(
+    user_id: str | None = Field(
+        default_factory=None,
         foreign_key="users.id",
+        index=True,
+        max_length=26,
+    )
+
+    share_id: str | None = Field(
+        default=None,
+        foreign_key="file_downloads.id",  # 指向自身表
         index=True,
         max_length=26,
     )

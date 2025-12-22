@@ -25,9 +25,11 @@ router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
-@require_user()
+@require_user
 async def index():
-    async with BaseLayout().render(header=True, footer=True, args={"title": _("Home")}) as (header, footer):
+    async with BaseLayout().render(
+        header=True, footer=True, args={"title": _("Home")}
+    ) as (header, footer):
 
         file_manager = globals.get_storage_manager()
         current_user = header.get_user()

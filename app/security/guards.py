@@ -1,6 +1,7 @@
 from functools import wraps
+from typing import Optional, Callable
 
-from nicegui import ui
+from nicegui import ui, app
 
 from app import globals
 from app.config import settings
@@ -16,10 +17,18 @@ def navigate_to(custom_url: str = None):
     )
 
 
-def require_user(*, superuser: bool = False, active: bool = True):
+def require_user(
+    func: Optional[Callable] = None, *, superuser: bool = False, active: bool = True
+):
+
     def decorator(page_func):
         @wraps(page_func)
         async def wrapper(*args, **kwargs):
+            if not app.storage.user:
+                notify.error(_("You need to sign in to access this page."))
+                navigate_to()
+                return None
+
             um = globals.get_user_manager()
             user = await um.current_user()
 
@@ -41,5 +50,8 @@ def require_user(*, superuser: bool = False, active: bool = True):
             return await page_func(*args, **kwargs)
 
         return wrapper
+
+    if callable(func):
+        return decorator(func)
 
     return decorator

@@ -90,6 +90,7 @@ async def console_page(request: Request, client: Client):
 
                 app_reload_button = ui.button(_("APP RELOAD"), color="red")
 
+            @require_user(superuser=True)
             async def on_app_reload_click():
                 confirm = await ConfirmDialog(
                     title=_("APP RELOAD"),
@@ -104,21 +105,25 @@ async def console_page(request: Request, client: Client):
 
             ui.separator()
 
+            @require_user(superuser=True)
             def on_app_storage_general_change(e):
                 new_data = e.content["json"]
                 app.storage.general.clear()
                 app.storage.general.update(new_data)
 
+            @require_user(superuser=True)
             def on_app_storage_user_change(e):
                 new_data = e.content["json"]
                 app.storage.user.clear()
                 app.storage.user.update(new_data)
 
+            @require_user(superuser=True)
             def on_app_storage_client_change(e):
                 new_data = e.content["json"]
                 app.storage.client.clear()
                 app.storage.client.update(new_data)
 
+            @require_user(superuser=True)
             def on_app_storage_browser_change(e):
                 new_data = e.content["json"]
                 app.storage.browser.clear()
@@ -156,11 +161,12 @@ async def console_page(request: Request, client: Client):
             memory_progress.value = round(metrics["memory_percent"] / 100, 1)
             disk_progress.value = round(metrics["disk_percent"] / 100, 1)
 
-            process_memory_label.text = _("{} Memory Usage: {} MB").format(settings.APP_NAME, metrics["process_memory"],)
+            process_memory_label.text = _("{} Memory Usage: {} MB").format(
+                settings.APP_NAME,
+                metrics["process_memory"],
+            )
 
-            system_load_label.text = _(
-                "Host Load Average: {} {} {}"
-            ).format(
+            system_load_label.text = _("Host Load Average: {} {} {}").format(
                 f"{metrics['system_load'][0]:.2f}",
                 f"{metrics['system_load'][1]:.2f}",
                 f"{metrics['system_load'][2]:.2f}",

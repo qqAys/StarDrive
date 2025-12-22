@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Sequence
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -19,9 +19,10 @@ class FileDownloadCRUD:
         type: FileType,
         path: str,
         base_path: str,
-        user: str,
         source: FileSource,
         expires_at: datetime,
+        user: str = None,
+        share_id: str = None,
     ) -> FileDownloadInfo:
         file_download = FileDownloadInfo(
             name=name,
@@ -29,6 +30,7 @@ class FileDownloadCRUD:
             path=path,
             base_path=base_path,
             user_id=user,
+            share_id=share_id,
             source=source,
             expires_at=expires_at,
         )
@@ -65,4 +67,15 @@ class FileDownloadCRUD:
         )
         file_download = await session.execute(file_download)
         file_download = file_download.scalar()
+        return file_download
+
+    @staticmethod
+    async def get_share(
+        session: AsyncSession, *, share_id: str
+    ) -> Sequence[FileDownloadInfo]:
+        file_download = select(FileDownloadInfo).where(
+            FileDownloadInfo.share_id == share_id
+        )
+        file_download = await session.execute(file_download)
+        file_download = file_download.scalars().all()
         return file_download

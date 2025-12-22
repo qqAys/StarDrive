@@ -45,7 +45,9 @@ def render_404(
                 ).format(settings.APP_NAME)
             ).classes("text-base")
         if request_uuid:
-            ui.markdown(_("request_uuid = `{}`").format(request_uuid)).classes("text-xs")
+            ui.markdown(_("request_uuid = `{}`").format(request_uuid)).classes(
+                "text-xs"
+            )
         with ui.row().classes("mt-4 gap-4"):
             if back_button:
                 ui.button(_("Back"), icon="arrow_back", on_click=ui.navigate.back)

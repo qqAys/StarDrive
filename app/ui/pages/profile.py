@@ -19,12 +19,13 @@ router = APIRouter(prefix=this_page_routes)
 
 
 @router.page("/")
-@require_user()
+@require_user
 async def index():
     async with BaseLayout().render(
         header=True, footer=True, args={"title": _("Profile")}
     ):
 
+        @require_user
         def change_language(lang_code):
             current_lang_code = app.storage.user.get("default_lang", "en_US")
             if current_lang_code != lang_code:

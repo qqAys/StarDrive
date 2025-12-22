@@ -1,4 +1,5 @@
 from typing import Callable, Any
+
 from nicegui import ui
 
 BASE_BUTTON = [
@@ -13,7 +14,7 @@ BASE_BUTTON = [
     "items-center",
     "gap-1",
     "text-white",
-    "no-underline"
+    "no-underline",
 ]
 
 BUTTON_VARIANTS = {
@@ -27,19 +28,15 @@ BUTTON_VARIANTS = {
 
 
 def fake_button(
-        text: str | None = None,
-        icon: str | None = None,
-        *,
-        link: str | None = None,
-        func: Callable[[], Any] | None = None,
-        variant: str = "default",
-        extra_classes: list[str] | None = None,
+    text: str | None = None,
+    icon: str | None = None,
+    *,
+    link: str | None = None,
+    func: Callable[[], Any] | None = None,
+    variant: str = "default",
+    extra_classes: list[str] | None = None,
 ):
-    classes = (
-            BASE_BUTTON
-            + BUTTON_VARIANTS.get(variant, [])
-            + (extra_classes or [])
-    )
+    classes = BASE_BUTTON + BUTTON_VARIANTS.get(variant, []) + (extra_classes or [])
 
     with ui.link(target=link).classes(" ".join(classes)) as b:
         if icon:
@@ -54,11 +51,11 @@ def fake_button(
 
 
 def nav_button(
-        text: str,
-        *,
-        icon: str | None = None,
-        link: str,
-        current_path: str,
+    text: str,
+    *,
+    icon: str | None = None,
+    link: str,
+    current_path: str,
 ):
     is_active = current_path.rstrip("/") == link.rstrip("/")
 
@@ -66,9 +63,5 @@ def nav_button(
         text=text,
         icon=icon,
         link=link,
-        extra_classes=(
-            BUTTON_VARIANTS["active"]
-            if is_active
-            else None
-        ),
+        extra_classes=(BUTTON_VARIANTS["active"] if is_active else None),
     )

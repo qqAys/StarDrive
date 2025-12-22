@@ -337,13 +337,14 @@ class StorageManager:
 
 
 async def generate_download_url(
-    current_user: User,
     target_path: str | list[str],
     name: str | list[str],
     type_: FileType,
     source: FileSource,
+    current_user: User = None,
     expire_datetime_utc: Optional[datetime] = None,
     expire_days: Optional[int] = None,
+    share_id: str = None,
 ) -> str | None:
     """
     生成下载链接。
@@ -377,7 +378,8 @@ async def generate_download_url(
             type=type_,
             path=target_path,
             base_path=app.storage.user["last_path"],
-            user=current_user.id,
+            user=current_user.id if current_user else None,
+            share_id=share_id,
             source=source,
             expires_at=this_url_ttl,
         )
@@ -426,10 +428,19 @@ async def delete_download_link(download_id: str):
     删除下载链接。
     """
     async with get_db_context() as session:
-        session.delete(
-            FileDownloadInfo.where(FileDownloadInfo.download_id == download_id)
+        share_objs = await FileDownloadCRUD.get_share(
+            session=session, share_id=download_id
         )
-    return True
+        if share_objs:
+            for share_obj in share_objs:
+                await session.delete(share_obj)
+                await session.commit()
+        obj = await FileDownloadCRUD.get(session=session, file_download_id=download_id)
+        if obj:
+            await session.delete(obj)
+            await session.commit()
+            return True
+        return False
 
 
 async def get_user_share_links(

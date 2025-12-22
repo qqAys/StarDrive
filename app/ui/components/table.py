@@ -8,6 +8,7 @@ from app.config import settings
 from app.core.i18n import _
 from app.models.user_model import User
 from app.schemas.file_schema import DirMetadata, FileMetadata, FileType, FileSource
+from app.security.guards import require_user
 from app.services.file_service import (
     StorageManager,
     get_file_icon,
@@ -99,6 +100,7 @@ class FileBrowserTable:
             self._current_path: Path = Path(initial_path)
 
         @ui.refreshable
+        @require_user
         async def browser_content():
             self.file_list = self.file_manager.list_files(str(self.current_path))
 
@@ -402,6 +404,7 @@ class FileBrowserTable:
         await self.refresh()
         return
 
+    @require_user
     def copy_path_clipboard(self):
         copy_to_clipboard(
             str(self.current_path), message=_("Path copied to clipboard.")
@@ -437,17 +440,18 @@ class FileBrowserTable:
             ).open()
             if confirm:
                 download_url = await generate_download_url(
-                    self.current_user,
-                    target_path,
-                    file_name,
-                    FileType.FILE,
-                    FileSource.DOWNLOAD,
+                    current_user=self.current_user,
+                    target_path=target_path,
+                    name=file_name,
+                    type_=FileType.FILE,
+                    source=FileSource.DOWNLOAD,
                 )
                 if not download_url:
                     return
                 ui.navigate.to(download_url)
         return
 
+    @require_user
     async def handle_new_directory_button_click(self):
         new_directory_name = await InputDialog(
             _("New Directory"),
@@ -485,6 +489,7 @@ class FileBrowserTable:
 
         await self.refresh()
 
+    @require_user
     async def handle_upload_button_click(self):
         self.on_upload = not self.on_upload
         if self.on_upload:
@@ -507,6 +512,7 @@ class FileBrowserTable:
             else:
                 self.upload_dialog.close()
 
+    @require_user
     async def handle_upload(self, e: events.MultiUploadEventArguments):
         for f in e.files:
 
@@ -531,6 +537,7 @@ class FileBrowserTable:
 
         await self.refresh()
 
+    @require_user
     def handle_edit_button_click(self):
         self.is_select_mode = not self.is_select_mode
 
@@ -555,6 +562,7 @@ class FileBrowserTable:
             f"icon={self.edit_button_icon_close if self.is_select_mode else self.edit_button_icon_open}"
         )
 
+    @require_user
     async def handle_download_button_click(self):
         if not self.browser_table.selected:
             notify.warning(_("Please select at least one file"))
@@ -571,17 +579,18 @@ class FileBrowserTable:
 
         if confirm:
             download_url = await generate_download_url(
-                self.current_user,
-                [s["path"] for s in self.browser_table.selected],
-                [s["raw_name"] for s in self.browser_table.selected],
-                FileType.MIXED,
-                FileSource.DOWNLOAD,
+                current_user=self.current_user,
+                target_path=[s["path"] for s in self.browser_table.selected],
+                name=[s["raw_name"] for s in self.browser_table.selected],
+                type_=FileType.MIXED,
+                source=FileSource.DOWNLOAD,
             )
             if not download_url:
                 return
             ui.navigate.to(download_url)
         return
 
+    @require_user
     async def handle_move_button_click(self):
         if not self.browser_table.selected:
             notify.warning(_("Please select at least one file"))
@@ -617,6 +626,7 @@ class FileBrowserTable:
 
         await self.refresh()
 
+    @require_user
     async def handle_delete_button_click(self):
         if not self.browser_table.selected:
             notify.warning(_("Please select at least one file"))
@@ -648,6 +658,7 @@ class FileBrowserTable:
 
         await self.refresh()
 
+    @require_user
     async def handle_search_button_click(self):
         select_result = await SearchDialog(self.file_manager, self.current_path).open()
 
@@ -664,6 +675,7 @@ class FileBrowserTable:
 
         await self.refresh()
 
+    @require_user
     async def handle_info_button_click(
         self,
         e: events.GenericEventArguments,

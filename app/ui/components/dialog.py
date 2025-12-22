@@ -316,9 +316,9 @@ class ShareDialog(Dialog):
 
                 all_share_link_dropdown_button: dict[str, ui.dropdown_button] = {}
 
-                def delete_share_link(download_id: str) -> bool:
+                async def delete_share_link(download_id: str) -> bool:
                     try:
-                        delete_download_link(download_id)
+                        await delete_download_link(download_id)
                         all_share_link_dropdown_button[download_id].remove(
                             all_share_link_dropdown_button[download_id]
                         )
@@ -332,7 +332,7 @@ class ShareDialog(Dialog):
 
                 with ui.row().classes("w-full justify-between"):
                     for share_link in user_share_links:
-                        link_url = share_link.type
+                        link_url = share_link.url
                         link_expire_time = share_link.expires_at.astimezone(
                             get_user_timezone()
                         ).strftime("%Y-%m-%d %H:%M:%S")
@@ -745,13 +745,13 @@ class MetadataDialog(Dialog):
         ).open()
         if expire_define:
             download_url = await generate_download_url(
-                self.current_user,
-                self.metadata.path,
-                self.metadata.name,
-                self.metadata.type,
-                FileSource.SHARE,
-                expire_define["expire_datetime_utc"],
-                expire_define["expire_days"],
+                current_user=self.current_user,
+                target_path=self.metadata.path,
+                name=self.metadata.name,
+                type_=self.metadata.type,
+                source=FileSource.SHARE,
+                expire_datetime_utc=expire_define["expire_datetime_utc"],
+                expire_days=expire_define["expire_days"],
             )
             if not download_url:
                 return
@@ -781,11 +781,11 @@ class MetadataDialog(Dialog):
 
         if confirm:
             download_url = await generate_download_url(
-                self.current_user,
-                self.metadata.path,
-                self.metadata.name,
-                self.metadata.type,
-                FileSource.DOWNLOAD,
+                current_user=self.current_user,
+                target_path=self.metadata.path,
+                name=self.metadata.name,
+                type_=self.metadata.type,
+                source=FileSource.DOWNLOAD,
             )
             if not download_url:
                 return
