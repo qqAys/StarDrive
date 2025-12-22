@@ -9,6 +9,7 @@ from app.core.logging import logger
 from app.crud.user_crud import UserCRUD
 from app.schemas.user_schema import UserLogin
 from app.security.password import generate_random_password
+from app.security.tokens import create_access_token, create_refresh_token
 
 
 class UserManager:
@@ -105,12 +106,21 @@ class UserManager:
 
             tz = await get_user_timezone_from_browser()
 
+            access_payload = {"sub": user.id}
+
+            access_token = create_access_token(access_payload)
+
+            refresh_payload = access_payload.copy()
+            refresh_payload.update({"tv": user.token_version})
+            refresh_token = create_refresh_token(refresh_payload)
+
             app.storage.user.update(
                 {
                     "user_id": user.id,
                     "email": user.email,
                     "token_version": user.token_version,
                     "timezone": tz,
+                    "access_token": access_token,
                 }
             )
 

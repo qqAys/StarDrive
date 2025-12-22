@@ -1,8 +1,12 @@
 from pathlib import Path
 
+from fastapi import APIRouter
 from starlette.responses import FileResponse
 
+auth_url_prefix = "auth"
 download_form_browser_url_prefix = "download-form-browser"
+
+router = APIRouter(prefix="/api")
 
 
 def return_file_response(

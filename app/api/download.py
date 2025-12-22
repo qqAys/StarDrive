@@ -3,17 +3,15 @@ import time
 from typing import Annotated
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends
+from fastapi import Depends
 from fastapi.exceptions import HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 
 from app import globals
-from app.api import download_form_browser_url_prefix
+from app.api import download_form_browser_url_prefix, router
 from app.schemas.file_schema import FileType
 from app.services.download_service import verify_download_token
 from app.services.file_service import FileDownloadInfo
-
-router = APIRouter(prefix="/api")
 
 
 @router.get("/" + download_form_browser_url_prefix + "/{jwt_token}")

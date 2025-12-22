@@ -8,8 +8,11 @@ from .constants import JWT_ALGORITHM
 
 
 def create_token(data: dict, expires_delta: timedelta):
+    iat = utc_now()
     to_encode = data.copy()
-    expire = utc_now() + expires_delta
+    expire = iat + expires_delta
+    to_encode["iss"] = settings._PROJECT_NAME_CODE
+    to_encode["iat"] = iat
     to_encode["exp"] = expire
 
     return jwt.encode(
