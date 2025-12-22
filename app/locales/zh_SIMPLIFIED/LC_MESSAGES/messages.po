@@ -8,35 +8,37 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2025-12-22 15:08+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
+"PO-Revision-Date: 2025-12-22 15:45+0000\n"
+"Last-Translator: Jinx <me@qqays.xyz>\n"
+"Language-Team: Chinese (Simplified) <https://hosted.weblate.org/projects/"
+"stardrive/stardrive/zh_SIMPLIFIED/>\n"
 "Language: zh_SIMPLIFIED\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 5.15.1\n"
 "Generated-By: Babel 2.17.0\n"
 
 #: app/schemas/file_schema.py:24
 msgid "File name or Directory name"
-msgstr ""
+msgstr "文件名称或文件夹名称"
 
 #: app/schemas/file_schema.py:25 app/ui/components/dialog.py:586
 msgid "Path"
-msgstr ""
+msgstr "路径"
 
 #: app/schemas/file_schema.py:26
 msgid "File type"
-msgstr ""
+msgstr "文件类型"
 
 #: app/schemas/file_schema.py:27
 msgid "File extension"
-msgstr ""
+msgstr "文件扩展"
 
 #: app/schemas/file_schema.py:28
 msgid "File size (bytes)"
-msgstr ""
+msgstr "文件大小（字节）"
 
 #: app/schemas/file_schema.py:30
 msgid "Last access timestamp"
