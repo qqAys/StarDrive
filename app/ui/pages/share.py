@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 from typing import Annotated, Callable
 
 from fastapi import Depends
@@ -13,7 +14,7 @@ from app.schemas.file_schema import FileMetadata, DirMetadata, FileSource
 from app.services.download_service import verify_download_token
 from app.services.file_service import get_file_icon, generate_download_url
 from app.ui.components.base import BaseLayout
-from app.ui.components.dialog import ConfirmDialog
+from app.ui.components.dialog import ConfirmDialog, FileBrowserDialog
 from app.ui.pages.error_page import render_404
 from app.utils.size import bytes_to_human_readable
 
@@ -52,6 +53,8 @@ async def index(
             validated_data.path
         )
 
+        file_path = Path(file_info.path)
+
         # ---------- helpers ----------
 
         def _fmt_ts(ts: float | None) -> str:
@@ -80,6 +83,9 @@ async def index(
                 size_label.text = bytes_to_human_readable(dir_size)
             finally:
                 calc_btn.enable()
+
+        async def on_explorer_button_click():
+            r = await FileBrowserDialog(file_manager, file_path).open()
 
         async def on_download_button_click():
             if file_info.is_dir:
@@ -188,6 +194,10 @@ async def index(
             # ===== Actions =====
             ui.separator()
             with ui.row().classes("w-full justify-end gap-2"):
+                if file_info.is_dir:
+                    ui.button(
+                        _("Explore"), icon="explorer", on_click=on_explorer_button_click
+                    )
                 ui.button(
                     _("Download"), icon="download", on_click=on_download_button_click
                 )

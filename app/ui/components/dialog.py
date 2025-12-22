@@ -456,6 +456,107 @@ class ShareDialog(Dialog):
         return r
 
 
+class FileBrowserDialog(Dialog):
+    """
+    文件浏览器对话框
+    用于分享文件夹，浏览内容，可下载文件
+    """
+
+    def __init__(self, file_service: StorageManager, root_path: Path):
+        super().__init__()
+        self.file_manager = file_service
+        self.root_path = root_path  # 共享根目录
+        self.current_path = self.root_path
+        self.dialog = ui.dialog().props(self.dialog_props)
+        self.title_label: Optional[ui.label] = None
+
+    async def open(self):
+        with self.dialog, ui.card().classes("w-full"):
+            self.title_label = ui.label().classes(self.title_class)
+
+            columns = [
+                {"name": "name", "label": _("Name"), "field": "name"},
+                {"name": "action", "label": _("Action"), "field": "action"},
+            ]
+
+            table = ui.table(
+                columns=columns,
+                rows=[],
+                column_defaults={"sortable": False, "align": "left", "required": True},
+            ).classes("w-full")
+
+            target_path = self.current_path
+
+            # 返回上一级按钮
+            with table.add_slot("top-left"):
+                with ui.row().classes("items-center gap-x-2"):
+                    ui.button(
+                        icon="arrow_upward",
+                        on_click=lambda: refresh_table(target_path.parent),
+                    ).props("flat dense").tooltip(_("Back to Parent Directory"))
+
+            # 无数据提示
+            with table.add_slot("no-data"):
+                with ui.row().classes("items-center"):
+                    ui.icon("warning").classes("text-2xl")
+                    ui.label(_("No files or directories found.")).classes("font-bold")
+
+            rows = []
+
+            def refresh_table(path: Path):
+                nonlocal rows, target_path
+                path = self.file_manager.get_full_path(str(path))
+                root = self.file_manager.get_full_path(str(self.root_path))
+
+                # 限制不能超出 root_path
+                if path != root and root not in path.parents:
+                    notify.warning(
+                        _(
+                            "Already at the share root directory. Cannot go back further."
+                        )
+                    )
+                    return
+
+                target_path = path
+
+                display_path = Path(self.root_path) / path.relative_to(root)
+
+                self.title_label.text = _("Browsing {}").format(display_path)
+                rows = []
+                for meta_data in self.file_manager.list_files(str(path)):
+                    row = {
+                        "name": f"{get_file_icon(meta_data.type, meta_data.extension)} {meta_data.name}",
+                        "path": meta_data.path,
+                        "is_dir": meta_data.is_dir,
+                    }
+                    rows.append(row)
+                table.rows = rows
+
+            def handle_click(meta):
+                if meta.is_dir:
+                    refresh_table(Path(meta.path))
+                else:
+                    # 下载占位
+                    ui.notify(f"Download {meta.name} (placeholder)")
+
+            # 双击行也可以进入目录
+            async def handle_row_double_click(e: events.GenericEventArguments):
+                _, row, _ = e.args
+                if row["is_dir"]:
+                    refresh_table(Path(row["path"]))
+
+            table.on("row-dblclick", handle_row_double_click)
+
+            refresh_table(target_path)
+
+            # 底部按钮
+            with ui.row().classes("w-full justify-end gap-2 mt-4"):
+                ui.button(_("Close"), on_click=lambda: self.dialog.submit(None))
+
+        r = await self.dialog
+        return r
+
+
 class MoveDialog(Dialog):
     """
     移动对话框
@@ -529,7 +630,7 @@ class MoveDialog(Dialog):
             refresh_dir_table(target_path)
 
             async def handle_row_double_click(e: events.GenericEventArguments):
-                click_event_params, click_row, click_index = e.args
+                _, click_row, _ = e.args
                 refresh_dir_table(Path(click_row["path"]))
                 return
 
