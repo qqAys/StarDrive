@@ -19,6 +19,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 RUN uv sync
+RUN uv run pybabel compile -d app/locales
 
 EXPOSE 8080
 
