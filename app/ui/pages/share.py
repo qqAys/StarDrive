@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Callable
 
@@ -9,6 +8,7 @@ from starlette.responses import RedirectResponse
 
 from app import globals
 from app.core.i18n import _
+from app.crud.user_crud import UserCRUD
 from app.models.file_download_model import FileDownloadInfo
 from app.schemas.file_schema import FileMetadata, DirMetadata, FileSource
 from app.services.download_service import verify_download_token
@@ -17,6 +17,7 @@ from app.ui.components.base import BaseLayout
 from app.ui.components.dialog import ConfirmDialog, FileBrowserDialog
 from app.ui.pages.error_page import render_404
 from app.utils.size import bytes_to_human_readable
+from app.utils.time import timestamp_to_human_readable, datetime_to_human_readable
 
 this_page_routes = "/share"
 
@@ -46,8 +47,13 @@ async def index(
     async with BaseLayout().render(
         header=True, footer=True, args={"title": _("Share")}
     ):
+        size_ui = {
+            "label": None,
+            "btn": None,
+        }
 
         file_manager = globals.get_storage_manager()
+        user_manager = globals.get_user_manager()
 
         file_info: FileMetadata | DirMetadata = file_manager.get_file_metadata(
             validated_data.path
@@ -57,35 +63,66 @@ async def index(
 
         # ---------- helpers ----------
 
-        def _fmt_ts(ts: float | None) -> str:
-            if not ts:
-                return "-"
-            return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
-
         def _kv(label: str, value: str | Callable[[], ui.element]):
             with ui.row(wrap=False).classes(
                 "w-full justify-between items-center text-sm"
             ):
-                ui.label(label).classes("text-gray-500")
+                ui.label(label).classes("text-gray-500 dark:text-gray-400")
                 if callable(value):
                     value()
                 else:
                     ui.label(value).classes("font-medium")
 
+        def size_value():
+            with ui.row().classes("items-center gap-2 min-h-[24px]"):
+                size = bytes_to_human_readable(file_info.size if file_info.size else 0)
+
+                size_ui["label"] = ui.label(size).classes("font-medium")
+
+                if isinstance(file_info, DirMetadata):
+                    size_ui["btn"] = (
+                        ui.button(
+                            icon="calculate",
+                            color="green",
+                            on_click=calculate_dir_size,
+                        )
+                        .props("flat dense size=sm")
+                        .tooltip(_("Calculate directory size"))
+                    )
+
+                    if file_info.num_children == 0:
+                        size_ui["btn"].disable()
+                        size_ui["label"].text = _("Directory is empty")
+
         # ---------- async action ----------
 
+        async def get_share_by_user():
+            async with user_manager.db_context() as session:
+                user = await UserCRUD.get_by_id(session, validated_data.user_id)
+                if user:
+                    return user.email
+                else:
+                    return _("Unknown")
+
         async def calculate_dir_size():
-            size_label.text = _("Calculating...")
-            calc_btn.disable()
+            label = size_ui.get("label")
+            btn = size_ui.get("btn")
+
+            if not label or not btn:
+                return
+
+            label.text = _("Calculating...")
+            btn.disable()
 
             try:
                 dir_size = await file_manager.get_directory_size(file_info.path)
-                size_label.text = bytes_to_human_readable(dir_size)
+                label.text = bytes_to_human_readable(dir_size)
             finally:
-                calc_btn.enable()
+                btn.enable()
 
-        async def on_explorer_button_click():
-            r = await FileBrowserDialog(file_manager, file_path).open()
+        async def on_browse_button_click():
+            await FileBrowserDialog(file_manager, file_path, validated_data.id).open()
+            return
 
         async def on_download_button_click():
             if file_info.is_dir:
@@ -139,47 +176,23 @@ async def index(
             with ui.column().classes("w-full justify-between gap-2"):
 
                 _kv(_("Type"), _(file_info.type.value))
-
-                # ---- Size row (with calc button) ----
-                with ui.row().classes("w-full justify-between items-center text-sm"):
-                    ui.label(_("Size")).classes("text-gray-500")
-
-                    with ui.row().classes("items-center gap-2"):
-                        size = bytes_to_human_readable(
-                            file_info.size if file_info.size else 0
-                        )
-                        size_label = ui.label(size).classes("font-medium")
-
-                        if isinstance(file_info, DirMetadata):
-                            calc_btn = (
-                                ui.button(
-                                    icon="calculate",
-                                    color="green",
-                                    on_click=calculate_dir_size,
-                                )
-                                .props("flat dense")
-                                .tooltip(_("Calculate directory size"))
-                            )
-                            if not file_info.is_dir or file_info.num_children == 0:
-                                calc_btn.disable()
-                                if file_info.is_dir:
-                                    size_label.text = _("Directory is empty")
-
-                _kv(
-                    _("Extension"),
-                    file_info.extension or "-",
-                )
+                _kv(_("Size"), size_value)
+                _kv(_("Extension"), file_info.extension or "-")
 
             ui.separator()
 
             # ===== Time Info =====
             with ui.column().classes("w-full justify-between gap-2"):
-                _kv(_("Created at"), _fmt_ts(file_info.created_at))
-                _kv(_("Modified at"), _fmt_ts(file_info.modified_at))
-                _kv(_("Accessed at"), _fmt_ts(file_info.accessed_at))
+                _kv(_("Created at"), timestamp_to_human_readable(file_info.created_at))
+                _kv(
+                    _("Modified at"), timestamp_to_human_readable(file_info.modified_at)
+                )
+                _kv(
+                    _("Accessed at"), timestamp_to_human_readable(file_info.accessed_at)
+                )
                 _kv(
                     _("Status changed at"),
-                    _fmt_ts(file_info.status_changed_at),
+                    timestamp_to_human_readable(file_info.status_changed_at),
                 )
 
             # ===== Dir only =====
@@ -191,12 +204,28 @@ async def index(
                         str(file_info.num_children),
                     )
 
+            ui.separator()
+
+            # ===== Share Info =====
+            share_by = await get_share_by_user()
+            with ui.column().classes("w-full justify-between gap-2"):
+                _kv(_("Shared by"), share_by)
+                _kv(_("Share ID"), validated_data.id)
+                _kv(
+                    _("Shared at"),
+                    datetime_to_human_readable(validated_data.created_at),
+                )
+                _kv(
+                    _("Expires at"),
+                    datetime_to_human_readable(validated_data.expires_at),
+                )
+
             # ===== Actions =====
             ui.separator()
             with ui.row().classes("w-full justify-end gap-2"):
                 if file_info.is_dir:
                     ui.button(
-                        _("Explore"), icon="explorer", on_click=on_explorer_button_click
+                        _("Browse"), icon="folder_open", on_click=on_browse_button_click
                     )
                 ui.button(
                     _("Download"), icon="download", on_click=on_download_button_click

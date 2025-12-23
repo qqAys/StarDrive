@@ -405,7 +405,7 @@ class FileBrowserTable:
         return
 
     @require_user
-    def copy_path_clipboard(self):
+    async def copy_path_clipboard(self):
         copy_to_clipboard(
             str(self.current_path), message=_("Path copied to clipboard.")
         )

@@ -21,4 +21,15 @@ def timestamp_to_human_readable(timestamp: float, tz=None) -> str:
         return "None"
     return datetime.fromtimestamp(
         timestamp, tz=tz or settings.SYSTEM_DEFAULT_TIMEZONE
-    ).strftime("%Y-%m-%d %H:%M:%S")
+    ).strftime("%Y-%m-%d %H:%M:%S %Z")
+
+
+def datetime_to_human_readable(dt: datetime, tz=None) -> str:
+    """
+    将时间转换为人类可读的格式。
+    """
+    if not dt:
+        return "None"
+    return dt.astimezone(tz or settings.SYSTEM_DEFAULT_TIMEZONE).strftime(
+        "%Y-%m-%d %H:%M:%S %Z"
+    )

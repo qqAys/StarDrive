@@ -12,6 +12,7 @@ from app.schemas.file_schema import (
     FileMetadata,
     DirMetadata,
     FileSource,
+    FileType,
 )
 from app.services.file_service import (
     get_user_share_links,
@@ -459,31 +460,48 @@ class ShareDialog(Dialog):
 class FileBrowserDialog(Dialog):
     """
     文件浏览器对话框
-    用于分享文件夹，浏览内容，可下载文件
+    用于分享文件夹浏览内容
     """
 
-    def __init__(self, file_service: StorageManager, root_path: Path):
+    def __init__(self, file_service: StorageManager, root_path: Path, share_id: str):
         super().__init__()
         self.file_manager = file_service
         self.root_path = root_path  # 共享根目录
         self.current_path = self.root_path
+        self.share_id = share_id
         self.dialog = ui.dialog().props(self.dialog_props)
         self.title_label: Optional[ui.label] = None
 
     async def open(self):
         with self.dialog, ui.card().classes("w-full"):
-            self.title_label = ui.label().classes(self.title_class)
+            with ui.row().classes("w-full justify-between"):
+                self.title_label = ui.label().classes(self.title_class)
+                ui.button(
+                    icon="close", on_click=lambda: self.dialog.submit(None)
+                ).props("flat dense")
 
-            columns = [
-                {"name": "name", "label": _("Name"), "field": "name"},
-                {"name": "action", "label": _("Action"), "field": "action"},
-            ]
+            with ui.scroll_area().classes("w-full h-[600px]"):
 
-            table = ui.table(
-                columns=columns,
-                rows=[],
-                column_defaults={"sortable": False, "align": "left", "required": True},
-            ).classes("w-full")
+                columns = [
+                    {"name": "name", "label": _("Name"), "field": "name"},
+                    {
+                        "name": "size",
+                        "label": _("Size"),
+                        "field": "size",
+                        "align": "right",
+                        "style": "width: 0px",
+                    },
+                ]
+
+                table = ui.table(
+                    columns=columns,
+                    rows=[],
+                    column_defaults={
+                        "sortable": False,
+                        "align": "left",
+                        "required": True,
+                    },
+                ).classes("w-full")
 
             target_path = self.current_path
 
@@ -526,32 +544,42 @@ class FileBrowserDialog(Dialog):
                 for meta_data in self.file_manager.list_files(str(path)):
                     row = {
                         "name": f"{get_file_icon(meta_data.type, meta_data.extension)} {meta_data.name}",
+                        "raw_name": meta_data.name,
+                        "size": bytes_to_human_readable(meta_data.size),
                         "path": meta_data.path,
                         "is_dir": meta_data.is_dir,
                     }
                     rows.append(row)
                 table.rows = rows
 
-            def handle_click(meta):
-                if meta.is_dir:
-                    refresh_table(Path(meta.path))
-                else:
-                    # 下载占位
-                    ui.notify(f"Download {meta.name} (placeholder)")
-
-            # 双击行也可以进入目录
             async def handle_row_double_click(e: events.GenericEventArguments):
-                _, row, _ = e.args
-                if row["is_dir"]:
-                    refresh_table(Path(row["path"]))
+                click_event_params, click_row, click_index = e.args
+                click_path = click_row["path"]
+                file_name = click_row["raw_name"]
+                if click_row["is_dir"]:
+                    refresh_table(Path(click_path))
+                else:
+                    confirm = await ConfirmDialog(
+                        _("Confirm Download"),
+                        _("Are you sure you want to download **`{}`**?").format(
+                            file_name
+                        ),
+                    ).open()
+                    if confirm:
+                        download_url = await generate_download_url(
+                            target_path=click_path,
+                            name=file_name,
+                            type_=FileType.FILE,
+                            source=FileSource.DOWNLOAD,
+                            share_id=self.share_id,
+                        )
+                        if not download_url:
+                            return
+                        ui.navigate.to(download_url)
 
             table.on("row-dblclick", handle_row_double_click)
 
             refresh_table(target_path)
-
-            # 底部按钮
-            with ui.row().classes("w-full justify-end gap-2 mt-4"):
-                ui.button(_("Close"), on_click=lambda: self.dialog.submit(None))
 
         r = await self.dialog
         return r
