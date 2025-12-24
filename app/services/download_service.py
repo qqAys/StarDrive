@@ -17,7 +17,7 @@ async def verify_download_token(jwt_token: str) -> FileDownloadInfo | None:
     if not download_info:
         return None
 
-    if ensure_utc(download_info.expires_at) < utc_now():
+    if ensure_utc(download_info.expires_at_utc) < utc_now():
         return None
 
     return download_info
