@@ -537,7 +537,6 @@ class FileBrowserTable:
 
         await self.refresh()
 
-    @require_user
     def handle_edit_button_click(self):
         self.is_select_mode = not self.is_select_mode
 
