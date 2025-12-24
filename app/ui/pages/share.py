@@ -16,6 +16,7 @@ from app.services.file_service import get_file_icon, generate_download_url
 from app.ui.components.base import BaseLayout
 from app.ui.components.dialog import ConfirmDialog, FileBrowserDialog
 from app.ui.pages.error_page import render_404
+from app.ui.pages.share_access import render_share_access_page
 from app.utils.size import bytes_to_human_readable
 from app.utils.time import timestamp_to_human_readable, datetime_to_human_readable
 
@@ -44,6 +45,23 @@ async def index(
         )
         return
 
+    file_manager = globals.get_storage_manager()
+    user_manager = globals.get_user_manager()
+
+    async def get_share_by_user():
+        async with user_manager.db_context() as session:
+            user = await UserCRUD.get_by_id(session, validated_data.user_id)
+            if user:
+                return user.email
+            else:
+                return _("Unknown")
+
+    share_by = await get_share_by_user()
+
+    if validated_data.access_code:
+        await render_share_access_page(validated_data, share_by)
+        return
+
     async with BaseLayout().render(
         header=True, footer=True, args={"title": _("Share")}
     ):
@@ -51,9 +69,6 @@ async def index(
             "label": None,
             "btn": None,
         }
-
-        file_manager = globals.get_storage_manager()
-        user_manager = globals.get_user_manager()
 
         file_info: FileMetadata | DirMetadata = file_manager.get_file_metadata(
             validated_data.path
@@ -95,14 +110,6 @@ async def index(
                         size_ui["label"].text = _("Directory is empty")
 
         # ---------- async action ----------
-
-        async def get_share_by_user():
-            async with user_manager.db_context() as session:
-                user = await UserCRUD.get_by_id(session, validated_data.user_id)
-                if user:
-                    return user.email
-                else:
-                    return _("Unknown")
 
         async def calculate_dir_size():
             label = size_ui.get("label")
@@ -213,11 +220,11 @@ async def index(
                 _kv(_("Share ID"), validated_data.id)
                 _kv(
                     _("Shared at"),
-                    datetime_to_human_readable(validated_data.created_at),
+                    datetime_to_human_readable(validated_data.created_at_utc),
                 )
                 _kv(
                     _("Expires at"),
-                    datetime_to_human_readable(validated_data.expires_at),
+                    datetime_to_human_readable(validated_data.expires_at_utc),
                 )
 
             # ===== Actions =====
