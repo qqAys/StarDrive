@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Enum, text
+from sqlalchemy import Column, DateTime, Enum
 from sqlmodel import SQLModel, Field
 
 from app.schemas.file_schema import FileType, FileSource
@@ -39,6 +39,8 @@ class FileDownloadInfo(SQLModel, table=True):
         max_length=26,
     )
 
+    access_code: str | None = Field(default_factory=None, max_length=16)
+
     source: FileSource = Field(
         sa_column=Column(Enum(FileSource, native_enum=False), nullable=False)
     )
@@ -49,9 +51,21 @@ class FileDownloadInfo(SQLModel, table=True):
 
     created_at: datetime = Field(
         default_factory=lambda: utc_now(),
-        sa_column=Column(
-            DateTime(timezone=True),
-            server_default=text("CURRENT_TIMESTAMP"),
-            index=True,
-        ),
+        sa_column=Column(DateTime(timezone=True), index=True),
     )
+
+    @property
+    def expires_at_utc(self) -> datetime | None:
+        dt = self.expires_at
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt
+
+    @property
+    def created_at_utc(self) -> datetime:
+        dt = self.created_at
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt

@@ -23,6 +23,7 @@ class FileDownloadCRUD:
         expires_at: datetime,
         user: str = None,
         share_id: str = None,
+        access_code: str = None,
     ) -> FileDownloadInfo:
         file_download = FileDownloadInfo(
             name=name,
@@ -31,6 +32,7 @@ class FileDownloadCRUD:
             base_path=base_path,
             user_id=user,
             share_id=share_id,
+            access_code=access_code,
             source=source,
             expires_at=expires_at,
         )
