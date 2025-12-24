@@ -14,6 +14,7 @@ from app.schemas.file_schema import (
     FileSource,
     FileType,
 )
+from app.security.access_code import generate_access_code
 from app.services.file_service import (
     get_user_share_links,
     delete_download_link,
@@ -25,7 +26,7 @@ from app.services.user_service import get_user_timezone
 from app.ui.components.clipboard import copy_to_clipboard
 from app.ui.components.notify import notify
 from app.utils.size import bytes_to_human_readable
-from app.utils.time import timestamp_to_human_readable
+from app.utils.time import timestamp_to_human_readable, utc_now
 
 
 class Dialog:
@@ -308,86 +309,154 @@ class ShareDialog(Dialog):
         with self.dialog, ui.card().classes("w-full"):
             ui.label(self.title).classes(self.title_class)
 
+            # 加载数据
             user_share_links = await get_user_share_links(
                 self.current_user, self.file_name
             )
-            if user_share_links:
-                ui.separator()
-                ui.label(_("Valid sharing links")).classes("text-base font-bold")
 
-                all_share_link_dropdown_button: dict[str, ui.dropdown_button] = {}
+            share_links = {link.id: link for link in user_share_links}
+
+            # 分享链接区域（始终存在，只控制显隐）
+            links_section = ui.column().classes("w-full")
+            links_section.set_visibility(bool(share_links))
+
+            with links_section:
+                ui.separator()
+
+                count_label = ui.label().classes("text-base font-bold")
+
+                def update_count_and_visibility():
+                    count = len(share_links)
+                    count_label.text = _("{} sharing links").format(count)
+                    links_section.set_visibility(count > 0)
+
+                update_count_and_visibility()
+
+                all_share_link_cards: dict[str, ui.card] = {}
 
                 async def delete_share_link(download_id: str) -> bool:
+                    confirm = await ConfirmDialog(
+                        title=_("Confirm Delete"),
+                        message=_("Are you sure you want to delete this share link?"),
+                        warning=True,
+                    ).open()
+
+                    if not confirm:
+                        return False
+
                     try:
                         await delete_download_link(download_id)
-                        all_share_link_dropdown_button[download_id].remove(
-                            all_share_link_dropdown_button[download_id]
-                        )
+
+                        # 删除 UI
+                        card = all_share_link_cards.pop(download_id, None)
+                        if card:
+                            card.remove(card)
+
+                        # 删除状态
+                        share_links.pop(download_id, None)
+
+                        # 更新派生 UI
+                        update_count_and_visibility()
+
                         notify.success(_("Share link deleted"))
+                        return True
+
                     except Exception as e:
                         notify.error(
                             _("Failed to delete share link: {}").format(str(e))
                         )
                         return False
-                    return True
 
-                with ui.row().classes("w-full justify-between"):
+                # 列表内容
+                with ui.scroll_area().classes("w-full"):
                     for share_link in user_share_links:
                         link_url = share_link.url
-                        link_expire_time = share_link.expires_at.astimezone(
+                        expires_at = share_link.expires_at_utc
+                        expire_time_local = expires_at.astimezone(
                             get_user_timezone()
-                        ).strftime("%Y-%m-%d %H:%M:%S")
-                        with (
-                            ui.dropdown_button(
-                                _("EXP: {}").format(link_expire_time),
-                                icon="share",
-                                split=True,
-                                on_click=lambda url=link_url: ui.navigate.to(
-                                    url, new_tab=True
-                                ),
-                                auto_close=True,
-                            )
-                            .props("no-caps dense")
-                            .classes("md:w-auto w-full") as dropdown_button
-                        ):
-                            with ui.row(wrap=False).classes("w-full justify-between"):
+                        ).strftime("%Y-%m-%d %H:%M:%S %Z")
+
+                        with ui.card().classes("w-full") as share_card:
+                            ui.input(
+                                label=_("Share link"),
+                                value=link_url,
+                            ).props(
+                                "readonly dense"
+                            ).classes("w-full")
+
+                            with ui.row().classes("w-full justify-start gap-2"):
+                                if utc_now() > expires_at:
+                                    ui.label(_("Expired")).classes(
+                                        "text-xs text-white bg-red-500 rounded px-2"
+                                    )
+                                else:
+                                    ui.label(_("Valid")).classes(
+                                        "text-xs text-white bg-green-500 rounded px-2"
+                                    )
+
+                                ui.label(
+                                    _("EXP: {}").format(expire_time_local)
+                                ).classes("text-xs text-gray-500")
+
+                                ui.label(
+                                    _("Access Code: {}").format(share_link.access_code)
+                                ).classes("text-xs text-gray-500")
+
+                            with ui.row().classes("w-full justify-end gap-2"):
                                 ui.button(
                                     _("Copy"),
                                     icon="content_copy",
-                                    on_click=lambda: copy_to_clipboard(
-                                        link_url,
+                                    on_click=lambda url=link_url: copy_to_clipboard(
+                                        url,
                                         message=_("Share link copied to clipboard."),
                                     ),
-                                ).classes("w-full").props("flat dense")
+                                ).props("flat dense")
+
+                                ui.button(
+                                    _("Open"),
+                                    icon="open_in_new",
+                                    on_click=lambda url=link_url: ui.navigate.to(
+                                        url, new_tab=True
+                                    ),
+                                ).props("flat dense")
+
                                 ui.button(
                                     _("Delete"),
                                     icon="delete",
+                                    color="red",
                                     on_click=lambda d_id=share_link.id: delete_share_link(
                                         d_id
                                     ),
-                                ).classes("w-full").props("flat dense")
-                        all_share_link_dropdown_button[share_link.id] = dropdown_button
+                                ).props("flat dense")
 
-                ui.separator()
-                ui.label(_("Create new sharing link")).classes("text-base font-bold")
+                        all_share_link_cards[share_link.id] = share_card
+
+            # 创建新分享链接
+            ui.separator()
+            ui.label(_("Create new sharing link")).classes("text-base font-bold")
 
             user_timezone = get_user_timezone()
             current_time_local = datetime.now(user_timezone)
 
             expire_type = ui.toggle(
-                [_("Expire after"), _("Expire after days")], value=_("Expire after")
+                [_("Expire after"), _("Expire after days")],
+                value=_("Expire after"),
             )
 
             with ui.row().classes("w-full justify-between") as datetime_picker:
                 date_input = ui.date_input(
-                    _("Expire date"), value=current_time_local.strftime("%Y-%m-%d")
+                    _("Expire date"),
+                    value=current_time_local.strftime("%Y-%m-%d"),
                 ).classes("md:w-auto w-full")
                 date_input.picker.props[":options"] = (
                     f'date => date >= "{current_time_local.strftime("%Y/%m/%d")}"'
                 )
-                time_input = ui.time_input(_("Expire time"), value="00:00").classes(
-                    "md:w-auto w-full"
-                )
+
+                time_input = ui.time_input(
+                    _("Expire time"),
+                    value="00:00",
+                ).classes("md:w-auto w-full")
+
                 datetime_picker.set_visibility(True)
 
             with ui.row().classes("w-full justify-between") as days_picker:
@@ -399,62 +468,114 @@ class ShareDialog(Dialog):
                     precision=0,
                     format="%.0f",
                 ).classes("w-full")
+
                 days_picker.set_visibility(False)
 
             def on_expire_type_change(e: events.ValueChangeEventArguments):
-                value = e.value
-                days_picker.set_visibility(value == _("Expire after days"))
-                datetime_picker.set_visibility(value == _("Expire after"))
+                days_picker.set_visibility(e.value == _("Expire after days"))
+                datetime_picker.set_visibility(e.value == _("Expire after"))
 
             expire_type.on_value_change(on_expire_type_change)
+
+            ui.label(_("Access code")).classes("text-base font-bold")
+
+            with ui.row(wrap=False).classes("w-full justify-between"):
+                access_code_enabled = ui.checkbox(_("Generate"), value=False)
+
+                access_code_input = (
+                    ui.input(
+                        label=_("Access code"),
+                        placeholder=_("Will be generated automatically"),
+                    )
+                    .props("readonly dense")
+                    .classes("w-full")
+                )
+
+                with access_code_input.add_slot("append"):
+                    regen_button = ui.button(
+                        _("Regenerate"),
+                        icon="refresh",
+                    ).props("flat dense")
+                    ui.button(
+                        _("Copy"),
+                        icon="content_copy",
+                        on_click=lambda: copy_to_clipboard(
+                            access_code, message=_("Access code copied.")
+                        ),
+                    ).props("flat dense")
+
+            # 初始隐藏
+            access_code_input.set_visibility(False)
+            regen_button.set_visibility(False)
+
+            access_code: str | None = None
+
+            def update_access_code_ui(enabled: bool):
+                nonlocal access_code
+
+                access_code_input.set_visibility(enabled)
+                regen_button.set_visibility(enabled)
+
+                if enabled:
+                    access_code = generate_access_code()
+                    access_code_input.value = access_code
+                else:
+                    access_code = None
+                    access_code_input.value = ""
+
+            access_code_enabled.on_value_change(
+                lambda e: update_access_code_ui(e.value)
+            )
+
+            def regenerate_access_code():
+                nonlocal access_code
+                access_code = generate_access_code()
+                access_code_input.value = access_code
+
+            regen_button.on_click(regenerate_access_code)
 
             def on_confirm():
                 if expire_type.value == _("Expire after"):
                     if not date_input.value or not time_input.value:
                         notify.warning(_("Please select a valid expire time"))
-                        return None
+                        return
+
                     selected_date = date.fromisoformat(date_input.value)
-                    selected_time_parts = time_input.value.split(":")
-                    selected_time = time(
-                        int(selected_time_parts[0]),  # hours
-                        int(selected_time_parts[1]),  # minutes
+                    h, m = map(int, time_input.value.split(":"))
+                    selected_time = time(h, m)
+
+                    expire_dt = (
+                        datetime.combine(selected_date, selected_time)
+                        .replace(tzinfo=user_timezone)
+                        .astimezone(timezone.utc)
                     )
 
-                    expire_datetime_naive = datetime.combine(
-                        selected_date, selected_time
-                    )
-                    expire_datetime = expire_datetime_naive.replace(
-                        tzinfo=user_timezone
-                    ).astimezone(timezone.utc)
-
-                    if expire_datetime < current_time_local.astimezone(timezone.utc):
+                    if expire_dt < utc_now():
                         notify.warning(_("Expire date cannot be before now"))
-                        return None
-                    return self.dialog.submit(
+                        return
+
+                    self.dialog.submit(
                         {
-                            "expire_datetime_utc": expire_datetime,
+                            "expire_datetime_utc": expire_dt,
                             "expire_days": None,
+                            "access_code": access_code,
                         }
                     )
-                elif expire_type.value == _("Expire after days"):
-                    return self.dialog.submit(
+
+                else:
+                    self.dialog.submit(
                         {
                             "expire_datetime_utc": None,
                             "expire_days": int(days.value),
+                            "access_code": access_code,
                         }
                     )
-                return None
 
             with ui.row().classes("w-full justify-between"):
-                ui.button(
-                    _("Confirm"),
-                    on_click=on_confirm,
-                    color="green",
-                )
+                ui.button(_("Confirm"), on_click=on_confirm, color="green")
                 ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(None))
 
-        r = await self.dialog
-        return r
+        return await self.dialog
 
 
 class FileBrowserDialog(Dialog):
@@ -881,6 +1002,7 @@ class MetadataDialog(Dialog):
                 source=FileSource.SHARE,
                 expire_datetime_utc=expire_define["expire_datetime_utc"],
                 expire_days=expire_define["expire_days"],
+                access_code=expire_define["access_code"],
             )
             if not download_url:
                 return
