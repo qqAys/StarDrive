@@ -1,3 +1,4 @@
+import inspect
 from functools import wraps
 from typing import Optional, Callable
 
@@ -18,12 +19,17 @@ def navigate_to(custom_url: str = None):
 
 
 def require_user(
-    func: Optional[Callable] = None, *, superuser: bool = False, active: bool = True
+    func: Optional[Callable] = None,
+    *,
+    superuser: bool = False,
+    active: bool = True,
 ):
+    def decorator(page_func: Callable):
+        is_async = inspect.iscoroutinefunction(page_func)
 
-    def decorator(page_func):
         @wraps(page_func)
         async def wrapper(*args, **kwargs):
+            # ---------- auth ----------
             if not app.storage.user:
                 notify.error(_("You need to sign in to access this page."))
                 navigate_to()
@@ -47,10 +53,15 @@ def require_user(
                 navigate_to("/home/")
                 return None
 
-            return await page_func(*args, **kwargs)
+            # ---------- call ----------
+            if is_async:
+                return await page_func(*args, **kwargs)
+            else:
+                return page_func(*args, **kwargs)
 
         return wrapper
 
+    # 支持 @require_user 和 @require_user(...)
     if callable(func):
         return decorator(func)
 
