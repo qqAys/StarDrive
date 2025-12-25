@@ -24,57 +24,51 @@ from app.storage.base import (
 
 
 class PathStat(NamedTuple):
-    """文件/目录状态的自定义具名元组。"""
+    """Custom named tuple representing file or directory metadata."""
 
     size: int
-    # 最后访问时间 (st_atime)
     accessed_at: Optional[float]
-    # 最后修改时间 (st_mtime)
     modified_at: Optional[float]
-    # 文件创建时间（仅在 Windows/macOS 上有明确含义，Linux 上可能为None）
     created_at: Optional[float]
-    # 最后状态更改时间（仅在 Unix/Linux 上有明确含义，Windows 上可能为None）
     status_changed_at: Optional[float]
-
-    # 自定义更新时间
     custom_updated_at: Optional[float]
 
 
 def parse_path_stat(stat: os.stat_result) -> PathStat:
-    # 提取不变的时间戳字段
+    """
+    Parse an `os.stat_result` into a platform-aware `PathStat` object.
+
+    This function handles cross-platform differences in how file timestamps are interpreted:
+    - On Windows, `st_ctime` represents the file creation time.
+    - On Unix-like systems (Linux/macOS), `st_ctime` represents the last status change time,
+      and file creation time (if available) is accessed via `st_birthtime`.
+    """
     size = stat.st_size
     accessed_at = stat.st_atime
     modified_at = stat.st_mtime
 
-    # 初始化 created_at 和 status_changed_at 为 None
     created_at = None
     status_changed_at = None
     custom_updated_at = None
 
-    # --- 跨平台逻辑判断 st_ctime 的含义 ---
-
     current_system = settings.SYSTEM_NAME
 
     if current_system == "Windows":
-        # 在 Windows 上，st_ctime 明确表示文件创建时间
+        # On Windows, st_ctime is the creation time
         created_at = stat.st_ctime
         custom_updated_at = accessed_at
-
-    elif current_system in ["Linux", "Darwin"]:  # Linux / macOS
-        # 在 Unix/Linux/macOS 上：
-        # - st_ctime 明确表示文件状态的最后更改时间（如权限、所有者变更等）
+    elif current_system in ["Linux", "Darwin"]:
+        # On Linux/macOS, st_ctime is the last status change time
         status_changed_at = stat.st_ctime
         custom_updated_at = stat.st_ctime
 
-        # - Windows 上代表的创建时间，在 Unix-like 系统上通常通过 st_birthtime 访问
-        #   Python 的 os.stat_result 在某些系统/版本上可能包含 st_birthtime 属性
+        # Attempt to retrieve true creation time if supported by the filesystem
         if hasattr(stat, "st_birthtime"):
             created_at = stat.st_birthtime
-        # 注意：在 Linux 上，st_birthtime 的可用性取决于文件系统（如 ext4）。
-        # 如果没有，则 created_at 保持为 None。
-
+        # Note: On Linux, st_birthtime availability depends on the filesystem (e.g., ext4).
+        # If unavailable, created_at remains None.
     else:
-        # 其他系统，如 BSD 等，默认将 st_ctime 视为状态更改时间
+        # Fallback for other systems (e.g., BSD): treat st_ctime as status change time
         status_changed_at = stat.st_ctime
 
     return PathStat(
@@ -89,28 +83,33 @@ def parse_path_stat(stat: os.stat_result) -> PathStat:
 
 class LocalStorage(StorageBackend):
     """
-    本地文件系统存储后端实现。
+    Implementation of a local file system storage backend.
+
+    This class provides methods to manage files and directories within a designated root directory,
+    ensuring security by restricting access to paths outside the root.
     """
 
     name: str = "LocalStorage"
     default_root_path: str = STORAGE_DIR
-
     MAX_SEARCH_DEPTH = 5
     MAX_SEARCH_RESULTS = 2000
 
     def __init__(self, root_path: str = default_root_path):
         self.root_path = Path(root_path).resolve()
-
-        # 确保根目录存在
+        # Ensure the root directory exists
         if not self.root_path.is_dir():
             self.root_path.mkdir(parents=True, exist_ok=True)
         logger.debug(
-            _("LocalStorage initialized, root directory: {}").format(self.root_path)
+            _("LocalStorage initialized with root directory: {root_path}").format(
+                root_path=self.root_path
+            )
         )
 
     def _get_full_path(self, remote_path: str) -> Path:
         """
-        将虚拟的远程路径转换为本地的绝对 Path 对象。
+        Convert a virtual remote path to an absolute local Path object.
+
+        Ensures the resolved path stays within the allowed root directory to prevent path traversal attacks.
         """
         remote_path_str = str(remote_path)
         stripped_remote_path = remote_path_str.lstrip("/")
@@ -120,68 +119,83 @@ class LocalStorage(StorageBackend):
             full_resolved_path = full_path.resolve(strict=False)
         except OSError as e:
             raise StorageError(
-                _("Path parsing failed: {}").format(remote_path), e
+                _("Failed to parse path: {remote_path}").format(remote_path=remote_path)
             ) from e
 
         if not full_resolved_path.is_relative_to(self.root_path):
             raise StoragePermissionError(
                 _(
-                    "Path security check failed, path is outside root directory: {}"
-                ).format(remote_path)
+                    "Access denied: path is outside the allowed root directory: {remote_path}"
+                ).format(remote_path=remote_path)
             )
 
         return full_resolved_path
 
-    # 抽象方法实现
-
     def exists(self, remote_path: str) -> bool:
+        """Check whether a file or directory exists at the given path."""
         full_path = self._get_full_path(remote_path)
         return full_path.exists()
 
     def get_full_path(self, remote_path: str) -> Path:
-        full_path = self._get_full_path(remote_path)
+        """
+        Return the absolute local path for a given remote path.
 
+        Raises an error if the file does not exist.
+        """
+        full_path = self._get_full_path(remote_path)
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("File does not exist, cannot download: {}").format(remote_path)
+                _("File not found: {remote_path}").format(remote_path=remote_path)
             )
-
         return full_path
 
     async def upload_file(self, file_object: AsyncIterator[bytes], remote_path: str):
+        """
+        Upload a file by writing chunks from an async iterator to the specified remote path.
+
+        Creates parent directories if they don't exist.
+        """
         full_path: Path = self._get_full_path(remote_path)
         try:
             await asyncio.to_thread(full_path.parent.mkdir, parents=True, exist_ok=True)
             async with aiofiles.open(full_path, mode="wb") as dest_file:
-
                 async for chunk in file_object:
                     if not chunk:
                         continue
-
                     await dest_file.write(chunk)
-
         except PermissionError as e:
             raise StoragePermissionError(
-                _("Permission denied to write file to {}").format(full_path)
+                _("Permission denied when writing to: {path}").format(path=full_path)
             ) from e
         except Exception as e:
             raise StorageError(
-                _("Could not write file to {}").format(full_path), e
+                _("Failed to write file to: {path}").format(path=full_path)
             ) from e
 
     def download_file(self, remote_path: str) -> Path:
+        """
+        Return the local path of an existing file for direct access.
+
+        Raises an error if the file does not exist.
+        """
         return self.get_full_path(remote_path)
 
     def download_file_with_stream(self, remote_path: str):
-        full_path = self._get_full_path(remote_path)
+        """
+        Stream the contents of a file in chunks for efficient downloading.
 
+        Raises an error if the path points to a directory.
+        """
+        full_path = self._get_full_path(remote_path)
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("File does not exist, cannot download: {}").format(remote_path)
+                _("File not found: {remote_path}").format(remote_path=remote_path)
             )
         if full_path.is_dir():
             raise StorageIsADirectoryError(
-                _("Path points to a directory: {}").format(remote_path)
+                _("Cannot download a directory: {remote_path}").format(
+                    remote_path=remote_path
+                )
             )
 
         chunk_size = 8192
@@ -193,27 +207,37 @@ class LocalStorage(StorageBackend):
                 yield chunk
 
     def delete_file(self, remote_path: str):
-        full_path = self._get_full_path(remote_path)
+        """
+        Delete a file at the specified path.
 
+        Raises an error if the path points to a directory or does not exist.
+        """
+        full_path = self._get_full_path(remote_path)
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("File does not exist, cannot delete: {}").format(remote_path)
+                _("File not found: {remote_path}").format(remote_path=remote_path)
             )
         if full_path.is_dir():
             raise StorageIsADirectoryError(
-                _("Path points to a directory, please use delete_directory: {}").format(
-                    remote_path
-                )
+                _(
+                    "Cannot delete a directory using this method. Use delete_directory instead: {remote_path}"
+                ).format(remote_path=remote_path)
             )
-
         try:
             full_path.unlink()
         except PermissionError as e:
             raise StoragePermissionError(
-                _("Permission denied to delete file: {}").format(remote_path)
+                _("Permission denied when deleting file: {remote_path}").format(
+                    remote_path=remote_path
+                )
             ) from e
 
     def list_files(self, remote_path: str) -> list[FileMetadata | DirMetadata]:
+        """
+        List all non-hidden files and directories in the specified directory.
+
+        Returns metadata for each entry, excluding those starting with a dot.
+        """
         if not remote_path.startswith("/"):
             full_path = self._get_full_path(remote_path)
         else:
@@ -221,23 +245,19 @@ class LocalStorage(StorageBackend):
 
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("Directory does not exist: {}").format(full_path)
+                _("Directory not found: {path}").format(path=full_path)
             )
         if not full_path.is_dir():
             raise StorageNotADirectoryError(
-                _("Path points to a file, not a directory: {}").format(full_path)
+                _("Path is not a directory: {path}").format(path=full_path)
             )
 
         metadata_list = []
         try:
             for entry_path in full_path.iterdir():
-                # 排除隐藏文件/目录
                 if entry_path.name.startswith("."):
                     continue
-
                 entry_remote_path = entry_path.relative_to(self.root_path).as_posix()
-
-                # 获取 stat 信息
                 stat_info = parse_path_stat(entry_path.stat())
                 is_dir = entry_path.is_dir()
 
@@ -265,108 +285,128 @@ class LocalStorage(StorageBackend):
                         status_changed_at=stat_info.status_changed_at,
                         custom_updated_at=stat_info.custom_updated_at,
                     )
-
                 metadata_list.append(metadata)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("Permission denied to read directory: {}").format(full_path)
+                _("Permission denied when reading directory: {path}").format(
+                    path=full_path
+                )
             ) from e
         except Exception as e:
-            raise StorageError(_("Failed to read directory: {}").format(e)) from e
+            raise StorageError(
+                _("Failed to read directory: {error}").format(error=str(e))
+            ) from e
 
         return metadata_list
 
     def create_directory(self, remote_path: str):
+        """
+        Create a new directory, including any necessary parent directories.
+
+        Raises an error if a file already exists at the target path.
+        """
         full_path = self._get_full_path(remote_path)
-
         if full_path.is_file():
-            # 路径已被文件占用
             raise StorageFileExistsError(
-                _("Path is already occupied by a file: {}").format(full_path)
+                _("A file already exists at this path: {path}").format(path=full_path)
             )
-
         try:
             full_path.mkdir(parents=True, exist_ok=True)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("Permission denied to create directory: {}").format(full_path)
+                _("Permission denied when creating directory: {path}").format(
+                    path=full_path
+                )
             ) from e
 
     def delete_directory(self, remote_path: str):
-        full_path = self._get_full_path(remote_path)
+        """
+        Recursively delete a directory and all its contents.
 
+        Raises an error if the path points to a file or does not exist.
+        """
+        full_path = self._get_full_path(remote_path)
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("Directory does not exist, cannot delete: {}").format(full_path)
+                _("Directory not found: {path}").format(path=full_path)
             )
         if full_path.is_file():
             raise StorageNotADirectoryError(
-                _("Path points to a file, not a directory: {}").format(full_path)
+                _("Path is not a directory: {path}").format(path=full_path)
             )
-
-        # 递归删除目录及其内容
         try:
             shutil.rmtree(full_path)
         except OSError as e:
-            # 捕获权限或其他可能错误
-            raise StorageError(_("Failed to delete directory: {}").format(e)) from e
+            raise StorageError(
+                _("Failed to delete directory: {error}").format(error=str(e))
+            ) from e
 
     def move_file(self, src_path: str, dest_path: str):
+        """
+        Move or rename a file or directory from source to destination.
+
+        Creates parent directories for the destination if needed.
+        """
         src_full_path = self._get_full_path(src_path)
         dest_full_path = self._get_full_path(dest_path)
 
         if not src_full_path.exists():
             raise StorageFileNotFoundError(
-                _("Source file/directory does not exist: {}").format(src_full_path)
+                _("Source not found: {path}").format(path=src_full_path)
             )
 
-        # 确保目标父目录存在
         dest_full_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # 移动/重命名操作
         try:
             shutil.move(src_full_path, dest_full_path)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("Insufficient permissions for move operation: {} -> {}").format(
-                    src_path, dest_path
+                _("Insufficient permissions to move from {src} to {dest}").format(
+                    src=src_path, dest=dest_path
                 )
             ) from e
         except Exception as e:
-            raise StorageError(_("Move operation failed: {}").format(e)) from e
+            raise StorageError(
+                _("Move operation failed: {error}").format(error=str(e))
+            ) from e
 
     def copy_file(self, src_path: str, dest_path: str):
+        """
+        Copy a file from source to destination, preserving metadata.
+
+        The source must be a file; directories are not supported.
+        """
         src_full_path = self._get_full_path(src_path)
         dest_full_path = self._get_full_path(dest_path)
 
         if not src_full_path.is_file():
-            # 复制文件要求源必须是文件
             raise StorageFileNotFoundError(
-                _("Source file does not exist or is a directory: {}").format(
-                    src_full_path
-                )
+                _("Source is not a valid file: {path}").format(path=src_full_path)
             )
 
-        # 确保目标父目录存在
         dest_full_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
             shutil.copy2(src_full_path, dest_full_path)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("Insufficient permissions for copy operation: {} -> {}").format(
-                    src_path, dest_path
+                _("Insufficient permissions to copy from {src} to {dest}").format(
+                    src=src_path, dest=dest_path
                 )
             ) from e
         except Exception as e:
-            raise StorageError(_("Copy operation failed: {}").format(e)) from e
+            raise StorageError(
+                _("Copy operation failed: {error}").format(error=str(e))
+            ) from e
 
     def get_file_metadata(self, remote_path: str) -> FileMetadata | DirMetadata:
+        """
+        Retrieve detailed metadata for a file or directory at the given path.
+        """
         full_path = self._get_full_path(remote_path)
-
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("File or directory does not exist: {}").format(full_path)
+                _("File or directory not found: {path}").format(path=full_path)
             )
 
         stat_info = parse_path_stat(full_path.stat())
@@ -399,39 +439,38 @@ class LocalStorage(StorageBackend):
 
     async def get_directory_size(self, remote_path: str) -> int:
         """
-        异步递归计算目录大小（字节）
+        Asynchronously compute the total size (in bytes) of a directory and its contents.
+
+        Hidden files and directories are excluded. Permission errors are silently ignored.
         """
         full_path = self._get_full_path(remote_path)
-
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("Directory does not exist: {}").format(full_path)
+                _("Directory not found: {path}").format(path=full_path)
             )
         if not full_path.is_dir():
             raise StorageNotADirectoryError(
-                _("Path points to a file, not a directory: {}").format(full_path)
+                _("Path is not a directory: {path}").format(path=full_path)
             )
 
         async def _get_size(path: Path) -> int:
             total_size = 0
             try:
-                # listdir 是耗时操作，放到线程池
                 entries = await asyncio.to_thread(list, path.iterdir())
             except PermissionError:
-                return 0  # 无权限则忽略
+                return 0
             except Exception as e:
                 logger.warning(f"Failed to list directory {path}: {e}")
                 return 0
 
             for entry in entries:
                 if entry.name.startswith("."):
-                    continue  # 忽略隐藏文件
+                    continue
                 try:
                     if entry.is_file():
                         stat_info = await asyncio.to_thread(entry.stat)
                         total_size += stat_info.st_size
                     elif entry.is_dir():
-                        # 递归调用
                         size = await _get_size(entry)
                         total_size += size
                 except PermissionError:
@@ -453,17 +492,16 @@ class LocalStorage(StorageBackend):
         max_results: int,
     ) -> Iterator[Path]:
         """
-        同步 BFS 搜索（用于 asyncio.to_thread）
+        Perform a breadth-first search (BFS) for files/directories matching the query.
+
+        Hidden entries are skipped. Search respects depth and result limits.
         """
         queue = deque([(start_path, 0)])
         results_count = 0
-
-        if not match_case:
-            query = query.lower()
+        search_term = query if match_case else query.lower()
 
         while queue:
             current_path, depth = queue.popleft()
-
             if depth > max_depth:
                 continue
 
@@ -473,31 +511,27 @@ class LocalStorage(StorageBackend):
                         continue
 
                     name = entry.name if match_case else entry.name.lower()
-
-                    if query in name:
+                    if search_term in name:
                         if not (file_only and entry.is_dir()):
                             yield entry
                             results_count += 1
-
                             if results_count >= max_results:
                                 return
 
                     if entry.is_dir():
                         queue.append((entry, depth + 1))
-
             except PermissionError:
                 logger.warning(f"Permission denied: {current_path}")
             except Exception as e:
                 logger.error(f"Search error in {current_path}: {e}")
 
     def _get_metadata_for_search(self, path: Path):
+        """Generate metadata for a search result entry."""
         if not path.is_relative_to(self.root_path):
             return None
-
         try:
             stat = parse_path_stat(path.stat())
             remote_path = path.relative_to(self.root_path).as_posix()
-
             if path.is_dir():
                 return DirMetadata(
                     name=path.name,
@@ -509,7 +543,6 @@ class LocalStorage(StorageBackend):
                     status_changed_at=stat.status_changed_at,
                     custom_updated_at=stat.custom_updated_at,
                 )
-
             return FileMetadata(
                 name=path.name,
                 path=remote_path,
@@ -521,7 +554,6 @@ class LocalStorage(StorageBackend):
                 status_changed_at=stat.status_changed_at,
                 custom_updated_at=stat.custom_updated_at,
             )
-
         except Exception as e:
             logger.warning(f"Metadata failed for {path}: {e}")
             return None
@@ -533,8 +565,12 @@ class LocalStorage(StorageBackend):
         match_case: bool = False,
         file_only: bool = False,
     ):
-        start_path = self._get_full_path(remote_path)
+        """
+        Asynchronously iterate over search results matching the query.
 
+        Uses a thread to avoid blocking the event loop during I/O-heavy operations.
+        """
+        start_path = self._get_full_path(remote_path)
         if not start_path.exists():
             raise StorageFileNotFoundError(remote_path)
 
@@ -562,21 +598,17 @@ class LocalStorage(StorageBackend):
         match_case: bool = False,
         file_only: bool = False,
     ):
+        """
+        Perform a paginated search for files or directories matching the query.
+
+        Returns up to `limit` results starting from the given `offset`.
+        """
         results = []
         index = 0
-
-        async for item in self.search_iter(
-            query,
-            remote_path,
-            match_case,
-            file_only,
-        ):
+        async for item in self.search_iter(query, remote_path, match_case, file_only):
             if index >= offset:
                 results.append(item)
-
-            if len(results) >= limit:
-                break
-
+                if len(results) >= limit:
+                    break
             index += 1
-
         return results

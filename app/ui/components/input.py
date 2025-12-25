@@ -9,6 +9,14 @@ from nicegui.events import Handler, ValueChangeEventArguments
 
 
 class Input(ui.input):
+    """
+    An enhanced input field that supports an appended icon on the right side.
+
+    This component extends NiceGUI's standard input with a consistent way to display
+    an icon (e.g., for visual hints or actions) while preserving all original functionality
+    such as validation, password masking, autocomplete, and event handling.
+    """
+
     def __init__(
         self,
         label: Optional[str] = None,
@@ -32,8 +40,10 @@ class Input(ui.input):
             autocomplete=autocomplete,
             validation=validation,
         )
-        with self.add_slot("append"):
-            ui.icon(icon)
+        # Append an icon to the right side of the input if specified
+        if icon:
+            with self.add_slot("append"):
+                ui.icon(icon)
 
 
 input_with_icon = Input

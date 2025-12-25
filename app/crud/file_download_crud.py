@@ -9,8 +9,10 @@ from app.schemas.file_schema import FileType, FileSource
 
 
 class FileDownloadCRUD:
+    """
+    CRUD operations for managing file download records.
+    """
 
-    # 创建
     @staticmethod
     async def create(
         session: AsyncSession,
@@ -25,6 +27,24 @@ class FileDownloadCRUD:
         share_id: str = None,
         access_code: str = None,
     ) -> FileDownloadInfo:
+        """
+        Creates a new file download record.
+
+        Args:
+            session: The asynchronous database session.
+            name: Display name of the file.
+            type: The categorized type of the file.
+            path: Relative path to the file.
+            base_path: Base storage path for the file.
+            source: Origin source of the file (e.g., upload, sync).
+            expires_at: Expiration timestamp for the download link.
+            user: Optional ID of the user who owns or requested the file.
+            share_id: Optional ID linking this file to a shared resource.
+            access_code: Optional code required to access the file.
+
+        Returns:
+            The created FileDownloadInfo instance.
+        """
         file_download = FileDownloadInfo(
             name=name,
             type=type,
@@ -41,7 +61,6 @@ class FileDownloadCRUD:
         await session.refresh(file_download)
         return file_download
 
-    # 更新URL
     @staticmethod
     async def update_url(
         session: AsyncSession,
@@ -49,35 +68,57 @@ class FileDownloadCRUD:
         file_download_id: str,
         url: str,
     ) -> FileDownloadInfo:
-        file_download = select(FileDownloadInfo).where(
-            FileDownloadInfo.id == file_download_id
-        )
-        file_download = await session.execute(file_download)
-        file_download = file_download.scalar()
+        """
+        Updates the public URL for an existing file download record.
+
+        Args:
+            session: The asynchronous database session.
+            file_download_id: Unique identifier of the file download record.
+            url: The new public download URL.
+
+        Returns:
+            The updated FileDownloadInfo instance.
+        """
+        stmt = select(FileDownloadInfo).where(FileDownloadInfo.id == file_download_id)
+        result = await session.execute(stmt)
+        file_download = result.scalar_one()
         file_download.url = url
         await session.commit()
         await session.refresh(file_download)
         return file_download
 
-    # 读取
     @staticmethod
     async def get(
         session: AsyncSession, *, file_download_id: str
     ) -> Optional[FileDownloadInfo]:
-        file_download = select(FileDownloadInfo).where(
-            FileDownloadInfo.id == file_download_id
-        )
-        file_download = await session.execute(file_download)
-        file_download = file_download.scalar()
-        return file_download
+        """
+        Retrieves a file download record by its ID.
+
+        Args:
+            session: The asynchronous database session.
+            file_download_id: Unique identifier of the file download record.
+
+        Returns:
+            The FileDownloadInfo instance if found, otherwise None.
+        """
+        stmt = select(FileDownloadInfo).where(FileDownloadInfo.id == file_download_id)
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
 
     @staticmethod
     async def get_share(
         session: AsyncSession, *, share_id: str
     ) -> Sequence[FileDownloadInfo]:
-        file_download = select(FileDownloadInfo).where(
-            FileDownloadInfo.share_id == share_id
-        )
-        file_download = await session.execute(file_download)
-        file_download = file_download.scalars().all()
-        return file_download
+        """
+        Retrieves all file download records associated with a given share ID.
+
+        Args:
+            session: The asynchronous database session.
+            share_id: Identifier of the shared resource.
+
+        Returns:
+            A sequence of FileDownloadInfo instances linked to the share.
+        """
+        stmt = select(FileDownloadInfo).where(FileDownloadInfo.share_id == share_id)
+        result = await session.execute(stmt)
+        return result.scalars().all()

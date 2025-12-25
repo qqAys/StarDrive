@@ -5,6 +5,22 @@ from app.utils.time import ensure_utc, utc_now
 
 
 async def verify_download_token(jwt_token: str) -> FileDownloadInfo | None:
+    """
+    Verify a JWT-based download token and return the associated file download record.
+
+    This function:
+    - Decodes the provided JWT token.
+    - Extracts the `download_id` from the payload.
+    - Fetches the corresponding `FileDownloadInfo` from the database.
+    - Checks that the download link has not expired.
+
+    Args:
+        jwt_token: The JWT string representing a time-limited download authorization.
+
+    Returns:
+        A valid `FileDownloadInfo` instance if the token is valid and not expired;
+        `None` otherwise.
+    """
     payload = decode_token(jwt_token)
     if not payload:
         return None

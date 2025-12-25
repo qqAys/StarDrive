@@ -25,7 +25,8 @@ this_page_routes = "/share"
 
 @app.get(this_page_routes)
 def browser_index():
-    return RedirectResponse(this_page_routes + "/")
+    """Redirect the base share route to its index page."""
+    return RedirectResponse(f"{this_page_routes}/")
 
 
 router = APIRouter(prefix=this_page_routes)
@@ -36,11 +37,18 @@ async def index(
     validated_data: Annotated[FileDownloadInfo, Depends(verify_download_token)],
     request: Request,
 ):
+    """
+    Render a shared file or folder page based on a verified JWT token.
+
+    If the token is invalid or the shared item no longer exists, show a 404 error.
+    If an access code is required and hasn't been entered, redirect to the access prompt.
+    Otherwise, display metadata and download/browse options for the shared item.
+    """
     if not validated_data:
         render_404(
             request.state.request_uuid,
-            _("This shared link is no longer available"),
-            _("It may have expired or the file was removed by the owner. 🧐"),
+            _("This share link is no longer available"),
+            _("It may have expired or the item was removed."),
             back_button=False,
         )
         return
@@ -49,12 +57,10 @@ async def index(
     user_manager = globals.get_user_manager()
 
     async def get_share_by_user():
+        """Retrieve the email of the user who created the share."""
         async with user_manager.db_context() as session:
             user = await UserCRUD.get_by_id(session, validated_data.user_id)
-            if user:
-                return user.email
-            else:
-                return _("Unknown")
+            return user.email if user else _("Unknown")
 
     share_by = await get_share_by_user()
 
@@ -62,26 +68,24 @@ async def index(
     if validated_data.access_code:
         if not app.storage.user.get(access_key, False):
             return await render_share_access_page(validated_data, share_by)
-    # 立即移除访问码
-    app.storage.user.pop(access_key)
+
+    # Clear access key after successful validation to avoid stale state
+    app.storage.user.pop(access_key, None)
 
     async with BaseLayout().render(
-        header=True, footer=True, args={"title": _("Share")}
+        header=True,
+        footer=True,
+        args={"title": _("Share")},
     ):
-        size_ui = {
-            "label": None,
-            "btn": None,
-        }
+        size_ui = {"label": None, "btn": None}
 
         file_info: FileMetadata | DirMetadata = file_manager.get_file_metadata(
             validated_data.path
         )
-
         file_path = Path(file_info.path)
 
-        # ---------- helpers ----------
-
         def _kv(label: str, value: str | Callable[[], ui.element]):
+            """Helper to render a key-value row in the metadata section."""
             with ui.row(wrap=False).classes(
                 "w-full justify-between items-center text-sm"
             ):
@@ -92,147 +96,131 @@ async def index(
                     ui.label(value).classes("font-medium")
 
         def size_value():
+            """Render the file/folder size with optional calculation button for directories."""
             with ui.row().classes("items-center gap-2 min-h-[24px]"):
-                size = bytes_to_human_readable(file_info.size if file_info.size else 0)
-
-                size_ui["label"] = ui.label(size).classes("font-medium")
+                size_text = bytes_to_human_readable(file_info.size or 0)
+                size_ui["label"] = ui.label(size_text).classes("font-medium")
 
                 if isinstance(file_info, DirMetadata):
                     size_ui["btn"] = (
                         ui.button(
                             icon="calculate",
-                            color="green",
                             on_click=calculate_dir_size,
                         )
                         .props("flat dense size=sm")
-                        .tooltip(_("Calculate directory size"))
+                        .tooltip(_("Calculate size"))
                     )
 
                     if file_info.num_children == 0:
                         size_ui["btn"].disable()
-                        size_ui["label"].text = _("Directory is empty")
-
-        # ---------- async action ----------
+                        size_ui["label"].text = _("Empty folder")
 
         async def calculate_dir_size():
+            """Recursively compute and display the total size of a directory."""
             label = size_ui.get("label")
             btn = size_ui.get("btn")
-
             if not label or not btn:
                 return
 
-            label.text = _("Calculating...")
+            label.text = _("Calculating…")
             btn.disable()
-
             try:
-                dir_size = await file_manager.get_directory_size(file_info.path)
-                label.text = bytes_to_human_readable(dir_size)
+                total_size = await file_manager.get_directory_size(file_info.path)
+                label.text = bytes_to_human_readable(total_size)
             finally:
                 btn.enable()
 
         async def on_browse_button_click():
+            """Open a file browser dialog for shared directories."""
             await FileBrowserDialog(file_manager, file_path, validated_data.id).open()
-            return
 
         async def on_download_button_click():
+            """Prompt confirmation and initiate download for file or folder."""
             if file_info.is_dir:
                 confirm = await ConfirmDialog(
-                    _("Confirm Download"),
+                    _("Download folder"),
                     _(
-                        "You selected a folder. It will be compressed into a **single tar.gz file** for download. "
+                        "The folder will be compressed into a single archive before download."
                     )
-                    + _("Are you sure you want to download **`{}`**? ").format(
-                        file_info.name
+                    + _(" Continue downloading **{name}**?").format(
+                        name=file_info.name
                     ),
                 ).open()
             else:
                 confirm = await ConfirmDialog(
-                    _("Confirm Download"),
-                    _("Are you sure you want to download **`{}`**? ").format(
-                        file_info.name
-                    ),
+                    _("Download file"),
+                    _("Continue downloading **{name}**?").format(name=file_info.name),
                 ).open()
 
-            if confirm:
-                download_url = await generate_download_url(
-                    target_path=file_info.path,
-                    name=file_info.name,
-                    type_=file_info.type,
-                    source=FileSource.DOWNLOAD,
-                    share_id=validated_data.id,
-                    base_path=validated_data.path,
-                )
-                if not download_url:
-                    return
-                ui.navigate.to(download_url)
-                return
-            else:
+            if not confirm:
                 return
 
-        # ---------- UI ----------
+            download_url = await generate_download_url(
+                target_path=file_info.path,
+                name=file_info.name,
+                type_=file_info.type,
+                source=FileSource.DOWNLOAD,
+                share_id=validated_data.id,
+                base_path=validated_data.path,
+            )
+            if download_url:
+                ui.navigate.to(download_url)
 
         icon = get_file_icon(file_info.type, file_info.extension)
 
         with ui.card().classes("w-full max-w-3xl mx-auto p-6 gap-4"):
-
-            # ===== Header =====
+            # Header: icon + filename
             with ui.row().classes("items-center gap-3"):
                 ui.icon(icon).classes("text-4xl text-primary")
-                with ui.column().classes("gap-1"):
-                    ui.label(file_info.name).classes("text-xl font-bold break-all")
+                ui.label(file_info.name).classes("text-xl font-bold break-all")
 
             ui.separator()
 
-            # ===== Base Info =====
-            with ui.column().classes("w-full justify-between gap-2"):
-
+            # Basic info
+            with ui.column().classes("w-full gap-2"):
                 _kv(_("Type"), _(file_info.type.value))
                 _kv(_("Size"), size_value)
                 _kv(_("Extension"), file_info.extension or "-")
 
             ui.separator()
 
-            # ===== Time Info =====
-            with ui.column().classes("w-full justify-between gap-2"):
-                _kv(_("Created at"), timestamp_to_human_readable(file_info.created_at))
+            # Timestamps
+            with ui.column().classes("w-full gap-2"):
+                _kv(_("Created"), timestamp_to_human_readable(file_info.created_at))
+                _kv(_("Modified"), timestamp_to_human_readable(file_info.modified_at))
                 _kv(
-                    _("Modified at"), timestamp_to_human_readable(file_info.modified_at)
+                    _("Last accessed"),
+                    timestamp_to_human_readable(file_info.accessed_at),
                 )
                 _kv(
-                    _("Accessed at"), timestamp_to_human_readable(file_info.accessed_at)
-                )
-                _kv(
-                    _("Status changed at"),
+                    _("Status updated"),
                     timestamp_to_human_readable(file_info.status_changed_at),
                 )
 
-            # ===== Dir only =====
+            # Directory-specific info
             if isinstance(file_info, DirMetadata):
                 ui.separator()
-                with ui.column().classes("w-full justify-between gap-2"):
-                    _kv(
-                        _("Children"),
-                        str(file_info.num_children),
-                    )
+                with ui.column().classes("w-full gap-2"):
+                    _kv(_("Items"), str(file_info.num_children))
 
             ui.separator()
 
-            # ===== Share Info =====
-            share_by = await get_share_by_user()
-            with ui.column().classes("w-full justify-between gap-2"):
+            # Share metadata
+            with ui.column().classes("w-full gap-2"):
                 _kv(_("Shared by"), share_by)
                 _kv(_("Share ID"), validated_data.id)
                 _kv(
-                    _("Shared at"),
+                    _("Shared on"),
                     datetime_to_human_readable(validated_data.created_at_utc),
                 )
                 _kv(
-                    _("Expires at"),
+                    _("Expires on"),
                     datetime_to_human_readable(validated_data.expires_at_utc),
                 )
 
-            # ===== Actions =====
             ui.separator()
+
+            # Action buttons
             with ui.row().classes("w-full justify-end gap-2"):
                 if file_info.is_dir:
                     ui.button(
@@ -241,3 +229,5 @@ async def index(
                 ui.button(
                     _("Download"), icon="download", on_click=on_download_button_click
                 )
+
+    return None

@@ -41,7 +41,6 @@ class Dialog:
 
 
 class SearchDialog(Dialog):
-
     PAGE_SIZE = 30
 
     def __init__(self, file_service: StorageManager, current_path: Path):
@@ -49,15 +48,11 @@ class SearchDialog(Dialog):
         self.search_input: Optional[ui.input] = None
         self.file_manager = file_service
         self.current_path = current_path
-
         self.last_query: Optional[str] = None
         self.results_list: Optional[ui.list] = None
-
-        self.last_query: Optional[str] = None
         self.offset = 0
         self.loading = False
         self.has_more = True
-
         self.search_task: Optional[asyncio.Task] = None
 
     async def open(self) -> Optional[FileMetadata | DirMetadata | None]:
@@ -65,7 +60,9 @@ class SearchDialog(Dialog):
             with ui.row().classes("w-full items-center px-4"):
                 self.search_input = (
                     ui.input(
-                        label=_("Search in {}").format(self.current_path.name),
+                        label=_("Search in {folder}").format(
+                            folder=self.current_path.name
+                        ),
                         on_change=self.on_input_change,
                     )
                     .classes("flex-grow")
@@ -73,57 +70,44 @@ class SearchDialog(Dialog):
                 )
                 with self.search_input.add_slot("append"):
                     ui.icon("search")
-
             with ui.scroll_area(on_scroll=self.on_scroll).classes("w-full h-full"):
                 self.results_list = (
                     ui.list()
                     .classes("w-full h-full overflow-auto")
                     .props("bordered separator")
                 )
-
         return await self.dialog
 
     async def on_input_change(self):
         await asyncio.sleep(0.6)
-
         query = self.search_input.value.strip()
-
         if query == self.last_query:
             return
-
         self.last_query = query
         self.offset = 0
         self.has_more = True
         self.results_list.clear()
-
         if self.search_task:
             self.search_task.cancel()
-
         if not query:
             return
-
         self.search_task = asyncio.create_task(self.load_more())
 
     async def load_more(self):
         if self.loading or not self.has_more:
             return
-
         self.loading = True
-
         results = await self.file_manager.search(
             query=self.last_query,
             remote_path=str(self.current_path),
             offset=self.offset,
             limit=self.PAGE_SIZE,
         )
-
         if not results:
             self.has_more = False
             self.loading = False
-
             self.render_no_more_results()
             return
-
         with self.results_list:
             for item in results:
                 with ui.item(
@@ -135,29 +119,25 @@ class SearchDialog(Dialog):
                             sanitize=False,
                         )
                         ui.markdown(f"`{item.path}`").classes("text-xs")
-
         self.offset += len(results)
-
         if len(results) < self.PAGE_SIZE:
             self.has_more = False
             self.render_no_more_results()
-
         self.loading = False
 
     def render_no_more_results(self):
         with self.results_list:
             with ui.item().props("disabled"):
                 with ui.column().classes("w-full items-center gap-1"):
-                    ui.button(text=_("No more results."), icon="search_off").props(
-                        "flat no-caps"
+                    ui.button(
+                        text=_("No more results"),
+                        icon="search_off",
+                    ).props("flat no-caps")
+                    ui.markdown(_("Try searching in a different folder.")).classes(
+                        "text-xs my-0 py-0"
                     )
                     ui.markdown(
-                        _(
-                            "If you still can't find it, try searching in a **different directory**."
-                        )
-                    ).classes("text-xs my-0 py-0")
-                    ui.markdown(
-                        _("Current directory: **{}**").format(self.current_path)
+                        _("Current folder: **{path}**").format(path=self.current_path)
                     ).classes("text-xs my-0 py-0")
 
     async def on_scroll(self, e: events.ScrollEventArguments):
@@ -167,49 +147,51 @@ class SearchDialog(Dialog):
 
 class InputDialog(Dialog):
     def __init__(
-        self, title: str, input_label: str, input_value: str = "", message: str = None
+        self,
+        title: str,
+        input_label: str,
+        input_value: str = "",
+        message: str | None = None,
     ):
         super().__init__()
         self.title = title
         self.message = message
         self.input_label = input_label
         self.input_value = input_value
-
         self.dialog = ui.dialog().props(self.dialog_props)
 
-    async def open(self):
+    async def open(self) -> str | None:
         with self.dialog, ui.card().classes("w-full"):
             ui.label(self.title).classes(self.title_class)
-
             if self.message:
                 ui.markdown(self.message).classes("break-words max-w-full")
-
             input_component = ui.input(
                 label=self.input_label, value=self.input_value
             ).classes("w-full")
-
             with ui.row().classes("w-full justify-between"):
                 ui.button(
                     _("Confirm"),
-                    on_click=lambda: self.dialog.submit(input_component.value),
+                    on_click=lambda: self.dialog.submit(input_component.value.strip()),
                     color="green",
                 )
-                ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(None))
-
+                ui.button(
+                    _("Cancel"),
+                    on_click=lambda: self.dialog.submit(None),
+                )
         return await self.dialog
 
 
 class ConfirmDialog(Dialog):
-
-    def __init__(self, title: str, message: str | list = None, warning: bool = False):
+    def __init__(
+        self, title: str, message: str | list | None = None, warning: bool = False
+    ):
         super().__init__()
         self.title = title
         self.message = message
         self.warning = warning
-
         self.dialog = ui.dialog().props(self.dialog_props)
 
-    async def open(self):
+    async def open(self) -> bool:
         with self.dialog, ui.card():
             ui.label(self.title).classes(self.title_class)
             if self.message:
@@ -218,111 +200,100 @@ class ConfirmDialog(Dialog):
                 elif isinstance(self.message, list):
                     formatted = "\n".join(f"- `{msg}`" for msg in self.message)
                     ui.markdown(formatted).classes("break-words max-w-full")
-
             with ui.row().classes("w-full justify-between"):
                 ui.button(
                     _("Confirm"),
                     on_click=lambda: self.dialog.submit(True),
                     color="red" if self.warning else "green",
                 )
-                ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(False))
-
+                ui.button(
+                    _("Cancel"),
+                    on_click=lambda: self.dialog.submit(False),
+                )
         return await self.dialog
 
 
 class RenameDialog(InputDialog):
     def __init__(self, current_name: str, old_name: str):
         super().__init__(
-            title=_("Rename {}").format(current_name),
+            title=_("Rename {name}").format(name=current_name),
             input_label=_("New name"),
             input_value=old_name,
         )
         self.old_name = old_name
 
-    async def open(self):
+    async def open(self) -> str | None:
         with self.dialog, ui.card().classes("w-full"):
             ui.label(self.title).classes(self.title_class)
-
             ui.input(label=_("Current name"), value=self.old_name).classes(
                 "w-full"
             ).disable()
-
             input_component = (
                 ui.input(label=self.input_label, value=self.input_value)
                 .classes("w-full")
                 .props("autofocus")
             )
 
-            def is_same(a, b):
-                return a == b
-
             async def on_confirm():
                 new_val = input_component.value.strip()
                 if not new_val:
                     notify.warning(_("New name cannot be empty"))
-                    return None
-                if is_same(new_val, self.old_name):
+                    return
+                if new_val == self.old_name:
                     notify.warning(_("New name cannot be the same as the current name"))
-                    return None
+                    return
                 if any(char in new_val for char in FILE_NAME_FORBIDDEN_CHARS):
                     notify.warning(
-                        f"File name cannot contain any of the following characters: {FILE_NAME_FORBIDDEN_CHARS}"
+                        _("File name cannot contain: {chars}").format(
+                            chars=", ".join(FILE_NAME_FORBIDDEN_CHARS)
+                        )
                     )
-                    return None
+                    return
                 if new_val.endswith("."):
                     notify.warning(_("File name cannot end with a dot"))
-                    return None
-
+                    return
                 confirm = await ConfirmDialog(
                     title=_("Confirm Rename"),
                     message=_(
-                        "Are you sure you want to rename **`{}`** to **`{}`** ?"
-                    ).format(self.old_name, new_val),
+                        "Are you sure you want to rename **{old}** to **{new}**?"
+                    ).format(old=self.old_name, new=new_val),
                 ).open()
-
                 if confirm:
-                    return self.dialog.submit(new_val)
-                return None
+                    self.dialog.submit(new_val)
 
             with ui.row().classes("w-full justify-between"):
                 ui.button(_("Confirm"), on_click=on_confirm, color="green")
                 ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(None))
-
         return await self.dialog
 
 
 class ShareDialog(Dialog):
     def __init__(self, file_name: str, current_user: User):
         super().__init__()
-        self.title = _("Share {}").format(file_name)
+        self.title = _("Share {file}").format(file=file_name)
         self.file_name = file_name
         self.current_user = current_user
-
         self.dialog = ui.dialog().props(self.dialog_props)
 
-    async def open(self):
+    async def open(self) -> dict | None:
         with self.dialog, ui.card().classes("w-full"):
             ui.label(self.title).classes(self.title_class)
 
-            # 加载数据
+            # Load existing share links
             user_share_links = await get_user_share_links(
                 self.current_user, self.file_name
             )
-
             share_links = {link.id: link for link in user_share_links}
-
-            # 分享链接区域（始终存在，只控制显隐）
             links_section = ui.column().classes("w-full")
             links_section.set_visibility(bool(share_links))
 
             with links_section:
                 ui.separator()
-
                 count_label = ui.label().classes("text-base font-bold")
 
                 def update_count_and_visibility():
                     count = len(share_links)
-                    count_label.text = _("{} sharing links").format(count)
+                    count_label.text = _("{count} sharing links").format(count=count)
                     links_section.set_visibility(count > 0)
 
                 update_count_and_visibility()
@@ -335,91 +306,65 @@ class ShareDialog(Dialog):
                         message=_("Are you sure you want to delete this share link?"),
                         warning=True,
                     ).open()
-
                     if not confirm:
                         return False
-
                     try:
                         await delete_download_link(download_id)
-
-                        # 删除 UI
                         card = all_share_link_cards.pop(download_id, None)
                         if card:
                             card.remove(card)
-
-                        # 删除状态
                         share_links.pop(download_id, None)
-
-                        # 更新派生 UI
                         update_count_and_visibility()
-
                         notify.success(_("Share link deleted"))
                         return True
-
                     except Exception as e:
                         notify.error(
-                            _("Failed to delete share link: {}").format(str(e))
+                            _("Failed to delete share link: {error}").format(
+                                error=str(e)
+                            )
                         )
                         return False
 
-                # 列表内容
+                # List share links
                 with ui.scroll_area().classes("w-full"):
-                    for share_link in user_share_links:
-                        link_url = share_link.url
-                        expires_at = share_link.expires_at_utc
-                        expire_time_local = expires_at.astimezone(
+                    for link in user_share_links:
+                        link_url = link.url
+                        expire_local = link.expires_at_utc.astimezone(
                             get_user_timezone()
                         ).strftime("%Y-%m-%d %H:%M:%S %Z")
-
                         with ui.card().classes("w-full") as share_card:
-                            ui.input(
-                                label=_("Share link"),
-                                value=link_url,
-                            ).props(
+                            ui.input(label=_("Share link"), value=link_url).props(
                                 "readonly dense"
                             ).classes("w-full")
-
                             with ui.row().classes("w-full items-center gap-3"):
-                                # ===== 访问方式（主语义）=====
-                                if share_link.access_code:
-                                    # —— 需要访问码 ——
-                                    ui.label(share_link.access_code).classes(
-                                        "text-sm font-semibold "
-                                        "px-3 py-1 rounded bg-blue-100 text-blue-700 "
-                                        "select-all"
+                                if link.access_code:
+                                    ui.label(link.access_code).classes(
+                                        "text-sm font-semibold px-3 py-1 rounded bg-blue-100 text-blue-700 select-all"
                                     )
                                 else:
-                                    # —— 公开访问 ——
                                     ui.label(_("Public Access")).classes(
-                                        "text-xs font-semibold text-green-700 "
-                                        "bg-green-100 rounded-full px-3 py-1"
+                                        "text-xs font-semibold text-green-700 bg-green-100 rounded-full px-3 py-1"
                                     )
-
-                                # ===== 状态 =====
-                                if utc_now() > expires_at:
-                                    ui.label(_("Expired")).classes(
-                                        "text-xs text-white font-semibold bg-red-500 rounded-full px-2 py-0.5"
-                                    )
-                                else:
-                                    ui.label(_("Valid")).classes(
-                                        "text-xs text-white font-semibold bg-green-500 rounded-full px-2 py-0.5"
-                                    )
-
-                                # ===== 过期时间 =====
                                 ui.label(
-                                    _("Expires at {}").format(expire_time_local)
+                                    _("Expired")
+                                    if utc_now() > link.expires_at_utc
+                                    else _("Valid")
+                                ).classes(
+                                    "text-xs text-white font-semibold bg-red-500 rounded-full px-2 py-0.5"
+                                    if utc_now() > link.expires_at_utc
+                                    else "text-xs text-white font-semibold bg-green-500 rounded-full px-2 py-0.5"
+                                )
+                                ui.label(
+                                    _("Expires at {time}").format(time=expire_local)
                                 ).classes("text-xs text-gray-500")
-
                             with ui.row().classes("w-full justify-end gap-2"):
                                 ui.button(
                                     _("Copy"),
                                     icon="content_copy",
                                     on_click=lambda url=link_url: copy_to_clipboard(
-                                        url,
-                                        message=_("Share link copied to clipboard."),
+                                        url, _("Share link copied to clipboard.")
                                     ),
                                 ).props("flat dense")
-
                                 ui.button(
                                     _("Open"),
                                     icon="open_in_new",
@@ -427,44 +372,35 @@ class ShareDialog(Dialog):
                                         url, new_tab=True
                                     ),
                                 ).props("flat dense")
-
                                 ui.button(
                                     _("Delete"),
                                     icon="delete",
                                     color="red",
-                                    on_click=lambda d_id=share_link.id: delete_share_link(
+                                    on_click=lambda d_id=link.id: delete_share_link(
                                         d_id
                                     ),
                                 ).props("flat dense")
+                            all_share_link_cards[link.id] = share_card
 
-                        all_share_link_cards[share_link.id] = share_card
-
-            # 创建新分享链接
+            # Create new share link
             ui.separator()
             ui.label(_("Create new sharing link")).classes("text-base font-bold")
-
-            user_timezone = get_user_timezone()
-            current_time_local = datetime.now(user_timezone)
-
+            user_tz = get_user_timezone()
+            now_local = datetime.now(user_tz)
             expire_type = ui.toggle(
-                [_("Expire after"), _("Expire after days")],
-                value=_("Expire after"),
+                [_("Expire after"), _("Expire after days")], value=_("Expire after")
             )
 
             with ui.row().classes("w-full justify-between") as datetime_picker:
                 date_input = ui.date_input(
-                    _("Expire date"),
-                    value=current_time_local.strftime("%Y-%m-%d"),
+                    _("Expire date"), value=now_local.strftime("%Y-%m-%d")
                 ).classes("md:w-auto w-full")
                 date_input.picker.props[":options"] = (
-                    f'date => date >= "{current_time_local.strftime("%Y/%m/%d")}"'
+                    f'date => date >= "{now_local.strftime("%Y/%m/%d")}"'
                 )
-
-                time_input = ui.time_input(
-                    _("Expire time"),
-                    value="00:00",
-                ).classes("md:w-auto w-full")
-
+                time_input = ui.time_input(_("Expire time"), value="00:00").classes(
+                    "md:w-auto w-full"
+                )
                 datetime_picker.set_visibility(True)
 
             with ui.row().classes("w-full justify-between") as days_picker:
@@ -476,21 +412,19 @@ class ShareDialog(Dialog):
                     precision=0,
                     format="%.0f",
                 ).classes("w-full")
-
                 days_picker.set_visibility(False)
 
-            def on_expire_type_change(e: events.ValueChangeEventArguments):
-                days_picker.set_visibility(e.value == _("Expire after days"))
-                datetime_picker.set_visibility(e.value == _("Expire after"))
-
-            expire_type.on_value_change(on_expire_type_change)
+            expire_type.on_value_change(
+                lambda e: (
+                    days_picker.set_visibility(e.value == _("Expire after days")),
+                    datetime_picker.set_visibility(e.value == _("Expire after")),
+                )
+            )
 
             ui.label(_("Access code")).classes("text-base font-bold")
-
             with ui.row(wrap=False).classes("w-full justify-between"):
-                access_code_enabled = ui.checkbox(_("Generate"), value=False)
-
-                access_code_input = (
+                access_enabled = ui.checkbox(_("Generate"), value=False)
+                access_input = (
                     ui.input(
                         label=_("Access code"),
                         placeholder=_("Will be generated automatically"),
@@ -498,55 +432,45 @@ class ShareDialog(Dialog):
                     .props("readonly dense")
                     .classes("w-full")
                 )
-
-                with access_code_input.add_slot("append"):
-                    regen_button = ui.button(
-                        _("Regenerate"),
-                        icon="refresh",
-                    ).props("flat dense")
+                with access_input.add_slot("append"):
+                    regen_btn = ui.button(_("Regenerate"), icon="refresh").props(
+                        "flat dense"
+                    )
                     ui.button(
                         _("Copy"),
                         icon="content_copy",
                         on_click=lambda: copy_to_clipboard(
-                            access_code, message=_("Access code copied.")
+                            access_code, _("Access code copied.")
                         ),
                     ).props("flat dense")
+                access_input.set_visibility(False)
+                regen_btn.set_visibility(False)
+                access_code: str | None = None
 
-            # 初始隐藏
-            access_code_input.set_visibility(False)
-            regen_button.set_visibility(False)
+                def update_access_ui(enabled: bool):
+                    nonlocal access_code
+                    access_input.set_visibility(enabled)
+                    regen_btn.set_visibility(enabled)
+                    if enabled:
+                        access_code = generate_access_code()
+                        access_input.value = access_code
+                    else:
+                        access_code = None
+                        access_input.value = ""
 
-            access_code: str | None = None
-
-            def update_access_code_ui(enabled: bool):
-                nonlocal access_code
-
-                access_code_input.set_visibility(enabled)
-                regen_button.set_visibility(enabled)
-
-                if enabled:
+                def regen_access_code():
+                    nonlocal access_code
                     access_code = generate_access_code()
-                    access_code_input.value = access_code
-                else:
-                    access_code = None
-                    access_code_input.value = ""
+                    access_input.value = access_code
 
-            access_code_enabled.on_value_change(
-                lambda e: update_access_code_ui(e.value)
-            )
-
-            def regenerate_access_code():
-                nonlocal access_code
-                access_code = generate_access_code()
-                access_code_input.value = access_code
-
-            regen_button.on_click(regenerate_access_code)
+                access_enabled.on_value_change(lambda e: update_access_ui(e.value))
+                regen_btn.on_click(regen_access_code)
 
             def on_confirm():
                 if len(all_share_link_cards) >= 10:
                     notify.error(
                         _(
-                            "You have reached the maximum number of share links. Please delete some share links before creating a new one."
+                            "Maximum number of share links reached. Delete some before creating a new one."
                         )
                     )
                     return
@@ -554,29 +478,24 @@ class ShareDialog(Dialog):
                     if not date_input.value or not time_input.value:
                         notify.warning(_("Please select a valid expire time"))
                         return
-
-                    selected_date = date.fromisoformat(date_input.value)
-                    h, m = map(int, time_input.value.split(":"))
-                    selected_time = time(h, m)
-
-                    expire_dt = (
-                        datetime.combine(selected_date, selected_time)
-                        .replace(tzinfo=user_timezone)
+                    selected_dt = (
+                        datetime.combine(
+                            date.fromisoformat(date_input.value),
+                            time(*map(int, time_input.value.split(":"))),
+                        )
+                        .replace(tzinfo=user_tz)
                         .astimezone(timezone.utc)
                     )
-
-                    if expire_dt < utc_now():
+                    if selected_dt < utc_now():
                         notify.warning(_("Expire date cannot be before now"))
                         return
-
                     self.dialog.submit(
                         {
-                            "expire_datetime_utc": expire_dt,
+                            "expire_datetime_utc": selected_dt,
                             "expire_days": None,
                             "access_code": access_code,
                         }
                     )
-
                 else:
                     self.dialog.submit(
                         {
@@ -589,28 +508,24 @@ class ShareDialog(Dialog):
             with ui.row().classes("w-full justify-between"):
                 ui.button(_("Confirm"), on_click=on_confirm, color="green")
                 ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(None))
-
         return await self.dialog
 
 
 class FileBrowserDialog(Dialog):
-    """
-    文件浏览器对话框
-    用于分享文件夹浏览内容
-    """
+    """File browser dialog for viewing shared folder contents."""
 
     def __init__(self, file_service: StorageManager, target_path: Path, share_id: str):
         super().__init__()
         self.file_manager = file_service
         self.target_path = target_path
         self.target_root_path = self.file_manager.get_full_path(str(self.target_path))
-
         self.share_id = share_id
         self.dialog = ui.dialog().props(self.dialog_props)
         self.title_label: Optional[ui.label] = None
 
     async def open(self):
         with self.dialog, ui.card().classes("w-full"):
+            # Header
             with ui.row().classes("w-full justify-between"):
                 self.title_label = ui.label().classes(self.title_class)
                 ui.button(
@@ -618,7 +533,6 @@ class FileBrowserDialog(Dialog):
                 ).props("flat dense")
 
             with ui.scroll_area().classes("w-full h-[600px]"):
-
                 columns = [
                     {"name": "name", "label": _("Name"), "field": "name"},
                     {
@@ -626,10 +540,9 @@ class FileBrowserDialog(Dialog):
                         "label": _("Size"),
                         "field": "size",
                         "align": "right",
-                        "style": "width: 0px",
+                        "style": "width:0px",
                     },
                 ]
-
                 table = ui.table(
                     columns=columns,
                     rows=[],
@@ -639,163 +552,147 @@ class FileBrowserDialog(Dialog):
                         "required": True,
                     },
                 ).classes("w-full")
+                target_path = self.target_root_path
 
-            target_path = self.target_root_path
+                # Back to parent button
+                with table.add_slot("top-left"):
+                    with ui.row().classes("items-center gap-x-2"):
+                        ui.button(
+                            icon="arrow_upward",
+                            on_click=lambda: refresh_table(target_path.parent),
+                        ).props("flat dense").tooltip(_("Back to parent directory"))
 
-            # 返回上一级按钮
-            with table.add_slot("top-left"):
-                with ui.row().classes("items-center gap-x-2"):
-                    ui.button(
-                        icon="arrow_upward",
-                        on_click=lambda: refresh_table(target_path.parent),
-                    ).props("flat dense").tooltip(_("Back to Parent Directory"))
-
-            # 无数据提示
-            with table.add_slot("no-data"):
-                with ui.row().classes("items-center"):
-                    ui.icon("warning").classes("text-2xl")
-                    ui.label(_("No files or directories found.")).classes("font-bold")
-
-            rows = []
-
-            def refresh_table(path: Path):
-                nonlocal rows, target_path
-
-                # 限制不能超出 root_path
-                if (
-                    path != self.target_root_path
-                    and self.target_root_path not in path.parents
-                ):
-                    notify.warning(
-                        _(
-                            "Already at the share root directory. Cannot go back further."
+                # No data message
+                with table.add_slot("no-data"):
+                    with ui.row().classes("items-center"):
+                        ui.icon("warning").classes("text-2xl")
+                        ui.label(_("No files or directories found.")).classes(
+                            "font-bold"
                         )
+
+                def refresh_table(path: Path):
+                    nonlocal target_path
+                    # Prevent navigating above root
+                    if (
+                        path != self.target_root_path
+                        and self.target_root_path not in path.parents
+                    ):
+                        notify.warning(
+                            _(
+                                "Already at the share root directory. Cannot go back further."
+                            )
+                        )
+                        return
+                    target_path = path
+                    display_path = (
+                        "."
+                        if target_path == self.target_root_path
+                        else target_path.relative_to(self.target_root_path)
                     )
-                    return
-
-                target_path = path
-
-                if target_path == self.target_root_path:
-                    display_path = "."
-                else:
-                    display_path = target_path.relative_to(self.target_root_path)
-
-                self.title_label.text = _("Browsing {}").format(display_path)
-
-                rows = []
-                for meta_data in self.file_manager.list_files(str(path)):
-                    row = {
-                        "name": f"{get_file_icon(meta_data.type, meta_data.extension)} {meta_data.name}",
-                        "raw_name": meta_data.name,
-                        "size": bytes_to_human_readable(meta_data.size),
-                        "path": meta_data.path,
-                        "is_dir": meta_data.is_dir,
-                    }
-                    rows.append(row)
-                table.rows = rows
-
-            async def handle_row_double_click(e: events.GenericEventArguments):
-                click_event_params, click_row, click_index = e.args
-                click_path = click_row["path"]
-                file_name = click_row["raw_name"]
-                if click_row["is_dir"]:
-                    clicked = Path(click_row["raw_name"])
-                    refresh_table(target_path / clicked)
-                else:
-                    confirm = await ConfirmDialog(
-                        _("Confirm Download"),
-                        _("Are you sure you want to download **`{}`**?").format(
-                            file_name
-                        ),
-                    ).open()
-                    if confirm:
-                        download_url = await generate_download_url(
-                            target_path=click_path,
-                            name=file_name,
-                            type_=FileType.FILE,
-                            source=FileSource.DOWNLOAD,
-                            share_id=self.share_id,
-                            base_path=str(self.target_path),
+                    self.title_label.text = _("Browsing {path}").format(
+                        path=display_path
+                    )
+                    rows = []
+                    for meta in self.file_manager.list_files(str(path)):
+                        rows.append(
+                            {
+                                "name": f"{get_file_icon(meta.type, meta.extension)} {meta.name}",
+                                "raw_name": meta.name,
+                                "size": bytes_to_human_readable(meta.size),
+                                "path": meta.path,
+                                "is_dir": meta.is_dir,
+                            }
                         )
-                        if not download_url:
-                            return
-                        ui.navigate.to(download_url)
+                    table.rows = rows
 
-            table.on("row-dblclick", handle_row_double_click)
+                async def handle_row_double_click(e: events.GenericEventArguments):
+                    _, row, _ = e.args
+                    click_path = row["path"]
+                    file_name = row["raw_name"]
+                    if row["is_dir"]:
+                        refresh_table(target_path / file_name)
+                    else:
+                        confirm = await ConfirmDialog(
+                            _("Confirm Download"),
+                            _("Are you sure you want to download **`{name}`**?").format(
+                                name=file_name
+                            ),
+                        ).open()
+                        if confirm:
+                            download_url = await generate_download_url(
+                                target_path=click_path,
+                                name=file_name,
+                                type_=FileType.FILE,
+                                source=FileSource.DOWNLOAD,
+                                share_id=self.share_id,
+                                base_path=str(self.target_path),
+                            )
+                            if download_url:
+                                ui.navigate.to(download_url)
 
-            refresh_table(target_path)
-
+                table.on("row-dblclick", handle_row_double_click)
+                refresh_table(target_path)
         return await self.dialog
 
 
 class MoveDialog(Dialog):
-    """
-    移动对话框
-    用户选择目标文件夹后，返回路径
-    """
+    """Move dialog that returns the selected target folder path."""
 
     def __init__(self, file_service: StorageManager, files: list, current_path: Path):
         super().__init__()
         self.title_label: Optional[ui.label] = None
-
         self.file_manager = file_service
         self.files = files
         self.current_path = current_path
-
         self.dialog = ui.dialog().props(self.dialog_props)
 
     async def open(self):
         with self.dialog, ui.card().classes("w-full"):
             self.title_label = ui.label().classes(self.title_class)
-
             columns = [{"name": "name", "label": _("Directory"), "field": "name"}]
-
             dir_table = ui.table(
                 columns=columns,
                 rows=[],
                 column_defaults={"sortable": True, "align": "left", "required": True},
             ).classes("w-full")
-
             target_path = self.current_path
 
+            # Back to parent slot
             with dir_table.add_slot("top-left"):
                 with ui.row().classes("items-center gap-x-0"):
-                    # 返回上一级目录按钮
                     ui.button(
                         icon="arrow_upward",
                         on_click=lambda: refresh_dir_table(target_path, True),
                     ).props("flat dense").tooltip(_("Back to parent directory"))
 
+            # No data message
             with dir_table.add_slot("no-data"):
                 with ui.row().classes("items-center"):
                     ui.icon("warning").classes("text-2xl")
                     ui.label(_("No directories found.")).classes("font-bold")
 
-            dir_table_rows = []
-
             def refresh_dir_table(path: Path, parent: bool = False):
-                nonlocal dir_table_rows, target_path
+                nonlocal target_path
                 if parent:
                     path = path.parent
-
-                self.title_label.text = _("Move {} to {}").format(
-                    (
+                self.title_label.text = _("Move {items} to {path}").format(
+                    items=(
                         f"{len(self.files)} items"
                         if len(self.files) > 1
                         else self.files[0]
                     ),
-                    str(path),
+                    path=str(path),
                 )
-                dir_table_rows = []
+                rows = []
                 for meta_data in self.file_manager.list_files(str(path)):
                     if meta_data.is_dir:
-                        dir_table_rows.append(
+                        rows.append(
                             {
                                 "name": f"{get_file_icon(meta_data.type, meta_data.extension)} {meta_data.name}",
                                 "path": meta_data.path,
                             }
                         )
-                dir_table.rows = dir_table_rows
+                dir_table.rows = rows
                 target_path = path
 
             refresh_dir_table(target_path)
@@ -803,7 +700,6 @@ class MoveDialog(Dialog):
             async def handle_row_double_click(e: events.GenericEventArguments):
                 _, click_row, _ = e.args
                 refresh_dir_table(Path(click_row["path"]))
-                return
 
             dir_table.on("row-dblclick", handle_row_double_click)
 
@@ -814,7 +710,6 @@ class MoveDialog(Dialog):
                     color="green",
                 )
                 ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(None))
-
         return await self.dialog
 
 
@@ -834,25 +729,22 @@ class MetadataDialog(Dialog):
         self.file_manager = file_manager
         self.current_user = current_user
         self.refresh_browser = refresh_browser_func
-
         self.size_label: ui.label | None = None
         self.calc_btn: ui.button | None = None
-
         self.user_timezone = get_user_timezone()
-
         self.dialog = ui.dialog().props(self.dialog_props)
 
     async def open(self):
         with self.dialog, ui.card().classes("w-full"):
             with ui.row().classes("w-full justify-between"):
-                ui.label(_("Metadata info")).classes(self.title_class)
+                ui.label(_("Metadata")).classes(self.title_class)
                 ui.button(
                     icon="close", on_click=lambda: self.dialog.submit(None)
                 ).props("flat dense")
 
             with ui.card().props("bordered flat").classes("w-full"):
                 with ui.list().props("dense separator").classes("w-full"):
-                    for k, v in {
+                    info = {
                         _("Name"): self.metadata.name,
                         _("Path"): self.metadata.path,
                         _("Type"): self.metadata.type,
@@ -865,19 +757,20 @@ class MetadataDialog(Dialog):
                         _(
                             "Extension"
                         ): f"{self.metadata.extension} ({get_file_icon(self.metadata.type, self.metadata.extension)})",
-                        _("Accessed At"): timestamp_to_human_readable(
+                        _("Accessed"): timestamp_to_human_readable(
                             self.metadata.accessed_at, self.user_timezone
                         ),
-                        _("Created At"): timestamp_to_human_readable(
+                        _("Created"): timestamp_to_human_readable(
                             self.metadata.created_at, self.user_timezone
                         ),
-                        _("Modified At"): timestamp_to_human_readable(
+                        _("Modified"): timestamp_to_human_readable(
                             self.metadata.modified_at, self.user_timezone
                         ),
-                        _("Status Changed At"): timestamp_to_human_readable(
+                        _("Status Changed"): timestamp_to_human_readable(
                             self.metadata.status_changed_at, self.user_timezone
                         ),
-                    }.items():
+                    }
+                    for k, v in info.items():
                         with ui.item():
                             with ui.row(wrap=False).classes("w-full items-center"):
                                 ui.label(k).classes("font-bold w-2/7")
@@ -885,7 +778,6 @@ class MetadataDialog(Dialog):
                                     self.size_label = ui.label(
                                         _("Click to calculate")
                                     ).classes("w-5/7")
-
                                     self.calc_btn = (
                                         ui.button(
                                             icon="calculate",
@@ -923,6 +815,7 @@ class MetadataDialog(Dialog):
                     on_click=self.on_rename_button_click,
                     color="gray-400",
                 )
+
             with ui.grid(columns=2).classes("w-full justify-between"):
                 ui.button(
                     _("Share"),
@@ -947,18 +840,18 @@ class MetadataDialog(Dialog):
     async def on_delete_button_click(self):
         confirm = await ConfirmDialog(
             _("Confirm Delete"),
-            _("Are you sure you want to delete **`{}`**").format(self.metadata.name),
+            _("Are you sure you want to delete **`{name}`**").format(
+                name=self.metadata.name
+            ),
             warning=True,
         ).open()
         if confirm:
             try:
                 self.file_manager.delete_file(self.metadata.path)
-                notify.success(_("Delete successful"))
+                notify.success(_("Deleted successfully"))
             except Exception as e:
-                notify.error(e)
-        else:
-            return
-        await self.refresh_browser()
+                notify.error(str(e))
+            await self.refresh_browser()
 
     async def on_rename_button_click(self):
         new_name = await RenameDialog(
@@ -967,20 +860,14 @@ class MetadataDialog(Dialog):
         if new_name:
             new_path = Path(self.metadata.path).parent / new_name
             if self.file_manager.exists(new_path):
-                notify.warning(
-                    _(
-                        "A file or folder with this name already exists. Please choose a different name."
-                    )
-                )
+                notify.warning(_("A file or folder with this name already exists."))
                 return
             try:
                 self.file_manager.move_file(self.metadata.path, new_path)
-                notify.success(_("Rename successful"))
+                notify.success(_("Renamed successfully"))
             except Exception as e:
-                notify.error(e)
-        else:
-            return
-        await self.refresh_browser()
+                notify.error(str(e))
+            await self.refresh_browser()
 
     async def on_move_button_click(self):
         target_path = await MoveDialog(
@@ -988,26 +875,20 @@ class MetadataDialog(Dialog):
         ).open()
         if target_path:
             if target_path == self.current_path:
-                notify.error(
-                    _(
-                        "Cannot move items to the same folder. Please select a different destination."
-                    )
-                )
+                notify.error(_("Cannot move to the same folder."))
                 return
-
             try:
                 self.file_manager.move_file(
                     self.metadata.path, target_path / self.metadata.name
                 )
                 notify.success(
-                    _("Move successful to {}").format(target_path / self.metadata.name)
+                    _("Moved successfully to {path}").format(
+                        path=target_path / self.metadata.name
+                    )
                 )
             except Exception as e:
-                notify.error(e)
-        else:
-            return
-
-        await self.refresh_browser()
+                notify.error(str(e))
+            await self.refresh_browser()
 
     async def on_share_button_click(self):
         expire_define = await ShareDialog(
@@ -1024,32 +905,17 @@ class MetadataDialog(Dialog):
                 expire_days=expire_define["expire_days"],
                 access_code=expire_define["access_code"],
             )
-            if not download_url:
-                return
-            copy_to_clipboard(
-                download_url, message=_("Share link copied to clipboard.")
-            )
-        return
+            if download_url:
+                copy_to_clipboard(download_url, message=_("Share link copied."))
 
     async def on_download_button_click(self):
         if self.metadata.is_dir:
-            confirm = await ConfirmDialog(
-                _("Confirm Download"),
-                _(
-                    "You selected a folder. It will be compressed into a **single tar.gz file** for download. "
-                )
-                + _("Are you sure you want to download **`{}`**? ").format(
-                    self.metadata.name
-                ),
-            ).open()
+            message = _(
+                "You selected a folder. It will be compressed into a single tar.gz file. Download **`{name}`**?"
+            ).format(name=self.metadata.name)
         else:
-            confirm = await ConfirmDialog(
-                _("Confirm Download"),
-                _("Are you sure you want to download **`{}`**? ").format(
-                    self.metadata.name
-                ),
-            ).open()
-
+            message = _("Download **`{name}`**?").format(name=self.metadata.name)
+        confirm = await ConfirmDialog(_("Confirm Download"), message).open()
         if confirm:
             download_url = await generate_download_url(
                 current_user=self.current_user,
@@ -1058,9 +924,5 @@ class MetadataDialog(Dialog):
                 type_=self.metadata.type,
                 source=FileSource.DOWNLOAD,
             )
-            if not download_url:
-                return
-            ui.navigate.to(download_url)
-            return
-        else:
-            return
+            if download_url:
+                ui.navigate.to(download_url)

@@ -8,8 +8,13 @@ from app.security.hashing import HashingManager
 
 
 class UserCRUD:
+    """
+    Data Access Layer for User-related operations.
+    Provides methods to create, read, update, delete, authenticate users,
+    and manage role assignments.
+    """
 
-    # 创建
+    # Create
     @staticmethod
     async def create(
         session: AsyncSession,
@@ -18,6 +23,18 @@ class UserCRUD:
         password: str,
         is_superuser: bool = False,
     ) -> User:
+        """
+        Create a new user with the provided email and password.
+
+        Args:
+            session: The async database session.
+            email: The user's email address.
+            password: The plain-text password to be hashed and stored.
+            is_superuser: Whether the user should have superuser privileges.
+
+        Returns:
+            The newly created User instance.
+        """
         user = User(
             email=email,
             password_hash=HashingManager.hash_password(password),
@@ -28,12 +45,22 @@ class UserCRUD:
         await session.refresh(user)
         return user
 
-    # 读取
+    # Read
     @staticmethod
     async def get_by_id(
         session: AsyncSession,
         user_id: str,
     ) -> Optional[User]:
+        """
+        Retrieve a user by their unique ID.
+
+        Args:
+            session: The async database session.
+            user_id: The unique identifier of the user.
+
+        Returns:
+            The User instance if found; otherwise, None.
+        """
         return await session.get(User, user_id)
 
     @staticmethod
@@ -41,6 +68,16 @@ class UserCRUD:
         session: AsyncSession,
         email: str,
     ) -> Optional[User]:
+        """
+        Retrieve a user by their email address.
+
+        Args:
+            session: The async database session.
+            email: The email address of the user.
+
+        Returns:
+            The User instance if found; otherwise, None.
+        """
         stmt = select(User).where(User.email == email)
         result = await session.execute(stmt)
         return result.scalar()
@@ -52,11 +89,22 @@ class UserCRUD:
         offset: int = 0,
         limit: int = 20,
     ) -> Sequence[User]:
+        """
+        Retrieve a paginated list of users.
+
+        Args:
+            session: The async database session.
+            offset: Number of records to skip (for pagination).
+            limit: Maximum number of records to return.
+
+        Returns:
+            A sequence of User instances.
+        """
         stmt = select(User).offset(offset).limit(limit)
         result = await session.execute(stmt)
         return result.scalars().all()
 
-    # 更新
+    # Update
     @staticmethod
     async def update_password(
         session: AsyncSession,
@@ -65,6 +113,18 @@ class UserCRUD:
         new_password: str,
         revoke_tokens: bool = True,
     ) -> User:
+        """
+        Update a user's password and optionally invalidate existing tokens.
+
+        Args:
+            session: The async database session.
+            user: The User instance to update.
+            new_password: The new plain-text password.
+            revoke_tokens: If True, increments token_version to invalidate active sessions.
+
+        Returns:
+            The updated User instance.
+        """
         user.password_hash = HashingManager.hash_password(new_password)
         if revoke_tokens:
             user.token_version += 1
@@ -81,22 +141,40 @@ class UserCRUD:
         user: User,
         is_active: bool,
     ) -> User:
+        """
+        Activate or deactivate a user account.
+
+        Args:
+            session: The async database session.
+            user: The User instance to update.
+            is_active: Desired activation status.
+
+        Returns:
+            The updated User instance.
+        """
         user.is_active = is_active
         session.add(user)
         await session.commit()
         return user
 
-    # 删除
+    # Delete
     @staticmethod
     async def delete(
         session: AsyncSession,
         *,
         user: User,
     ) -> None:
+        """
+        Permanently delete a user from the database.
+
+        Args:
+            session: The async database session.
+            user: The User instance to delete.
+        """
         await session.delete(user)
         await session.commit()
 
-    # 授权
+    # Authentication
     @staticmethod
     async def authenticate(
         session: AsyncSession,
@@ -104,6 +182,18 @@ class UserCRUD:
         email: str,
         password: str,
     ) -> Optional[User]:
+        """
+        Authenticate a user by verifying email and password.
+
+        Args:
+            session: The async database session.
+            email: The user's email address.
+            password: The plain-text password provided during login.
+
+        Returns:
+            The authenticated User instance if credentials are valid and account is active;
+            otherwise, None.
+        """
         user = await UserCRUD.get_by_email(session, email)
         if not user or not user.is_active:
             return None
@@ -111,7 +201,7 @@ class UserCRUD:
             return None
         return user
 
-    # 权限绑定
+    # Role Management
     @staticmethod
     async def add_role(
         session: AsyncSession,
@@ -119,13 +209,21 @@ class UserCRUD:
         user: User,
         role: Role,
     ) -> None:
+        """
+        Assign a role to a user if not already assigned.
+
+        Args:
+            session: The async database session.
+            user: The User instance.
+            role: The Role to assign.
+        """
         stmt = select(UserRoleLink).where(
             UserRoleLink.user_id == user.id,
             UserRoleLink.role_id == role.id,
         )
         result = await session.execute(stmt)
         if result.scalar():
-            return
+            return  # Role already assigned
 
         link = UserRoleLink(user_id=user.id, role_id=role.id)
         session.add(link)
@@ -138,6 +236,14 @@ class UserCRUD:
         user: User,
         role: Role,
     ) -> None:
+        """
+        Remove a role assignment from a user.
+
+        Args:
+            session: The async database session.
+            user: The User instance.
+            role: The Role to remove.
+        """
         stmt = select(UserRoleLink).where(
             UserRoleLink.user_id == user.id,
             UserRoleLink.role_id == role.id,

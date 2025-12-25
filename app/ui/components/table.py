@@ -34,11 +34,11 @@ size_sort_js = """(a, b, rowA, rowB) => {
     const isDirA = rowA.type === 'dir';
     const isDirB = rowB.type === 'dir';
 
-    // 目录优先
+    // Directories first
     if (isDirA && !isDirB) return -1;
     if (!isDirA && isDirB) return 1;
 
-    // 按 raw_size 排序
+    // Sort by raw_size
     return rowA.raw_size - rowB.raw_size;
 }"""
 
@@ -96,7 +96,7 @@ class FileBrowserTable:
             set_user_last_path(self._current_path)
 
         if not self.file_manager.exists(str(self.current_path)):
-            notify.error(_("Path not exists, will go to home dir."))
+            notify.error(_("Path does not exist. Navigating to home directory."))
             self._current_path: Path = Path(initial_path)
 
         @ui.refreshable
@@ -179,26 +179,26 @@ class FileBrowserTable:
             with self.browser_table.add_slot("no-data"):
                 with ui.row().classes("items-center"):
                     ui.icon("warning").classes("text-2xl")
-                    ui.label(_("Empty Here.")).classes("font-bold")
+                    ui.label(_("No files found.")).classes("font-bold")
 
             with self.browser_table.add_slot("top-left"):
                 with ui.row().classes("items-center gap-x-0"):
-                    # 返回上一级目录按钮
+                    # Back to parent directory button
                     ui.button(icon="arrow_upward", on_click=self.back_func).props(
                         "flat dense"
-                    ).tooltip(_("Back to Parent Directory"))
+                    ).tooltip(_("Navigate to parent directory"))
 
-                    # 路径分隔符
+                    # Path separator
                     if self.current_path.parts:
                         home_button = ui.button(
                             text=_("Home"),
                             on_click=lambda: self.goto_func(Path(initial_path)),
                         ).props("flat dense")
-                        home_button.tooltip(_("Back to Home Directory"))
+                        home_button.tooltip(_("Navigate to home directory"))
 
                         ui.icon("chevron_right").classes("text-xl text-gray-500 mx-0.5")
 
-                    # 面包屑导航栏渲染，构建累积路径
+                    # Breadcrumb navigation - build cumulative path
                     MAX_DISPLAY_PARTS = 3
                     path_parts = [p for p in self.current_path.parts if p]
                     cumulative_path = Path()
@@ -224,7 +224,7 @@ class FileBrowserTable:
                         )
 
                         if should_display_button:
-                            # 跳转按钮本身
+                            # Navigation button itself
                             if not is_last:
                                 ui.button(
                                     p,
@@ -232,7 +232,7 @@ class FileBrowserTable:
                                         path_to_go
                                     ),
                                 ).props(f"no-caps flat dense")
-                                # 按钮后的分隔符
+                                # Separator after button
                                 ui.icon("chevron_right").classes(
                                     "text-xl text-gray-500 mx-0.5"
                                 )
@@ -255,7 +255,7 @@ class FileBrowserTable:
                             on_click=self.handle_upload_button_click,
                         )
                         .props("flat dense")
-                        .tooltip(_("Upload"))
+                        .tooltip(_("Upload files"))
                     )
                     self.new_directory_button = (
                         ui.button(
@@ -263,7 +263,7 @@ class FileBrowserTable:
                             on_click=self.handle_new_directory_button_click,
                         )
                         .props("flat dense")
-                        .tooltip(_("New Directory"))
+                        .tooltip(_("Create new directory"))
                     )
                     self.delete_button = (
                         ui.button(
@@ -271,7 +271,7 @@ class FileBrowserTable:
                             on_click=self.handle_delete_button_click,
                         )
                         .props("flat dense")
-                        .tooltip(_("Delete"))
+                        .tooltip(_("Delete selected items"))
                     )
                     self.download_button = (
                         ui.button(
@@ -279,7 +279,7 @@ class FileBrowserTable:
                             on_click=self.handle_download_button_click,
                         )
                         .props("flat dense")
-                        .tooltip(_("Download"))
+                        .tooltip(_("Download selected items"))
                     )
                     self.move_button = (
                         ui.button(
@@ -287,7 +287,7 @@ class FileBrowserTable:
                             on_click=self.handle_move_button_click,
                         )
                         .props("flat dense")
-                        .tooltip(_("Move"))
+                        .tooltip(_("Move selected items"))
                     )
 
                     self.edit_button = (
@@ -300,7 +300,7 @@ class FileBrowserTable:
                             on_click=self.handle_edit_button_click,
                         )
                         .props("flat dense")
-                        .tooltip(_("Batch Actions"))
+                        .tooltip(_("Toggle batch actions"))
                     )
                     self.search_button = (
                         ui.button(
@@ -308,7 +308,7 @@ class FileBrowserTable:
                             on_click=self.handle_search_button_click,
                         )
                         .props("dense flat")
-                        .tooltip(_("Search in Current Directory (./)"))
+                        .tooltip(_("Search in current directory"))
                     )
 
                     self.new_directory_button.set_visibility(not self.is_select_mode)
@@ -325,7 +325,7 @@ class FileBrowserTable:
                 "body-cell-action",
                 f"""
                 <q-td :props="props">
-                    <q-btn icon="info" @click="() => $parent.$emit('info', props.row)" flat dense><q-tooltip>{_("Information")}</<q-tooltip></q-btn>
+                    <q-btn icon="info" @click="() => $parent.$emit('info', props.row)" flat dense><q-tooltip>{_("Show file information")}</q-tooltip></q-btn>
                 </q-td>
             """,
             )
@@ -435,8 +435,8 @@ class FileBrowserTable:
             confirm = await ConfirmDialog(
                 _("Confirm Download"),
                 _(
-                    "Are you sure you want to download **`{}`**? To **delete**, **move**, **rename** or **share** this file, please use the **Information** button(i) next to the file row."
-                ).format(file_name),
+                    "Are you sure you want to download **`{file_name}`**? To **delete**, **move**, **rename** or **share** this file, please use the **Information** button(i) next to the file row."
+                ).format(file_name=file_name),
             ).open()
             if confirm:
                 download_url = await generate_download_url(
@@ -481,10 +481,16 @@ class FileBrowserTable:
                 try:
                     self.file_manager.create_directory(new_directory)
                 except Exception as e:
-                    notify.error(_("Failed to create new directory: {}").format(str(e)))
+                    notify.error(
+                        _("Failed to create new directory: {error}").format(
+                            error=str(e)
+                        )
+                    )
                     return
                 notify.success(
-                    _("New directory created successfully: {}").format(new_directory)
+                    _("New directory created successfully: {path}").format(
+                        path=new_directory
+                    )
                 )
 
         await self.refresh()
@@ -518,12 +524,14 @@ class FileBrowserTable:
 
             if self.file_manager.exists(str(self.current_path / f.name)):
                 confirm = await ConfirmDialog(
-                    _("File Exists: {}").format(f.name),
+                    _("File Exists: {filename}").format(filename=f.name),
                     _("This file already exists. Do you want to overwrite it?"),
                     warning=True,
                 ).open()
                 if not confirm:
-                    notify.warning(_("Cancel overwrite: {}").format(f.name))
+                    notify.warning(
+                        _("Cancelled overwrite: {filename}").format(filename=f.name)
+                    )
                     continue
 
             try:
@@ -531,7 +539,7 @@ class FileBrowserTable:
                     f.iterate(), str(self.current_path / f.name)
                 )
             except Exception as up_e:
-                notify.error(up_e)
+                notify.error(str(up_e))
 
         self.upload_component.clear()
 
@@ -546,7 +554,7 @@ class FileBrowserTable:
         self.browser_table.set_selection("multiple" if self.is_select_mode else None)
         self.browser_table.selected = []
 
-        # 隐藏 action 列
+        # Hide action column
         if self.is_select_mode:
             self.browser_table.columns.remove(self.action_column)
         else:
@@ -618,8 +626,8 @@ class FileBrowserTable:
                     )
                     result.append({"action": "delete", "raw": item, "result": True})
                 except Exception as e:
-                    notify.error(e)
-            notify.success(_("Moved {} items").format(len(result)))
+                    notify.error(str(e))
+            notify.success(_("Moved {count} items").format(count=len(result)))
         else:
             return
 
@@ -632,7 +640,9 @@ class FileBrowserTable:
             return
 
         confirm = await ConfirmDialog(
-            title=_("Delete {} items").format(len(self.browser_table.selected)),
+            title=_("Delete {count} items").format(
+                count=len(self.browser_table.selected)
+            ),
             message=[
                 f"{get_file_icon(item["type"], item["extension"])} {item["raw_name"]}"
                 for item in self.browser_table.selected
@@ -649,9 +659,9 @@ class FileBrowserTable:
                     else:
                         self.file_manager.delete_file(item["path"])
                     result.append({"action": "delete", "raw": item, "result": True})
-                notify.success(_("Deleted {} items").format(len(result)))
+                notify.success(_("Deleted {count} items").format(count=len(result)))
             except Exception as e:
-                notify.error(e)
+                notify.error(str(e))
         else:
             return
 

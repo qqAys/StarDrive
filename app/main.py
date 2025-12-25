@@ -13,7 +13,16 @@ if __name__ in {"__main__", "__mp_main__"}:
 
     create_app()
 
-    logger.info(f"App started at http://{settings.APP_HOST}:{settings.APP_PORT}")
+    # Construct user-friendly startup message
+    host = settings.APP_HOST if settings.APP_HOST != "0.0.0.0" else "localhost"
+    url = f"http://{host}:{settings.APP_PORT}"
+
+    if settings.DEBUG:
+        logger.warning(
+            "Debug mode is enabled. Do not use this setting in production—it may expose sensitive information."
+        )
+
+    logger.info(f"Application is running at {url}")
 
     ui.run(
         storage_secret=settings.APP_SECRET,
@@ -28,7 +37,7 @@ if __name__ in {"__main__", "__mp_main__"}:
         prod_js=True,
         show_welcome_message=False,
         session_middleware_kwargs={
-            "session_cookie": settings._PROJECT_NAME_CODE + "_session"
+            "session_cookie": f"{settings.APP_NAME.lower().replace(' ', '_')}_session"
         },
         reconnect_timeout=settings.NICEGUI_RECONNECT_TIMEOUT,
         fastapi_docs=settings.DEBUG,

@@ -9,14 +9,21 @@ from app.ui.components.header import Header
 
 
 class BaseLayout:
+    """
+    Base layout class for the application UI.
+
+    This class sets up global UI configurations such as theme colors and favicon,
+    and provides a reusable rendering context that optionally includes a header and footer.
+    """
 
     def __init__(self):
+        # Apply the primary color defined in app settings
         ui.colors(primary=settings.APP_PRIMARY_COLOR)
 
-        # favicon
+        # Add favicon and related meta tags to the HTML head
         ui.add_head_html(
             f"""
-    <!-- favicon -->
+    <!-- Favicon and PWA icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="{settings.APP_NAME}" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -31,7 +38,17 @@ class BaseLayout:
     async def render(
         self, header: bool = False, footer: bool = False, args: dict = None
     ):
+        """
+        Asynchronous context manager to render the base layout with optional header and footer.
 
+        Args:
+            header (bool): Whether to render the header component.
+            footer (bool): Whether to render the footer component.
+            args (dict): Optional arguments passed to the header and footer render methods.
+
+        Yields:
+            tuple: A tuple containing the rendered header and footer components (or None if not rendered).
+        """
         if args is None:
             args = {}
 
@@ -49,4 +66,5 @@ class BaseLayout:
             with ui.element().classes("w-full" + max_w):
                 yield header_el, footer_el
         finally:
+            # No cleanup required at this level; components manage their own lifecycle
             pass

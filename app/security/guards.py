@@ -10,7 +10,16 @@ from app.core.i18n import _
 from app.ui.components.notify import notify
 
 
-def navigate_to(custom_url: str = None):
+def navigate_to(custom_url: str = None) -> None:
+    """
+    Redirect the user to a specified URL after a short delay.
+
+    Used to avoid navigation issues during page rendering by deferring the redirect
+    via a one-time timer.
+
+    Args:
+        custom_url: The target URL. Defaults to "/login" if not provided.
+    """
     ui.timer(
         settings.NICEGUI_TIMER_INTERVAL,
         lambda: ui.navigate.to(custom_url or "/login"),
@@ -24,13 +33,32 @@ def require_user(
     superuser: bool = False,
     active: bool = True,
 ):
+    """
+    Decorator to enforce user authentication and authorization on NiceGUI page functions.
+
+    This decorator ensures that:
+    - The user is signed in.
+    - The user account is active (if `active=True`).
+    - The user has superuser privileges (if `superuser=True`).
+
+    If any condition fails, an error notification is shown and the user is redirected.
+
+    Usage:
+        @require_user
+        def my_page(): ...
+
+        @require_user(superuser=True)
+        async def admin_page(): ...
+    """
+
     def decorator(page_func: Callable):
         is_async = inspect.iscoroutinefunction(page_func)
 
         @wraps(page_func)
         async def wrapper(*args, **kwargs):
-            # ---------- auth ----------
-            if not app.storage.user:
+            # Authentication & Authorization
+            user_storage = app.storage.user
+            if not user_storage:
                 notify.error(_("You need to sign in to access this page."))
                 navigate_to()
                 return None
@@ -53,7 +81,7 @@ def require_user(
                 navigate_to("/home/")
                 return None
 
-            # ---------- call ----------
+            # Execute Original Function
             if is_async:
                 return await page_func(*args, **kwargs)
             else:
@@ -61,7 +89,7 @@ def require_user(
 
         return wrapper
 
-    # 支持 @require_user 和 @require_user(...)
+    # Support both @require_user and @require_user(...)
     if callable(func):
         return decorator(func)
 

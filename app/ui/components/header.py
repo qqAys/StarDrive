@@ -12,46 +12,41 @@ from app.ui.components.notify import notify
 
 
 class Header:
-
     def __init__(self):
         self.user_manager = globals.get_user_manager()
-
         self.header = ui.header
         self.user: Optional[User] = None
 
     async def logout(self):
-        confirm = await ConfirmDialog(
+        confirmed = await ConfirmDialog(
             title=_("Logout"),
             message=_("Are you sure you want to logout?"),
             warning=True,
         ).open()
 
-        if confirm:
-            if await self.user_manager.logout():
-                notify.success(_("Logged out"))
-                ui.timer(
-                    settings.NICEGUI_TIMER_INTERVAL,
-                    lambda: ui.navigate.to("/login"),
-                    once=True,
-                )
-            else:
-                notify.error(_("Logout failed"))
-                return
+        if not confirmed:
+            return
 
-    async def render(self, title=None, *args, **kwargs):
-        if title is None:
-            title = settings.APP_NAME
+        if await self.user_manager.logout():
+            notify.success(_("Logged out"))
+            ui.timer(
+                settings.NICEGUI_TIMER_INTERVAL,
+                lambda: ui.navigate.to("/login"),
+                once=True,
+            )
         else:
-            title = title + " | " + settings.APP_NAME
+            notify.error(_("Logout failed"))
 
-        ui.page_title(title)
+    async def render(self, title: Optional[str] = None, *args, **kwargs):
+        page_title = f"{title} | {settings.APP_NAME}" if title else settings.APP_NAME
+        ui.page_title(page_title)
         current_path = ui.context.client.page.path
 
         self.user = await self.user_manager.current_user()
 
         with self.header().classes(
             "fixed h-12 p-2 flex items-center gap-4 z-50"
-        ) as self.header:
+        ) as header:
             with ui.link(target="/home/").classes("text-white no-underline"):
                 ui.label(settings.APP_NAME).classes("font-bold")
 
@@ -64,7 +59,6 @@ class Header:
                     link="/profile",
                     current_path=current_path,
                 )
-
                 if self.user.is_superuser:
                     nav_button(
                         _("Console"),
@@ -72,19 +66,11 @@ class Header:
                         link="/console",
                         current_path=current_path,
                     )
-
-                fake_button(
-                    _("Logout"),
-                    icon="logout",
-                    func=self.logout,
-                )
+                fake_button(_("Logout"), icon="logout", func=self.logout)
             else:
                 nav_button(
-                    _("Login"),
-                    icon="login",
-                    link="/login",
-                    current_path=current_path,
+                    _("Login"), icon="login", link="/login", current_path=current_path
                 )
 
-    def get_user(self):
+    def get_user(self) -> Optional[User]:
         return self.user

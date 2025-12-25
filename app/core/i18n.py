@@ -8,12 +8,11 @@ from app.core.paths import LOCALES_DIR
 
 APP_DEFAULT_LANGUAGE = settings.APP_DEFAULT_LANGUAGE.replace("-", "_")
 
-# 支持的语言列表
-# 从 locales 目录下加载
+# List of supported languages loaded from the locales directory.
 SUPPORTED_LANGUAGES = [item.name for item in LOCALES_DIR.iterdir() if item.is_dir()]
 logger.debug(f"Supported languages: {SUPPORTED_LANGUAGES}")
 
-# 存储所有语言的 Translation 对象
+# Dictionary to hold Translation objects for each supported language.
 translations = {}
 
 
@@ -21,13 +20,18 @@ def load_translations(
     localedir=LOCALES_DIR, domain="messages", supported_languages=None
 ):
     """
-    加载所有支持语言的 Translation 对象到字典中。
+    Load Translation objects for all supported languages into a dictionary.
+
+    This function iterates over the list of supported languages and attempts to
+    load the corresponding .mo translation files using Python's built-in gettext module.
+    If a translation file is missing for a language, a warning is logged and a
+    NullTranslations object is used as a fallback to return the original message.
     """
     if supported_languages is None:
         supported_languages = SUPPORTED_LANGUAGES
     for lang_code in supported_languages:
         try:
-            # 创建特定语言的 Translation 对象
+            # Create a Translation object for the specific language.
             t = gettext.translation(domain, localedir=localedir, languages=[lang_code])
             translations[lang_code] = t
         except FileNotFoundError:
@@ -40,23 +44,33 @@ load_translations()
 
 def dynamic_gettext(message: str, lang_code: str = None) -> str:
     """
-    根据给定的语言代码返回翻译后的消息。
+    Return the translated version of a message based on the specified or current user language.
+
+    If no language code is provided, this function attempts to retrieve the user's preferred
+    language from NiceGUI's user storage. If that fails (e.g., during application startup),
+    it falls back to the application's default language.
+
+    If a valid Translation object exists for the resolved language, the message is translated.
+    Otherwise, the original message is returned unchanged.
     """
     if lang_code is None:
         try:
-            # 尝试从 NiceGUI 用户存储中获取
+            # Retrieve the user's selected language from NiceGUI user storage.
             lang_code = app.storage.user.get("default_lang", APP_DEFAULT_LANGUAGE)
         except RuntimeError:
-            # 如在初始化时，使用默认语言
+            # Fallback to the default language during early initialization.
             lang_code = APP_DEFAULT_LANGUAGE
-    # 查找对应的 Translation 对象
+
+    # Fetch the corresponding translator for the resolved language code.
     translator = translations.get(lang_code)
 
     if translator:
-        # 使用该对象的 gettext 方法进行翻译
+        # Translate the message using the loaded catalog.
         return translator.gettext(message)
     else:
+        # Return the original message if no translator is available.
         return message
 
 
+# Alias for convenient use throughout the application.
 _ = dynamic_gettext
