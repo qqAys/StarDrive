@@ -63,7 +63,7 @@ async def index(
         if not app.storage.user.get(access_key, False):
             return await render_share_access_page(validated_data, share_by)
     # 立即移除访问码
-    await app.storage.user.pop(access_key)
+    app.storage.user.pop(access_key)
 
     async with BaseLayout().render(
         header=True, footer=True, args={"title": _("Share")}
