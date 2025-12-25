@@ -37,8 +37,7 @@ class Dialog:
         self.dialog = ui.dialog().props(self.dialog_props)
 
     async def open(self):
-        r = await self.dialog
-        return r
+        return await self.dialog
 
 
 class SearchDialog(Dialog):
@@ -82,8 +81,7 @@ class SearchDialog(Dialog):
                     .props("bordered separator")
                 )
 
-        r = await self.dialog
-        return r
+        return await self.dialog
 
     async def on_input_change(self):
         await asyncio.sleep(0.6)
@@ -198,8 +196,7 @@ class InputDialog(Dialog):
                 )
                 ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(None))
 
-        r = await self.dialog
-        return r
+        return await self.dialog
 
 
 class ConfirmDialog(Dialog):
@@ -230,8 +227,7 @@ class ConfirmDialog(Dialog):
                 )
                 ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(False))
 
-        r = await self.dialog
-        return r
+        return await self.dialog
 
 
 class RenameDialog(InputDialog):
@@ -292,8 +288,7 @@ class RenameDialog(InputDialog):
                 ui.button(_("Confirm"), on_click=on_confirm, color="green")
                 ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(None))
 
-        r = await self.dialog
-        return r
+        return await self.dialog
 
 
 class ShareDialog(Dialog):
@@ -384,22 +379,35 @@ class ShareDialog(Dialog):
                                 "readonly dense"
                             ).classes("w-full")
 
-                            with ui.row().classes("w-full justify-start gap-2"):
+                            with ui.row().classes("w-full items-center gap-3"):
+                                # ===== 访问方式（主语义）=====
+                                if share_link.access_code:
+                                    # —— 需要访问码 ——
+                                    ui.label(share_link.access_code).classes(
+                                        "text-sm font-semibold "
+                                        "px-3 py-1 rounded bg-blue-100 text-blue-700 "
+                                        "select-all"
+                                    )
+                                else:
+                                    # —— 公开访问 ——
+                                    ui.label(_("Public Access")).classes(
+                                        "text-xs font-semibold text-green-700 "
+                                        "bg-green-100 rounded-full px-3 py-1"
+                                    )
+
+                                # ===== 状态 =====
                                 if utc_now() > expires_at:
                                     ui.label(_("Expired")).classes(
-                                        "text-xs text-white bg-red-500 rounded px-2"
+                                        "text-xs text-white font-semibold bg-red-500 rounded-full px-2 py-0.5"
                                     )
                                 else:
                                     ui.label(_("Valid")).classes(
-                                        "text-xs text-white bg-green-500 rounded px-2"
+                                        "text-xs text-white font-semibold bg-green-500 rounded-full px-2 py-0.5"
                                     )
 
+                                # ===== 过期时间 =====
                                 ui.label(
-                                    _("EXP: {}").format(expire_time_local)
-                                ).classes("text-xs text-gray-500")
-
-                                ui.label(
-                                    _("Access Code: {}").format(share_link.access_code)
+                                    _("Expires at {}").format(expire_time_local)
                                 ).classes("text-xs text-gray-500")
 
                             with ui.row().classes("w-full justify-end gap-2"):
@@ -535,6 +543,13 @@ class ShareDialog(Dialog):
             regen_button.on_click(regenerate_access_code)
 
             def on_confirm():
+                if len(all_share_link_cards) >= 10:
+                    notify.error(
+                        _(
+                            "You have reached the maximum number of share links. Please delete some share links before creating a new one."
+                        )
+                    )
+                    return
                 if expire_type.value == _("Expire after"):
                     if not date_input.value or not time_input.value:
                         notify.warning(_("Please select a valid expire time"))
@@ -584,11 +599,12 @@ class FileBrowserDialog(Dialog):
     用于分享文件夹浏览内容
     """
 
-    def __init__(self, file_service: StorageManager, root_path: Path, share_id: str):
+    def __init__(self, file_service: StorageManager, target_path: Path, share_id: str):
         super().__init__()
         self.file_manager = file_service
-        self.root_path = root_path  # 共享根目录
-        self.current_path = self.root_path
+        self.target_path = target_path
+        self.target_root_path = self.file_manager.get_full_path(str(self.target_path))
+
         self.share_id = share_id
         self.dialog = ui.dialog().props(self.dialog_props)
         self.title_label: Optional[ui.label] = None
@@ -624,7 +640,7 @@ class FileBrowserDialog(Dialog):
                     },
                 ).classes("w-full")
 
-            target_path = self.current_path
+            target_path = self.target_root_path
 
             # 返回上一级按钮
             with table.add_slot("top-left"):
@@ -644,11 +660,12 @@ class FileBrowserDialog(Dialog):
 
             def refresh_table(path: Path):
                 nonlocal rows, target_path
-                path = self.file_manager.get_full_path(str(path))
-                root = self.file_manager.get_full_path(str(self.root_path))
 
                 # 限制不能超出 root_path
-                if path != root and root not in path.parents:
+                if (
+                    path != self.target_root_path
+                    and self.target_root_path not in path.parents
+                ):
                     notify.warning(
                         _(
                             "Already at the share root directory. Cannot go back further."
@@ -658,9 +675,13 @@ class FileBrowserDialog(Dialog):
 
                 target_path = path
 
-                display_path = Path(self.root_path) / path.relative_to(root)
+                if target_path == self.target_root_path:
+                    display_path = "."
+                else:
+                    display_path = target_path.relative_to(self.target_root_path)
 
                 self.title_label.text = _("Browsing {}").format(display_path)
+
                 rows = []
                 for meta_data in self.file_manager.list_files(str(path)):
                     row = {
@@ -678,7 +699,8 @@ class FileBrowserDialog(Dialog):
                 click_path = click_row["path"]
                 file_name = click_row["raw_name"]
                 if click_row["is_dir"]:
-                    refresh_table(Path(click_path))
+                    clicked = Path(click_row["raw_name"])
+                    refresh_table(target_path / clicked)
                 else:
                     confirm = await ConfirmDialog(
                         _("Confirm Download"),
@@ -693,6 +715,7 @@ class FileBrowserDialog(Dialog):
                             type_=FileType.FILE,
                             source=FileSource.DOWNLOAD,
                             share_id=self.share_id,
+                            base_path=str(self.target_path),
                         )
                         if not download_url:
                             return
@@ -702,8 +725,7 @@ class FileBrowserDialog(Dialog):
 
             refresh_table(target_path)
 
-        r = await self.dialog
-        return r
+        return await self.dialog
 
 
 class MoveDialog(Dialog):
@@ -793,8 +815,7 @@ class MoveDialog(Dialog):
                 )
                 ui.button(_("Cancel"), on_click=lambda: self.dialog.submit(None))
 
-        r = await self.dialog
-        return r
+        return await self.dialog
 
 
 class MetadataDialog(Dialog):
@@ -916,8 +937,7 @@ class MetadataDialog(Dialog):
                     color="blue",
                 )
 
-        r = await self.dialog
-        return r
+        return await self.dialog
 
     async def calculate_dir_size(self):
         self.size_label.text = _("Calculating...")
