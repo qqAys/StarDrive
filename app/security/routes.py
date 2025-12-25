@@ -9,6 +9,7 @@ UNRESTRICTED_PAGE_ROUTES = (
     # 公开路由
     "/login*",
     "/share*",
+    "/api*",
 )
 
 
