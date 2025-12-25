@@ -1,5 +1,7 @@
 # StarDrive
 
+[![翻译状态](https://hosted.weblate.org/widget/stardrive/stardrive/svg-badge.svg)](https://hosted.weblate.org/engage/stardrive/)
+
 StarDrive 是一个基于 [NiceGUI](https://github.com/zauberzeug/nicegui) 库开发的文件管理系统，提供多后端存储的文件管理功能。
 
 StarDrive is a file management system developed based on the [NiceGUI](https://github.com/zauberzeug/nicegui) library, providing file management capabilities with multiple backend storage options.
@@ -30,6 +32,8 @@ We welcome contributions in all forms. Whether it's adding new features, fixing 
 We have provided the StarDrive contribution guidelines in the [CONTRIBUTING.md](CONTRIBUTING.md) file. We recommend that you carefully read these guidelines before submitting any contribution to ensure your work aligns with the project's goals and standards.
 
 If you have any questions or need any help, please feel free to contact us.
+
+[![翻译状态](https://hosted.weblate.org/widget/stardrive/stardrive/multi-auto.svg)](https://hosted.weblate.org/engage/stardrive/)
 
 ## Acknowledgments
 
