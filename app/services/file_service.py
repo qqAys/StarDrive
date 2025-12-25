@@ -346,6 +346,7 @@ async def generate_download_url(
     expire_days: Optional[int] = None,
     share_id: str = None,
     access_code: str = None,
+    base_path: str = None,
 ) -> str | None:
     """
     生成下载链接。
@@ -378,7 +379,7 @@ async def generate_download_url(
             name=name,
             type=type_,
             path=target_path,
-            base_path=app.storage.user["last_path"],
+            base_path=base_path or app.storage.user["last_path"],
             user=current_user.id if current_user else None,
             share_id=share_id,
             access_code=access_code,

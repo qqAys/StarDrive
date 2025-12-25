@@ -214,15 +214,18 @@ class LocalStorage(StorageBackend):
             ) from e
 
     def list_files(self, remote_path: str) -> list[FileMetadata | DirMetadata]:
-        full_path = self._get_full_path(remote_path)
+        if not remote_path.startswith("/"):
+            full_path = self._get_full_path(remote_path)
+        else:
+            full_path = Path(remote_path)
 
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("Directory does not exist: {}").format(remote_path)
+                _("Directory does not exist: {}").format(full_path)
             )
         if not full_path.is_dir():
             raise StorageNotADirectoryError(
-                _("Path points to a file, not a directory: {}").format(remote_path)
+                _("Path points to a file, not a directory: {}").format(full_path)
             )
 
         metadata_list = []
@@ -266,7 +269,7 @@ class LocalStorage(StorageBackend):
                 metadata_list.append(metadata)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("Permission denied to read directory: {}").format(remote_path)
+                _("Permission denied to read directory: {}").format(full_path)
             ) from e
         except Exception as e:
             raise StorageError(_("Failed to read directory: {}").format(e)) from e
@@ -279,14 +282,14 @@ class LocalStorage(StorageBackend):
         if full_path.is_file():
             # 路径已被文件占用
             raise StorageFileExistsError(
-                _("Path is already occupied by a file: {}").format(remote_path)
+                _("Path is already occupied by a file: {}").format(full_path)
             )
 
         try:
             full_path.mkdir(parents=True, exist_ok=True)
         except PermissionError as e:
             raise StoragePermissionError(
-                _("Permission denied to create directory: {}").format(remote_path)
+                _("Permission denied to create directory: {}").format(full_path)
             ) from e
 
     def delete_directory(self, remote_path: str):
@@ -294,11 +297,11 @@ class LocalStorage(StorageBackend):
 
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("Directory does not exist, cannot delete: {}").format(remote_path)
+                _("Directory does not exist, cannot delete: {}").format(full_path)
             )
         if full_path.is_file():
             raise StorageNotADirectoryError(
-                _("Path points to a file, not a directory: {}").format(remote_path)
+                _("Path points to a file, not a directory: {}").format(full_path)
             )
 
         # 递归删除目录及其内容
@@ -314,7 +317,7 @@ class LocalStorage(StorageBackend):
 
         if not src_full_path.exists():
             raise StorageFileNotFoundError(
-                _("Source file/directory does not exist: {}").format(src_path)
+                _("Source file/directory does not exist: {}").format(src_full_path)
             )
 
         # 确保目标父目录存在
@@ -339,7 +342,9 @@ class LocalStorage(StorageBackend):
         if not src_full_path.is_file():
             # 复制文件要求源必须是文件
             raise StorageFileNotFoundError(
-                _("Source file does not exist or is a directory: {}").format(src_path)
+                _("Source file does not exist or is a directory: {}").format(
+                    src_full_path
+                )
             )
 
         # 确保目标父目录存在
@@ -361,7 +366,7 @@ class LocalStorage(StorageBackend):
 
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("File or directory does not exist: {}").format(remote_path)
+                _("File or directory does not exist: {}").format(full_path)
             )
 
         stat_info = parse_path_stat(full_path.stat())
@@ -400,11 +405,11 @@ class LocalStorage(StorageBackend):
 
         if not full_path.exists():
             raise StorageFileNotFoundError(
-                _("Directory does not exist: {}").format(remote_path)
+                _("Directory does not exist: {}").format(full_path)
             )
         if not full_path.is_dir():
             raise StorageNotADirectoryError(
-                _("Path points to a file, not a directory: {}").format(remote_path)
+                _("Path points to a file, not a directory: {}").format(full_path)
             )
 
         async def _get_size(path: Path) -> int:
