@@ -58,9 +58,12 @@ async def index(
 
     share_by = await get_share_by_user()
 
+    access_key = f"share:{validated_data.id}:access"
     if validated_data.access_code:
-        if not app.storage.user.get(f"share:{validated_data.id}:access", False) is True:
+        if not app.storage.user.get(access_key, False):
             return await render_share_access_page(validated_data, share_by)
+    # 立即移除访问码
+    await app.storage.user.pop(access_key)
 
     async with BaseLayout().render(
         header=True, footer=True, args={"title": _("Share")}
