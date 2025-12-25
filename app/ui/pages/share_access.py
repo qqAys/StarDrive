@@ -1,4 +1,4 @@
-from nicegui import ui
+from nicegui import ui, app
 
 from app.config import settings
 from app.core.i18n import _
@@ -58,8 +58,12 @@ async def render_share_access_page(
 
                     if code_entered == share_info.access_code:
                         notify.success(_("Access granted"))
-                        # 这里可以做进一步操作，比如跳转下载页
-                        # ui.navigate.to(f"/download/{share_info.id}")
+                        app.storage.user[f"share:{share_info.id}:access"] = True
+                        ui.timer(
+                            settings.NICEGUI_TIMER_INTERVAL,
+                            lambda: ui.navigate.to(ui.context.client.request.url.path),
+                            once=True,
+                        )
                     else:
                         notify.error(_("Invalid access code"))
                         access_code_input.value = ""  # 清空输入

@@ -59,8 +59,8 @@ async def index(
     share_by = await get_share_by_user()
 
     if validated_data.access_code:
-        await render_share_access_page(validated_data, share_by)
-        return
+        if not app.storage.user.get(f"share:{validated_data.id}:access", False) is True:
+            return await render_share_access_page(validated_data, share_by)
 
     async with BaseLayout().render(
         header=True, footer=True, args={"title": _("Share")}
@@ -157,6 +157,7 @@ async def index(
                     type_=file_info.type,
                     source=FileSource.DOWNLOAD,
                     share_id=validated_data.id,
+                    base_path=validated_data.path,
                 )
                 if not download_url:
                     return
