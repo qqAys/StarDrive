@@ -7,8 +7,8 @@ from app.config import settings
 from app.core.i18n import _
 from app.core.logging import logger
 from app.crud.user_crud import UserCRUD
-from app.schemas.user_schema import UserLogin
-from app.security.password import generate_random_password
+from app.schemas.user_schema import UserLogin, UserModifyPassword
+from app.security.password import generate_random_password, validate_password
 from app.security.tokens import create_access_token, create_refresh_token
 
 
@@ -181,27 +181,31 @@ class UserManager:
             )
 
     async def change_password(
-        self,
-        *,
-        email: str,
-        new_password: str,
-    ) -> None:
+        self, *, email: str, user_modify_password: UserModifyPassword
+    ) -> bool | None:
         """
         Update a user's password and revoke all existing sessions by incrementing token_version.
         """
+        valid, message = validate_password(user_modify_password.new_password)
+        if not valid:
+            raise ValueError(message)
         async with self.db_context() as session:
-            user = await UserCRUD.get_by_email(session, email)
+            user = await self.user_crud.authenticate(
+                session=session,
+                email=email,
+                password=user_modify_password.current_password,
+            )
             if not user:
-                message = _("User does not exist")
-                logger.warning(message)
+                message = _("Invalid current password")
                 raise ValueError(message)
 
             await UserCRUD.update_password(
                 session=session,
                 user=user,
-                new_password=new_password,
+                new_password=user_modify_password.new_password,
                 revoke_tokens=True,
             )
+            return True
 
     async def set_active(
         self,
