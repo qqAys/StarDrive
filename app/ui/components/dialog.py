@@ -204,7 +204,7 @@ class ConfirmDialog(Dialog):
                 ui.button(
                     _("Confirm"),
                     on_click=lambda: self.dialog.submit(True),
-                    color="red" if self.warning else "green",
+                    color="negative" if self.warning else "positive",
                 )
                 ui.button(
                     _("Cancel"),
