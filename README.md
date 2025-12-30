@@ -1,49 +1,76 @@
 # StarDrive
 
-![License](https://img.shields.io/github/license/qqAys/StarDrive)
-![Translation status](https://hosted.weblate.org/widget/stardrive/stardrive/svg-badge.svg)
+<p align="center">
+  <img src="https://img.shields.io/github/license/qqAys/StarDrive" alt="License">
+  <a href="https://hosted.weblate.org/engage/stardrive/">
+    <img src="https://hosted.weblate.org/widget/stardrive/stardrive/svg-badge.svg" alt="Translation status">
+  </a>
+</p>
 
+StarDrive 是一个基于 [NiceGUI](https://github.com/zauberzeug/nicegui) 构建的云盘系统，支持多后端存储，并提供完善的文件管理功能。
 
-StarDrive 是一个基于 [NiceGUI](https://github.com/zauberzeug/nicegui) 库开发的文件管理系统，提供多后端存储的文件管理功能。
-
-StarDrive is a file management system developed based on the [NiceGUI](https://github.com/zauberzeug/nicegui) library, providing file management capabilities with multiple backend storage options.
+StarDrive is a cloud drive system built on the [NiceGUI](https://github.com/zauberzeug/nicegui) library, featuring multi-backend storage support and comprehensive file management capabilities.
 
 > [!WARNING]
-> **本项目仍在开发中，尚未发布任何正式的 Release 版本。**
+> **本项目仍在开发中，尚未发布正式版本。**
+> StarDrive 尚未经过充分测试，可能包含未知的 Bug 或安全漏洞。**请勿将其用于存储重要数据或在生产环境中使用。**
 >
-> StarDrive 尚未经过充分的测试，可能包含大量 **未知的 Bug、安全漏洞** 或 **不稳定的功能**。**请勿将其用于存储重要数据或在生产环境中使用。** 
-> 
-> **This project is currently under development and no official Release version has been published yet.**
->
-> StarDrive has not undergone sufficient testing and may contain a large number of **unknown bugs, security vulnerabilities**, or **unstable features**. **Please DO NOT use it to store important data or in a production environment.**
+> **This project is under active development. No official release yet.**
+> It may contain unknown bugs or security vulnerabilities. **Please DO NOT use it for sensitive data or in production.**
 
-## 贡献 (Contributing)
+---
 
-感谢您对 StarDrive 的贡献感兴趣！我们非常高兴您的加入，并感谢您为使本项目更加完善所做的努力。
+## 技术栈 (Tech Stack)
 
-我们欢迎各种形式的贡献。无论是添加新功能、修复错误、改进文档、翻译，您的每一份贡献都至关重要。
+StarDrive 采用了现代化的 Python 技术栈：
 
-我们在 [CONTRIBUTING.md](CONTRIBUTING.md) 文件中提供了 StarDrive 贡献指南。我们建议您在提交任何贡献之前仔细阅读该指南，以确保您的工作符合项目的目标和标准。
+* **Python 3.12+**
+* **NiceGUI** (FastAPI, Vue 3, Quasar, Tailwind CSS 4)
+* **SQLModel** - 数据库 ORM
+* **PyJWT** - 身份认证
+* **uv** - 现代 Python 包管理工具
 
-如果您有任何疑问或需要任何帮助，请随时联系我们。
+## 快速开始 (Quick Start)
 
-Thank you for your interest in contributing to StarDrive! We are very happy to have you join us and appreciate your efforts to make this project even better.
+本项目使用 `uv` 进行依赖管理。
 
-We welcome contributions in all forms. Whether it's adding new features, fixing bugs, improving documentation, or translating, every contribution you make is vital.
+1.  **安装 uv**:
+    ```shell
+    curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+    ```
+2.  **安装依赖并运行**:
+    ```shell
+    uv sync
+    uv run -m app.main
+    ```
 
-We have provided the StarDrive contribution guidelines in the [CONTRIBUTING.md](CONTRIBUTING.md) file. We recommend that you carefully read these guidelines before submitting any contribution to ensure your work aligns with the project's goals and standards.
+## 翻译 (Translations)
 
-If you have any questions or need any help, please feel free to contact us.
+我们使用 Weblate 管理多语言翻译。欢迎加入！
+
+We use Weblate to manage translations. Contributions to new or existing languages are highly welcome!
+
+[https://hosted.weblate.org/projects/stardrive/](https://hosted.weblate.org/projects/stardrive/)
 
 [![Translation status](https://hosted.weblate.org/widget/stardrive/stardrive/multi-auto.svg)](https://hosted.weblate.org/engage/stardrive/)
 
-## Acknowledgments
+## 贡献 (Contributing)
 
-This project is built upon the foundational work of [nicegui](https://github.com/zauberzeug/nicegui).
+无论是修复 Bug、添加新功能还是改进文档，我们都欢迎您的贡献！
 
-> Schindler, F., & Trappe, R. NiceGUI: Web-based user interfaces with Python. The nice way. [Computer software]. https://doi.org/10.5281/zenodo.7785516
+Whether it's fixing bugs, adding features, or improving docs, your help is appreciated!
+
+* **指南 (Guide)**: 请阅读我们的 [CONTRIBUTING.md](./CONTRIBUTING.md) 以了解环境搭建、代码规范和 PR 流程。
+* **问题反馈 (Issues)**: 发现问题？请通过 [GitHub Issues](https://github.com/qqAys/StarDrive/issues) 告知我们。
+
+## 致谢 (Acknowledgments)
+
+本项目基于 [NiceGUI](https://github.com/zauberzeug/nicegui) 的杰出工作：
+
+> Schindler, F., & Trappe, R. NiceGUI: Web-based user interfaces with Python. The nice way. https://doi.org/10.5281/zenodo.7785516
+
+感谢所有为本项目付出努力的贡献者！
 
 ## 许可 (License)
-StarDrive 遵循 [MIT](https://github.com/qqAys/StarDrive/blob/main/LICENSE) 许可，详见项目根目录下的 LICENSE 文件。
 
-StarDrive is licensed under the [MIT](https://github.com/qqAys/StarDrive/blob/main/LICENSE) License. Please see the LICENSE file in the project's root directory for details.
+本项目遵循 [MIT](./LICENSE) 许可证。
