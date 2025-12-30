@@ -52,41 +52,42 @@ async def login_page(redirect_to: str | None = None):
             return
 
         # Login form UI
-        with ui.card(align_items="center").classes("absolute-center w-max"):
-            with ui.card_section().classes("w-full"):
-                # App branding
-                with ui.column().classes("mb-4"):
-                    with ui.row().classes("text-3xl items-center gap-2"):
-                        ui.image("/android-chrome-512x512.png").classes("w-8 h-8")
-                        ui.label(settings.APP_NAME).classes("text-2xl font-bold")
-                    ui.label(
-                        _("Welcome to {app_name}").format(app_name=settings.APP_NAME)
-                    ).classes("text-xs")
+        with (
+            ui.card(align_items="center")
+            .classes("absolute-center w-[350px]")
+            .props("flat rounded")
+        ):
+            # App branding
+            ui.image("/android-chrome-512x512.png").classes("w-15 h-15")
+            ui.label(_("Sign in")).classes("text-2xl font-bold")
 
-                async def try_login():
-                    """Attempt to log in the user with the provided credentials."""
-                    credentials = UserLogin(
-                        email=email.value,
-                        password=password.value,
-                    )
-                    try:
-                        login_user = await user_manager.login(credentials)
-                    except Exception as e:
-                        notify.error(str(e))
-                        return
+            ui.label(_("Sign in to your account")).classes("text-sm text-gray-500")
 
-                    if not login_user:
-                        notify.warning(_("Account not found"))
-                        return
+            async def try_login():
+                """Attempt to log in the user with the provided credentials."""
+                credentials = UserLogin(
+                    email=email.value,
+                    password=password.value,
+                )
+                try:
+                    login_user = await user_manager.login(credentials)
+                except Exception as e:
+                    notify.error(str(e))
+                    return
 
-                    notify.success(_("Signed in successfully"))
+                if not login_user:
+                    notify.warning(_("Account not found"))
+                    return
 
-                    # Store user's timezone from browser
-                    user_timezone = await get_user_timezone_from_browser()
-                    app.storage.user.update({"timezone": user_timezone})
+                notify.success(_("Signed in successfully"))
 
-                    redirect()
+                # Store user's timezone from browser
+                user_timezone = await get_user_timezone_from_browser()
+                app.storage.user.update({"timezone": user_timezone})
 
+                redirect()
+
+            with ui.column().classes("w-full gap-0"):
                 # Email input with validation
                 email = (
                     ui.input(
@@ -99,6 +100,7 @@ async def login_page(redirect_to: str | None = None):
                     )
                     .on("keyup.enter", try_login)
                     .classes("w-full")
+                    .props("autofocus rounded outlined dense")
                 )
 
                 # Password input
@@ -110,11 +112,13 @@ async def login_page(redirect_to: str | None = None):
                     )
                     .on("keyup.enter", try_login)
                     .classes("w-full")
+                    .props("rounded outlined dense")
                 )
 
-                # Sign-in button
-                ui.button(
-                    _("Sign in"),
-                    on_click=try_login,
-                    icon="login",
-                ).classes("w-full mt-4")
+            # Sign-in button
+            ui.button(
+                _("Sign in"),
+                on_click=try_login,
+            ).classes(
+                "w-full mt-6 py-2"
+            ).props("rounded unelevated")
