@@ -4,20 +4,32 @@ We're thrilled you're interested in contributing to StarDrive!
 
 ## About the Project
 
-StarDrive is a cloud drive system developed based on the [NiceGUI](https://github.com/zauberzeug/nicegui) library, offering multi-backend storage and file management capabilities.
+StarDrive is a cloud drive system built on the [NiceGUI](https://github.com/zauberzeug/nicegui) library, featuring multi-backend storage support and comprehensive file management capabilities.
 
 ### Project Structure
 
-* `locales/` - Translation files
-* `models/` - Model definitions
-* `static/` - Static assets
-* `storage/` - Storage backend implementations
-* `tests/` - Tests
-* `ui/` - Frontend code built with NiceGUI
+* `app/` - Base directory
+  * `api/` - API endpoints
+  * `bootstrap/` - Initialization logic
+  * `core/` - Core business logic
+  * `locales/` - Translation files
+  * `middlewares/` - Middleware implementations
+  * `models/` - Database models
+  * `schemas/` - Pydantic/Validation schemas
+  * `security/` - Authentication and security logic
+  * `services/` - Service layer implementations
+  * `static/` - Static assets
+  * `storage/ `- Storage backend drivers
+  * `ui/` - Frontend components (NiceGUI)
+  * `utils/` - Utility functions
+  * `config.py` - Configuration management
+  * `globals.py` - Global variables
+  * `main.py` - Application entry point
+* `tests/` - Test suite
 
 ### Tech Stack
 
-This partially inherits the technology stack of NiceGUI:
+StarDrive leverages the following technologies:
 
 * **Python 3.12+** - Core language
 * **NiceGUI**
@@ -25,6 +37,8 @@ This partially inherits the technology stack of NiceGUI:
     * **Vue 3** - Frontend framework
     * **Quasar** - UI component framework
     * **Tailwind CSS 4** - Styling
+* **SQLModel** - Database ORM
+* **PyJWT** - Authentication library
 * **pytest** - Testing framework
 
 ## Reporting Issues
@@ -36,6 +50,13 @@ If you encounter a bug or other issues while using StarDrive, the best way to re
 2.  **Feature**: Please follow the [Feature Template](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_TEMPLATE/feature_request.md)
 
 3.  **Question / Support**: Please follow the [Question Template](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_TEMPLATE/question-or-support.md)
+
+## Translations
+StarDrive supports multiple languages. We use Weblate to manage our translations.
+
+  * **Want to translate?** Join our project on Weblate: [https://hosted.weblate.org/projects/stardrive/](https://hosted.weblate.org/projects/stardrive/)
+
+  * **Modified the UI?**: If your code changes include new or modified UI text, you must update the translation templates before submitting your PR (see [Updating Translation Strings](#updating-translation-strings)).
 
 ## Code of Conduct
 
@@ -51,13 +72,11 @@ To set up your local development environment for StarDrive, you need to install 
 
 You can install `uv` using the following commands:
 
-macOS/Linux:
 ```shell
+# macOS/Linux:
 curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
-```
 
-Windows:
-```shell
+# Windows:
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
@@ -67,74 +86,52 @@ Once `uv` is installed, you can install StarDrive's dependencies with this comma
 uv sync
 ```
 
-### Coding Style
+### Coding Style & Testing
 
-StarDrive uses [Black](https://github.com/psf/black) for code formatting.
-
-
-You can format your code using the following command:
+We use **Black** for formatting and **pytest** for testing.
 
 ```shell
+# Format code
 uv run black .
-```
 
-### Testing
-
-StarDrive uses [pytest](https://docs.pytest.org/en/latest/) for writing and running tests.
-
-Please ensure all tests pass before submitting a pull request. To run all tests from the root directory of StarDrive, use this command:
-
-```shell
+# Run tests
 uv run pytest
 ```
 
-### Translations
+### Updating Translation Strings
 
-1. This project uses `pybabel` to create the translation file `.pot`:
+If you have added or changed any translatable strings in the source code (e.g., in the `ui/` folder), 
+please follow these steps to ensure the translation templates are up to date:
+
+1. **Extract new strings** to update the `.pot` template:
 
     ```shell
     uv run pybabel extract -F babel.cfg -o app/locales/messages.pot .
     ```
 
-2. After initializing the `.pot` file, create the language file for the language you want to translate:
+2. **Sync the translation files** (`.po`) with the new template:
 
     ```shell
-    uv run pybabel init -i app/locales/messages.pot -d app/locales -l {your_language_code}
+    uv run pybabel update -i app/locales/messages.pot -d app/locales    
     ```
       
-    > If you have already created a `.po` file, please use the following command to **update** them:
-    > ```shell
-    > uv run pybabel update -i app/locales/messages.pot -d app/locales
-    > ```
+3. **(Optional) Compile for local testing**: If you want to verify your changes locally, compile the files:
 
-3. Open the `.po` file with your favorite editor and fill in the translation in the `msgstr` field.
-
-4. Generate the compiled language file `.mo` for testing:
-
-    ```shell
+    ```
     uv run pybabel compile -d app/locales
     ```
 
-5. After successful testing, commit the `app/locales/{your_language_code}/LC_MESSAGES/messages.po` file to version control. Please note the `.gitignore` file and do not commit the `.pot` or `.mo` files.
+4. **Commit the changes**: Commit the updated `app/locales/messages.pot` and the modified `.po` files.
 
+    > Note: Do not commit the `.mo` files; they are ignored by git.
 
 ### Creating a Pull Request (PR)
 
-When creating a pull request, please ensure you follow these steps:
+1. Fork the repository and create a feature branch (e.g., `feat/new-feature` or `fix/bug-fix`).
 
-1. Create a fork of the repository and clone it to your local machine.
+2. Commit your changes, ensuring code is formatted and tests pass.
 
-2. Create a feature branch based on `main` (the primary branch of your fork). (e.g., `feat/my-new-feature`, `fix/bug-description`, `docs/update-readme`).
-
-3. Add your changes and commit them.
-
-4. Format your code and run the tests.
-
-5. Push your changes to your fork.
-
-6. Create a pull request, following the [Pull Request Template](https://github.com/qqAys/StarDrive/blob/main/.github/PULL_REQUEST_TEMPLATE.md), provide a detailed description of your changes, and wait for us to review and merge.
-
-When submitting a pull request, please ensure the code adheres to the existing coding style and that all tests pass. If you are adding a new feature, please include tests that cover the new functionality.
+3. Submit your PR using our [Pull Request Template](https://github.com/qqAys/StarDrive/blob/main/.github/PULL_REQUEST_TEMPLATE.md).
 
 ## Acknowledgments
 
