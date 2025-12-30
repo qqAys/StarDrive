@@ -20,6 +20,34 @@ class BaseLayout:
         # Apply the primary color defined in app settings
         ui.colors(primary=settings.APP_PRIMARY_COLOR)
 
+        if settings.USE_MISANS:
+            ui.add_head_html(
+                f"""
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/misans@4.0.0/lib/Normal/MiSans-Regular.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/misans@4.0.0/lib/Normal/MiSans-Medium.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/misans@4.0.0/lib/Normal/MiSans-Bold.min.css">
+    <style>
+    :root {{
+        --main-font: 'MiSans', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }}
+
+    html, body, .q-app {{
+        font-family: var(--main-font);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+        line-height: 1.6;
+        letter-spacing: 0.01em;
+    }}
+
+    [lang="zh"] {{
+        word-break: break-all;
+    }}
+    </style>
+            """
+            )
+
         # Add favicon and related meta tags to the HTML head
         ui.add_head_html(
             f"""
