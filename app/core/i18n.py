@@ -6,10 +6,133 @@ from app.config import settings
 from app.core.logging import logger
 from app.core.paths import LOCALES_DIR
 
+LANGUAGE_MAP = {
+    # ========================
+    # Chinese
+    # ========================
+    "zh_CN": "中文（中国）",
+    "zh_TW": "中文（台灣）",
+    "zh_HK": "中文（香港）",
+    "zh_SG": "中文（新加坡）",
+    # ========================
+    # English
+    # ========================
+    "en_US": "English (United States)",
+    "en_GB": "English (United Kingdom)",
+    "en_AU": "English (Australia)",
+    "en_CA": "English (Canada)",
+    "en_NZ": "English (New Zealand)",
+    "en_IN": "English (India)",
+    # ========================
+    # Japanese / Korean
+    # ========================
+    "ja_JP": "日本語（日本）",
+    "ko_KR": "한국어（대한민국）",
+    # ========================
+    # French
+    # ========================
+    "fr_FR": "Français (France)",
+    "fr_CA": "Français (Canada)",
+    "fr_BE": "Français (Belgique)",
+    "fr_CH": "Français (Suisse)",
+    # ========================
+    # German
+    # ========================
+    "de_DE": "Deutsch (Deutschland)",
+    "de_AT": "Deutsch (Österreich)",
+    "de_CH": "Deutsch (Schweiz)",
+    # ========================
+    # Spanish
+    # ========================
+    "es_ES": "Español (España)",
+    "es_MX": "Español (México)",
+    "es_AR": "Español (Argentina)",
+    "es_CO": "Español (Colombia)",
+    "es_CL": "Español (Chile)",
+    "es_PE": "Español (Perú)",
+    # ========================
+    # Portuguese
+    # ========================
+    "pt_PT": "Português (Portugal)",
+    "pt_BR": "Português (Brasil)",
+    # ========================
+    # Italian
+    # ========================
+    "it_IT": "Italiano (Italia)",
+    # ========================
+    # Dutch
+    # ========================
+    "nl_NL": "Nederlands (Nederland)",
+    "nl_BE": "Nederlands (België)",
+    # ========================
+    # Nordic languages
+    # ========================
+    "sv_SE": "Svenska (Sverige)",
+    "no_NO": "Norsk (Norge)",
+    "da_DK": "Dansk (Danmark)",
+    "fi_FI": "Suomi (Suomi)",
+    "is_IS": "Íslenska (Ísland)",
+    # ========================
+    # Eastern and Central Europe
+    # ========================
+    "ru_RU": "Русский (Россия)",
+    "uk_UA": "Українська (Україна)",
+    "pl_PL": "Polski (Polska)",
+    "cs_CZ": "Čeština (Česko)",
+    "sk_SK": "Slovenčina (Slovensko)",
+    "hu_HU": "Magyar (Magyarország)",
+    "ro_RO": "Română (România)",
+    "bg_BG": "Български (България)",
+    # ========================
+    # Balkan
+    # ========================
+    "hr_HR": "Hrvatski (Hrvatska)",
+    "sr_RS": "Српски (Србија)",
+    "sl_SI": "Slovenščina (Slovenija)",
+    # ========================
+    # Middle East
+    # ========================
+    "ar_SA": "العربية (السعودية)",
+    "ar_EG": "العربية (مصر)",
+    "ar_AE": "العربية (الإمارات)",
+    "he_IL": "עברית (ישראל)",
+    "fa_IR": "فارسی (ایران)",
+    "tr_TR": "Türkçe (Türkiye)",
+    # ========================
+    # South Asia / Southeast Asia
+    # ========================
+    "hi_IN": "हिन्दी (भारत)",
+    "bn_BD": "বাংলা (বাংলাদেশ)",
+    "ta_IN": "தமிழ் (இந்தியா)",
+    "te_IN": "తెలుగు (భారతదేశం)",
+    "th_TH": "ไทย (ประเทศไทย)",
+    "vi_VN": "Tiếng Việt (Việt Nam)",
+    "id_ID": "Bahasa Indonesia (Indonesia)",
+    "ms_MY": "Bahasa Melayu (Malaysia)",
+    # ========================
+    # Africa
+    # ========================
+    "sw_KE": "Kiswahili (Kenya)",
+    "sw_TZ": "Kiswahili (Tanzania)",
+    "af_ZA": "Afrikaans (South Africa)",
+    # ========================
+    # Other common languages
+    # ========================
+    "el_GR": "Ελληνικά (Ελλάδα)",
+    "lt_LT": "Lietuvių (Lietuva)",
+    "lv_LV": "Latviešu (Latvija)",
+    "et_EE": "Eesti (Eesti)",
+}
+
+
 APP_DEFAULT_LANGUAGE = settings.APP_DEFAULT_LANGUAGE.replace("-", "_")
 
 # List of supported languages loaded from the locales directory.
 SUPPORTED_LANGUAGES = [item.name for item in LOCALES_DIR.iterdir() if item.is_dir()]
+SUPPORTED_LANGUAGES_MAP = {
+    lang_code: LANGUAGE_MAP.get(lang_code, lang_code)
+    for lang_code in SUPPORTED_LANGUAGES
+}
 logger.debug(f"Supported languages: {SUPPORTED_LANGUAGES}")
 
 # Dictionary to hold Translation objects for each supported language.
