@@ -3,9 +3,13 @@ from contextlib import asynccontextmanager
 from nicegui import ui
 
 from app.config import settings
+from app.core.i18n import _
+from app.services.user_service import UserManager
 from app.ui.components import max_w
+from app.ui.components.dialog import ConfirmDialog
 from app.ui.components.footer import Footer
 from app.ui.components.header import Header
+from app.ui.components.notify import notify
 
 
 class BaseLayout:
@@ -96,3 +100,24 @@ class BaseLayout:
         finally:
             # No cleanup required at this level; components manage their own lifecycle
             pass
+
+
+async def logout(user: UserManager):
+    confirmed = await ConfirmDialog(
+        title=_("Logout"),
+        message=_("Are you sure you want to logout?"),
+        warning=True,
+    ).open()
+
+    if not confirmed:
+        return
+
+    if await user.logout():
+        notify.success(_("Logged out"))
+        ui.timer(
+            settings.NICEGUI_TIMER_INTERVAL,
+            lambda: ui.navigate.to("/login"),
+            once=True,
+        )
+    else:
+        notify.error(_("Logout failed"))

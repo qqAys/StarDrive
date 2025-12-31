@@ -6,31 +6,7 @@ from app import globals
 from app.config import settings
 from app.core.i18n import _
 from app.models.user_model import User
-from app.services.user_service import UserManager
-from app.ui.components.dialog import ConfirmDialog
-from app.ui.components.fake_button import fake_button, nav_button
-from app.ui.components.notify import notify
-
-
-async def logout(user: UserManager):
-    confirmed = await ConfirmDialog(
-        title=_("Logout"),
-        message=_("Are you sure you want to logout?"),
-        warning=True,
-    ).open()
-
-    if not confirmed:
-        return
-
-    if await user.logout():
-        notify.success(_("Logged out"))
-        ui.timer(
-            settings.NICEGUI_TIMER_INTERVAL,
-            lambda: ui.navigate.to("/login"),
-            once=True,
-        )
-    else:
-        notify.error(_("Logout failed"))
+from app.ui.components.fake_button import nav_button
 
 
 class Header:
@@ -55,12 +31,6 @@ class Header:
             ui.space()
 
             if self.user:
-                nav_button(
-                    _("Profile"),
-                    icon="account_circle",
-                    link="/profile",
-                    current_path=current_path,
-                )
                 if self.user.is_superuser:
                     nav_button(
                         _("Console"),
@@ -68,8 +38,11 @@ class Header:
                         link="/console",
                         current_path=current_path,
                     )
-                fake_button(
-                    _("Logout"), icon="logout", func=lambda: logout(self.user_manager)
+                nav_button(
+                    _("Account"),
+                    icon="account_circle",
+                    link="/account",
+                    current_path=current_path,
                 )
             else:
                 nav_button(
