@@ -54,12 +54,12 @@ async def login_page(redirect_to: str | None = None):
         # Login form UI
         with (
             ui.card(align_items="center")
-            .classes("absolute-center w-[350px]")
-            .props("flat rounded")
+            .classes("absolute-center w-[350px] bg-transparent border-0 shadow-none")
+            .props("flat")
         ):
             # App branding
             ui.image("/android-chrome-512x512.png").classes("w-15 h-15")
-            ui.label(_("Sign in")).classes("text-2xl font-bold")
+            ui.label(settings.APP_NAME).classes("text-2xl font-bold")
 
             ui.label(_("Sign in to your account")).classes("text-sm text-gray-500")
 
@@ -100,7 +100,7 @@ async def login_page(redirect_to: str | None = None):
                     )
                     .on("keyup.enter", try_login)
                     .classes("w-full")
-                    .props("autofocus rounded outlined dense")
+                    .props("autofocus dense")
                 )
 
                 # Password input
@@ -112,13 +112,11 @@ async def login_page(redirect_to: str | None = None):
                     )
                     .on("keyup.enter", try_login)
                     .classes("w-full")
-                    .props("rounded outlined dense")
+                    .props("dense")
                 )
 
             # Sign-in button
             ui.button(
                 _("Sign in"),
                 on_click=try_login,
-            ).classes(
-                "w-full mt-6 py-2"
-            ).props("rounded unelevated")
+            ).classes("w-full mt-6 py-2")
