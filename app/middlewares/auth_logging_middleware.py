@@ -21,6 +21,13 @@ class AuthLoggingMiddleware(BaseHTTPMiddleware):
     - Redirects unauthenticated users to the login page with a `redirect_to` parameter.
     """
 
+    @staticmethod
+    def get_browser_language(request: Request) -> str | None:
+        accept_language = request.headers.get("accept-language")
+        if not accept_language:
+            return None
+        return accept_language.split(",")[0].strip().replace("-", "_")
+
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
 
@@ -49,6 +56,10 @@ class AuthLoggingMiddleware(BaseHTTPMiddleware):
         if is_route_unrestricted(path):
             logger.debug({"auth": "pass", "reason": "unrestricted", **log_ctx})
             return await call_next(request)
+
+        # Set the language
+        if "default_lang" not in app.storage.user:
+            app.storage.user["default_lang"] = self.get_browser_language(request)
 
         # Check authentication state from NiceGUI user storage
         user_storage = app.storage.user
