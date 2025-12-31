@@ -3,15 +3,15 @@ from nicegui import ui, APIRouter, app
 
 from app import globals
 from app.config import settings
-from app.core.i18n import _, SUPPORTED_LANGUAGES
+from app.core.i18n import _, APP_DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES_MAP
 from app.schemas.user_schema import UserModifyPassword
 from app.security.guards import require_user
 from app.ui.components import max_w
 from app.ui.components.base import BaseLayout
-from app.ui.components.header import logout
+from app.ui.components.base import logout
 from app.ui.components.notify import notify
 
-this_page_routes = "/profile"
+this_page_routes = "/account"
 
 
 @app.get(this_page_routes)
@@ -28,42 +28,18 @@ async def index():
     async with BaseLayout().render(
         header=True,
         footer=True,
-        args={"title": _("Profile")},
+        args={"title": _("Account")},
     ):
 
         user_manager = globals.get_user_manager()
 
-        # =============================
-        # Language switch
-        # =============================
-        def change_language(lang_code: str):
-            current_lang_code = app.storage.user.get("default_lang", "en_US")
-            if current_lang_code != lang_code:
-                app.storage.user["default_lang"] = lang_code
-                notify.success(_("Language changed to {}").format(lang_code))
-                ui.timer(
-                    settings.NICEGUI_TIMER_INTERVAL,
-                    lambda: ui.navigate.to(this_page_routes),
-                )
-
         with ui.element().classes("w-full " + max_w + " space-y-6"):
 
             # =============================
-            # Header actions
-            # =============================
-            with ui.row().classes("w-full items-center justify-end"):
-                with ui.dropdown_button(icon="translate", auto_close=True):
-                    for lang in SUPPORTED_LANGUAGES:
-                        ui.item(
-                            lang,
-                            on_click=lambda l=lang: change_language(l),
-                        )
-
-            # =============================
-            # Profile Info Card
+            # Account Info Card
             # =============================
             with ui.card().classes("w-full"):
-                ui.label(_("Profile Information")).classes("text-lg font-semibold mb-4")
+                ui.label(_("Account Information")).classes("text-lg font-semibold mb-4")
 
                 with ui.column().classes("gap-2"):
                     with ui.row().classes("justify-between"):
@@ -74,6 +50,43 @@ async def index():
                     with ui.row().classes("justify-between"):
                         ui.label(_("Username"))
                         ui.label(app.storage.user.get("email")).classes("text-gray-600")
+
+            # =============================
+            # Preferences / Language Card
+            # =============================
+            with ui.card().classes("w-full"):
+                ui.label(_("Preferences")).classes("text-lg font-semibold mb-4")
+
+                current_lang = app.storage.user.get(
+                    "default_lang", APP_DEFAULT_LANGUAGE
+                )
+
+                ui.label(_("Language")).classes("text-sm text-gray-500 mb-2")
+
+                language_select = ui.select(
+                    options=SUPPORTED_LANGUAGES_MAP,
+                    value=current_lang,
+                ).classes("w-full")
+
+                async def handle_change_language():
+                    new_lang = language_select.value
+                    if new_lang == current_lang:
+                        notify.info(_("Language unchanged"))
+                        return
+
+                    app.storage.user["default_lang"] = new_lang
+                    notify.success(_("Language changed"))
+
+                    ui.timer(
+                        settings.NICEGUI_TIMER_INTERVAL,
+                        lambda: ui.navigate.to(this_page_routes),
+                        once=True,
+                    )
+
+                ui.button(
+                    _("Save language"),
+                    on_click=handle_change_language,
+                ).classes("mt-4")
 
             # =============================
             # Change Password Card
