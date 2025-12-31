@@ -56,12 +56,12 @@ class SearchDialog(Dialog):
         self.search_task: Optional[asyncio.Task] = None
 
     async def open(self) -> Optional[FileMetadata | DirMetadata | None]:
-        with self.dialog, ui.card().tight().classes("w-[800px] h-[600px]"):
+        with self.dialog, ui.card().tight().classes("w-full h-[600px]"):
             with ui.row().classes("w-full items-center px-4"):
                 self.search_input = (
                     ui.input(
                         label=_("Search in {folder}").format(
-                            folder=self.current_path.name
+                            folder=self.current_path.name or "."
                         ),
                         on_change=self.on_input_change,
                     )
@@ -113,7 +113,9 @@ class SearchDialog(Dialog):
                 with ui.item(
                     on_click=lambda item_=item: self.dialog.submit(item_)
                 ).props("clickable"):
-                    with ui.item_section():
+                    with ui.item_section().classes(
+                        "w-full break-all whitespace-normal"
+                    ):
                         ui.html(
                             f"{get_file_icon(item.type, item.extension)} <b>{item.name}</b>",
                             sanitize=False,
