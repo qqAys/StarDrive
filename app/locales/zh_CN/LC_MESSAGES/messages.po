@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.0\n"
 "Report-Msgid-Bugs-To: me@qqays.xyz\n"
-"POT-Creation-Date: 2025-12-25 23:39+0800\n"
+"POT-Creation-Date: 2025-12-31 16:31+0800\n"
 "PO-Revision-Date: 2025-12-25 06:43+0000\n"
 "Last-Translator: Jinx <me@qqays.xyz>\n"
 "Language: zh_CN\n"
@@ -83,6 +83,31 @@ msgstr "您的账户已被禁用。"
 #: app/security/guards.py:80
 msgid "You don’t have access to this page."
 msgstr "您没有权限访问此页面。"
+
+#: app/security/password.py:15
+msgid "New password must be at least 8 characters long."
+msgstr ""
+
+#: app/security/password.py:17
+msgid "New password must contain at least one digit."
+msgstr ""
+
+#: app/security/password.py:19
+msgid "New password must contain at least one uppercase letter."
+msgstr ""
+
+#: app/security/password.py:21
+msgid "New password must contain at least one lowercase letter."
+msgstr ""
+
+#: app/security/password.py:23
+msgid "New password must contain at least one special character."
+msgstr ""
+
+#: app/security/password.py:24
+#, fuzzy
+msgid "New password is valid."
+msgstr "名称有效。"
 
 #: app/services/file_service.py:175
 #, fuzzy, python-brace-format
@@ -189,12 +214,16 @@ msgstr "邮箱或密码错误"
 msgid "User already exists"
 msgstr "用户已存在"
 
-#: app/services/user_service.py:195 app/services/user_service.py:218
-#: app/services/user_service.py:238
+#: app/services/user_service.py:199
+#, fuzzy
+msgid "Invalid current password"
+msgstr "无效的邮箱或密码"
+
+#: app/services/user_service.py:222 app/services/user_service.py:242
 msgid "User does not exist"
 msgstr "用户不存在"
 
-#: app/services/user_service.py:257
+#: app/services/user_service.py:261
 #, fuzzy, python-brace-format
 msgid "Error getting user timezone: {error}"
 msgstr "获取用户时区失败：{}"
@@ -319,8 +348,24 @@ msgstr "复制操作失败：{}"
 msgid "File or directory not found: {path}"
 msgstr "文件或目录不存在：{}"
 
+#: app/ui/components/base.py:107 app/ui/pages/profile.py:157
+msgid "Logout"
+msgstr "退出登录"
+
+#: app/ui/components/base.py:108
+msgid "Are you sure you want to logout?"
+msgstr "您确定要退出登录吗？"
+
+#: app/ui/components/base.py:116
+msgid "Logged out"
+msgstr "已退出登录"
+
+#: app/ui/components/base.py:123
+msgid "Logout failed"
+msgstr "退出登录失败"
+
 #: app/ui/components/clipboard.py:25
-#, fuzzy, python-brace-format
+#, fuzzy
 msgid "Failed to copy to clipboard"
 msgstr "无法复制到剪贴板：{}"
 
@@ -329,393 +374,377 @@ msgstr "无法复制到剪贴板：{}"
 msgid "Search in {folder}"
 msgstr "在 {} 中搜索"
 
-#: app/ui/components/dialog.py:133
+#: app/ui/components/dialog.py:135
 #, fuzzy
 msgid "No more results"
 msgstr "没有更多结果。"
 
-#: app/ui/components/dialog.py:136
+#: app/ui/components/dialog.py:138
 msgid "Try searching in a different folder."
 msgstr ""
 
-#: app/ui/components/dialog.py:140
+#: app/ui/components/dialog.py:142
 #, fuzzy, python-brace-format
 msgid "Current folder: **{path}**"
 msgstr "当前目录：**{}**"
 
-#: app/ui/components/dialog.py:173 app/ui/components/dialog.py:205
-#: app/ui/components/dialog.py:265 app/ui/components/dialog.py:509
-#: app/ui/components/dialog.py:708
+#: app/ui/components/dialog.py:175 app/ui/components/dialog.py:207
+#: app/ui/components/dialog.py:267 app/ui/components/dialog.py:511
+#: app/ui/components/dialog.py:710
 msgid "Confirm"
 msgstr "确定"
 
-#: app/ui/components/dialog.py:178 app/ui/components/dialog.py:210
-#: app/ui/components/dialog.py:266 app/ui/components/dialog.py:510
-#: app/ui/components/dialog.py:712
+#: app/ui/components/dialog.py:180 app/ui/components/dialog.py:212
+#: app/ui/components/dialog.py:268 app/ui/components/dialog.py:512
+#: app/ui/components/dialog.py:714
 msgid "Cancel"
 msgstr "取消"
 
-#: app/ui/components/dialog.py:219
+#: app/ui/components/dialog.py:221
 #, fuzzy, python-brace-format
 msgid "Rename {name}"
 msgstr "重命名 {}"
 
-#: app/ui/components/dialog.py:220
+#: app/ui/components/dialog.py:222
 msgid "New name"
 msgstr "新名称"
 
-#: app/ui/components/dialog.py:228
+#: app/ui/components/dialog.py:230
 msgid "Current name"
 msgstr "当前名称"
 
-#: app/ui/components/dialog.py:240
+#: app/ui/components/dialog.py:242
 msgid "New name cannot be empty"
 msgstr "新名称不能为空"
 
-#: app/ui/components/dialog.py:243
+#: app/ui/components/dialog.py:245
 msgid "New name cannot be the same as the current name"
 msgstr "新名称不能与当前名称相同"
 
-#: app/ui/components/dialog.py:247
+#: app/ui/components/dialog.py:249
 #, fuzzy, python-brace-format
 msgid "File name cannot contain: {chars}"
 msgstr "文件名不能以点结尾"
 
-#: app/ui/components/dialog.py:253
+#: app/ui/components/dialog.py:255
 msgid "File name cannot end with a dot"
 msgstr "文件名不能以点结尾"
 
-#: app/ui/components/dialog.py:256
+#: app/ui/components/dialog.py:258
 msgid "Confirm Rename"
 msgstr "确认重命名"
 
-#: app/ui/components/dialog.py:258
+#: app/ui/components/dialog.py:260
 #, fuzzy, python-brace-format
 msgid "Are you sure you want to rename **{old}** to **{new}**?"
 msgstr "您确定要将 **`{}`** 重命名为 **`{}`** 吗？"
 
-#: app/ui/components/dialog.py:273
+#: app/ui/components/dialog.py:275
 #, fuzzy, python-brace-format
 msgid "Share {file}"
 msgstr "分享 {}"
 
-#: app/ui/components/dialog.py:296
+#: app/ui/components/dialog.py:298
 #, fuzzy, python-brace-format
 msgid "{count} sharing links"
 msgstr "{}个有效分享链接"
 
-#: app/ui/components/dialog.py:305 app/ui/components/dialog.py:842
+#: app/ui/components/dialog.py:307 app/ui/components/dialog.py:844
 msgid "Confirm Delete"
 msgstr "确认删除"
 
-#: app/ui/components/dialog.py:306
+#: app/ui/components/dialog.py:308
 msgid "Are you sure you want to delete this share link?"
 msgstr "您确定要删除这个分享链接吗？"
 
-#: app/ui/components/dialog.py:318
+#: app/ui/components/dialog.py:320
 msgid "Share link deleted"
 msgstr "分享链接已删除"
 
-#: app/ui/components/dialog.py:322
+#: app/ui/components/dialog.py:324
 #, fuzzy, python-brace-format
 msgid "Failed to delete share link: {error}"
 msgstr "删除分享链接失败：{}"
 
-#: app/ui/components/dialog.py:336
+#: app/ui/components/dialog.py:338
 msgid "Share link"
 msgstr "分享链接"
 
-#: app/ui/components/dialog.py:345
+#: app/ui/components/dialog.py:347
 msgid "Public Access"
 msgstr "公共访问"
 
-#: app/ui/components/dialog.py:349
+#: app/ui/components/dialog.py:351
 msgid "Expired"
 msgstr "已过期"
 
-#: app/ui/components/dialog.py:351
+#: app/ui/components/dialog.py:353
 msgid "Valid"
 msgstr "有效"
 
-#: app/ui/components/dialog.py:358 app/ui/pages/share_access.py:51
+#: app/ui/components/dialog.py:360 app/ui/pages/share_access.py:69
 #, fuzzy, python-brace-format
 msgid "Expires at {time}"
 msgstr "过期日期 {}"
 
-#: app/ui/components/dialog.py:362 app/ui/components/dialog.py:440
+#: app/ui/components/dialog.py:364 app/ui/components/dialog.py:442
 msgid "Copy"
 msgstr "复制"
 
-#: app/ui/components/dialog.py:365
+#: app/ui/components/dialog.py:367
 msgid "Share link copied to clipboard."
 msgstr "分享链接已复制到剪贴板。"
 
-#: app/ui/components/dialog.py:369
+#: app/ui/components/dialog.py:371
 msgid "Open"
 msgstr "打开"
 
-#: app/ui/components/dialog.py:376 app/ui/components/dialog.py:801
+#: app/ui/components/dialog.py:378 app/ui/components/dialog.py:803
 msgid "Delete"
 msgstr "删除"
 
-#: app/ui/components/dialog.py:387
+#: app/ui/components/dialog.py:389
 msgid "Create new sharing link"
 msgstr "创建新分享链接"
 
-#: app/ui/components/dialog.py:391 app/ui/components/dialog.py:420
-#: app/ui/components/dialog.py:477
+#: app/ui/components/dialog.py:393 app/ui/components/dialog.py:422
+#: app/ui/components/dialog.py:479
 msgid "Expire after"
 msgstr "有效期"
 
-#: app/ui/components/dialog.py:391 app/ui/components/dialog.py:419
+#: app/ui/components/dialog.py:393 app/ui/components/dialog.py:421
 msgid "Expire after days"
 msgstr "有效期（天）"
 
-#: app/ui/components/dialog.py:396
+#: app/ui/components/dialog.py:398
 msgid "Expire date"
 msgstr "过期日期"
 
-#: app/ui/components/dialog.py:401
+#: app/ui/components/dialog.py:403
 msgid "Expire time"
 msgstr "过期时间"
 
-#: app/ui/components/dialog.py:408
+#: app/ui/components/dialog.py:410
 msgid "Expire days"
 msgstr "有效天数"
 
-#: app/ui/components/dialog.py:424 app/ui/components/dialog.py:429
-#: app/ui/pages/share_access.py:61
+#: app/ui/components/dialog.py:426 app/ui/components/dialog.py:431
+#: app/ui/pages/share_access.py:77
 msgid "Access code"
 msgstr "访问码"
 
-#: app/ui/components/dialog.py:426
+#: app/ui/components/dialog.py:428
 msgid "Generate"
 msgstr "生成"
 
-#: app/ui/components/dialog.py:430
+#: app/ui/components/dialog.py:432
 msgid "Will be generated automatically"
 msgstr "将会自动生成"
 
-#: app/ui/components/dialog.py:436
+#: app/ui/components/dialog.py:438
 msgid "Regenerate"
 msgstr "重新生成"
 
-#: app/ui/components/dialog.py:443
+#: app/ui/components/dialog.py:445
 msgid "Access code copied."
 msgstr "访问码已复制。"
 
-#: app/ui/components/dialog.py:473
+#: app/ui/components/dialog.py:475
 #, fuzzy
 msgid ""
 "Maximum number of share links reached. Delete some before creating a new "
 "one."
 msgstr "您已达到分享链接的最大数量。请删除一些分享链接后再创建新的链接。"
 
-#: app/ui/components/dialog.py:479
+#: app/ui/components/dialog.py:481
 msgid "Please select a valid expire time"
 msgstr "请选择有效的过期时间"
 
-#: app/ui/components/dialog.py:490
+#: app/ui/components/dialog.py:492
 msgid "Expire date cannot be before now"
 msgstr "过期日期不能早于当前时间"
 
-#: app/ui/components/dialog.py:537 app/ui/components/dialog.py:748
+#: app/ui/components/dialog.py:539 app/ui/components/dialog.py:750
 #: app/ui/components/table.py:110
 msgid "Name"
 msgstr "名称"
 
-#: app/ui/components/dialog.py:540 app/ui/components/dialog.py:751
-#: app/ui/components/dialog.py:777 app/ui/components/table.py:133
+#: app/ui/components/dialog.py:542 app/ui/components/dialog.py:753
+#: app/ui/components/dialog.py:779 app/ui/components/table.py:133
 #: app/ui/pages/share.py:182
 msgid "Size"
 msgstr "大小"
 
-#: app/ui/components/dialog.py:563 app/ui/components/dialog.py:666
+#: app/ui/components/dialog.py:565 app/ui/components/dialog.py:668
 msgid "Back to parent directory"
 msgstr "返回上级目录"
 
-#: app/ui/components/dialog.py:569
+#: app/ui/components/dialog.py:571
 msgid "No files or directories found."
 msgstr "没有找到文件或目录。"
 
-#: app/ui/components/dialog.py:582
+#: app/ui/components/dialog.py:584
 msgid "Already at the share root directory. Cannot go back further."
 msgstr "已位于根目录，无法继续返回。"
 
-#: app/ui/components/dialog.py:592
+#: app/ui/components/dialog.py:594
 #, fuzzy, python-brace-format
 msgid "Browsing {path}"
 msgstr "浏览 {}"
 
-#: app/ui/components/dialog.py:616 app/ui/components/dialog.py:918
+#: app/ui/components/dialog.py:618 app/ui/components/dialog.py:920
 #: app/ui/components/table.py:436
 msgid "Confirm Download"
 msgstr "确认下载"
 
-#: app/ui/components/dialog.py:617
+#: app/ui/components/dialog.py:619
 #, fuzzy, python-brace-format
 msgid "Are you sure you want to download **`{name}`**?"
 msgstr "确定要下载 **`{}`** 吗？"
 
-#: app/ui/components/dialog.py:652
+#: app/ui/components/dialog.py:654
 msgid "Directory"
 msgstr "目录"
 
-#: app/ui/components/dialog.py:672
+#: app/ui/components/dialog.py:674
 msgid "No directories found."
 msgstr "未找到目录。"
 
-#: app/ui/components/dialog.py:678
+#: app/ui/components/dialog.py:680
 #, fuzzy, python-brace-format
 msgid "Move {items} to {path}"
 msgstr "将 {} 移动到 {}"
 
-#: app/ui/components/dialog.py:740
+#: app/ui/components/dialog.py:742
 #, fuzzy
 msgid "Metadata"
 msgstr "元数据信息"
 
-#: app/ui/components/dialog.py:749
+#: app/ui/components/dialog.py:751
 msgid "Path"
 msgstr "路径"
 
-#: app/ui/components/dialog.py:750 app/ui/components/table.py:117
+#: app/ui/components/dialog.py:752 app/ui/components/table.py:117
 #: app/ui/pages/share.py:181
 msgid "Type"
 msgstr "类型"
 
-#: app/ui/components/dialog.py:753
+#: app/ui/components/dialog.py:755
 msgid "Direct children"
 msgstr "直接子项"
 
-#: app/ui/components/dialog.py:758 app/ui/components/table.py:124
+#: app/ui/components/dialog.py:760 app/ui/components/table.py:124
 #: app/ui/pages/share.py:183
 msgid "Extension"
 msgstr "扩展名"
 
-#: app/ui/components/dialog.py:760
+#: app/ui/components/dialog.py:762
 #, fuzzy
 msgid "Accessed"
 msgstr "访问时间"
 
-#: app/ui/components/dialog.py:763 app/ui/pages/share.py:189
+#: app/ui/components/dialog.py:765 app/ui/pages/share.py:189
 #, fuzzy
 msgid "Created"
 msgstr "创建时间"
 
-#: app/ui/components/dialog.py:766 app/ui/pages/share.py:190
+#: app/ui/components/dialog.py:768 app/ui/pages/share.py:190
 #, fuzzy
 msgid "Modified"
 msgstr "修改时间"
 
-#: app/ui/components/dialog.py:769
+#: app/ui/components/dialog.py:771
 #, fuzzy
 msgid "Status Changed"
 msgstr "状态更新于"
 
-#: app/ui/components/dialog.py:779
+#: app/ui/components/dialog.py:781
 msgid "Click to calculate"
 msgstr "点击计算"
 
-#: app/ui/components/dialog.py:791
+#: app/ui/components/dialog.py:793
 msgid "Calculate directory size"
 msgstr "计算目录大小"
 
-#: app/ui/components/dialog.py:795
+#: app/ui/components/dialog.py:797
 msgid "Directory is empty"
 msgstr "目录为空"
 
-#: app/ui/components/dialog.py:807
+#: app/ui/components/dialog.py:809
 msgid "Move"
 msgstr "移动"
 
-#: app/ui/components/dialog.py:813
+#: app/ui/components/dialog.py:815
 msgid "Rename"
 msgstr "重命名"
 
-#: app/ui/components/dialog.py:821 app/ui/pages/share.py:78
+#: app/ui/components/dialog.py:823 app/ui/pages/share.py:78
 msgid "Share"
 msgstr "分享"
 
-#: app/ui/components/dialog.py:827 app/ui/pages/share.py:230
+#: app/ui/components/dialog.py:829 app/ui/pages/share.py:230
 msgid "Download"
 msgstr "下载"
 
-#: app/ui/components/dialog.py:836
+#: app/ui/components/dialog.py:838
 msgid "Calculating..."
 msgstr "正在计算..."
 
-#: app/ui/components/dialog.py:843
+#: app/ui/components/dialog.py:845
 #, fuzzy, python-brace-format
 msgid "Are you sure you want to delete **`{name}`**"
 msgstr "您确定要删除 **`{}`** 吗？"
 
-#: app/ui/components/dialog.py:851
+#: app/ui/components/dialog.py:853
 #, fuzzy
 msgid "Deleted successfully"
 msgstr "删除成功"
 
-#: app/ui/components/dialog.py:863
+#: app/ui/components/dialog.py:865
 #, fuzzy
 msgid "A file or folder with this name already exists."
 msgstr "已存在同名的文件或文件夹。请使用其他名称。"
 
-#: app/ui/components/dialog.py:867
+#: app/ui/components/dialog.py:869
 #, fuzzy
 msgid "Renamed successfully"
 msgstr "重命名成功"
 
-#: app/ui/components/dialog.py:878
+#: app/ui/components/dialog.py:880
 msgid "Cannot move to the same folder."
 msgstr ""
 
-#: app/ui/components/dialog.py:885
+#: app/ui/components/dialog.py:887
 #, fuzzy, python-brace-format
 msgid "Moved successfully to {path}"
 msgstr "成功移动到 {}"
 
-#: app/ui/components/dialog.py:909
+#: app/ui/components/dialog.py:911
 #, fuzzy
 msgid "Share link copied."
 msgstr "分享链接已复制到剪贴板。"
 
-#: app/ui/components/dialog.py:914
+#: app/ui/components/dialog.py:916
 #, fuzzy, python-brace-format
 msgid ""
 "You selected a folder. It will be compressed into a single tar.gz file. "
 "Download **`{name}`**?"
 msgstr "您选择了一个文件夹，它将被打包为 **tar.gz 文件**供下载。 "
 
-#: app/ui/components/dialog.py:917
+#: app/ui/components/dialog.py:919
 #, python-brace-format
 msgid "Download **`{name}`**?"
 msgstr ""
 
-#: app/ui/components/header.py:22 app/ui/components/header.py:69
-msgid "Logout"
-msgstr "退出登录"
-
-#: app/ui/components/header.py:23
-msgid "Are you sure you want to logout?"
-msgstr "您确定要退出登录吗？"
-
-#: app/ui/components/header.py:31
-msgid "Logged out"
-msgstr "已退出登录"
-
-#: app/ui/components/header.py:38
-msgid "Logout failed"
-msgstr "退出登录失败"
-
-#: app/ui/components/header.py:57 app/ui/pages/profile.py:25
-msgid "Profile"
-msgstr "个人中心"
-
-#: app/ui/components/header.py:64 app/ui/pages/console.py:74
+#: app/ui/components/header.py:36 app/ui/pages/console.py:74
 msgid "Console"
 msgstr "控制台"
 
-#: app/ui/components/header.py:72
+#: app/ui/components/header.py:42 app/ui/pages/profile.py:31
+msgid "Account"
+msgstr ""
+
+#: app/ui/components/header.py:49
 msgid "Login"
 msgstr "登录"
 
@@ -770,17 +799,17 @@ msgid "Create new directory"
 msgstr "新建目录"
 
 #: app/ui/components/table.py:274
-#, fuzzy, python-brace-format
+#, fuzzy
 msgid "Delete selected items"
 msgstr "删除 {} 个项目"
 
 #: app/ui/components/table.py:282
-#, fuzzy, python-brace-format
+#, fuzzy
 msgid "Download selected items"
 msgstr "已删除 {} 个项目"
 
 #: app/ui/components/table.py:290
-#, fuzzy, python-brace-format
+#, fuzzy
 msgid "Move selected items"
 msgstr "已删除 {} 个项目"
 
@@ -1031,10 +1060,9 @@ msgstr "报告问题"
 msgid "You are already signed in"
 msgstr ""
 
-#: app/ui/pages/login.py:63
-#, fuzzy, python-brace-format
-msgid "Welcome to {app_name}"
-msgstr "欢迎使用 {}"
+#: app/ui/pages/login.py:64
+msgid "Sign in to your account"
+msgstr ""
 
 #: app/ui/pages/login.py:79
 #, fuzzy
@@ -1046,26 +1074,97 @@ msgstr "未找到用户"
 msgid "Signed in successfully"
 msgstr "登录成功"
 
-#: app/ui/pages/login.py:93
+#: app/ui/pages/login.py:94
 msgid "Email"
 msgstr "电子邮箱"
 
-#: app/ui/pages/login.py:97
+#: app/ui/pages/login.py:98
 msgid "Invalid email address"
 msgstr "无效的邮箱地址"
 
-#: app/ui/pages/login.py:107
+#: app/ui/pages/login.py:109
 msgid "Password"
 msgstr "密码"
 
-#: app/ui/pages/login.py:117
+#: app/ui/pages/login.py:120
 msgid "Sign in"
 msgstr ""
 
-#: app/ui/pages/profile.py:33
-#, python-brace-format
-msgid "Language changed to {}"
+#: app/ui/pages/profile.py:42
+#, fuzzy
+msgid "Account Information"
+msgstr "未找到用户"
+
+#: app/ui/pages/profile.py:46
+msgid "ID"
+msgstr ""
+
+#: app/ui/pages/profile.py:51
+#, fuzzy
+msgid "Username"
+msgstr "重命名"
+
+#: app/ui/pages/profile.py:58
+msgid "Preferences"
+msgstr ""
+
+#: app/ui/pages/profile.py:64
+msgid "Language"
+msgstr ""
+
+#: app/ui/pages/profile.py:74
+#, fuzzy, python-brace-format
+msgid "Language unchanged"
 msgstr "界面语言已切换为 {}"
+
+#: app/ui/pages/profile.py:78
+#, fuzzy, python-brace-format
+msgid "Language changed"
+msgstr "界面语言已切换为 {}"
+
+#: app/ui/pages/profile.py:87
+msgid "Save language"
+msgstr ""
+
+#: app/ui/pages/profile.py:95
+msgid "Security"
+msgstr ""
+
+#: app/ui/pages/profile.py:98
+#, fuzzy
+msgid "Current password"
+msgstr "密码"
+
+#: app/ui/pages/profile.py:103
+#, fuzzy
+msgid "New password"
+msgstr "密码"
+
+#: app/ui/pages/profile.py:108
+msgid "Confirm new password"
+msgstr ""
+
+#: app/ui/pages/profile.py:115
+msgid "Passwords do not match"
+msgstr ""
+
+#: app/ui/pages/profile.py:126
+#, fuzzy
+msgid "Password changed successfully"
+msgstr "重命名成功"
+
+#: app/ui/pages/profile.py:139
+#, fuzzy
+msgid "Change password"
+msgstr "密码"
+
+#: app/ui/pages/profile.py:147
+msgid "Danger Zone"
+msgstr ""
+
+#: app/ui/pages/profile.py:155
+msgid "Log out from this account"
+msgstr ""
 
 #: app/ui/pages/share.py:50
 #, fuzzy
@@ -1157,55 +1256,50 @@ msgstr "过期日期"
 msgid "Browse"
 msgstr "浏览"
 
-#: app/ui/pages/share_access.py:20
+#: app/ui/pages/share_access.py:15
 #, fuzzy
 msgid "Folder"
 msgstr "文件"
 
-#: app/ui/pages/share_access.py:20
+#: app/ui/pages/share_access.py:15
 #, fuzzy
 msgid "File"
 msgstr "文件"
 
-#: app/ui/pages/share_access.py:33
-#, fuzzy, python-brace-format
-msgid "Enter the access code to view this {item_type}"
-msgstr "输入访问码来访问这个{}"
-
-#: app/ui/pages/share_access.py:40
-#, fuzzy
-msgid "Shared item"
-msgstr "分享日期"
-
-#: app/ui/pages/share_access.py:41
-#, fuzzy, python-brace-format
-msgid "Name: {name}"
-msgstr "名称：{}"
-
-#: app/ui/pages/share_access.py:46
-#, fuzzy, python-brace-format
-msgid "Shared by {user}"
-msgstr "分享来自用户：{}"
-
-#: app/ui/pages/share_access.py:62
-#, fuzzy
-msgid "Enter access code"
-msgstr "访问码"
-
-#: app/ui/pages/share_access.py:72
+#: app/ui/pages/share_access.py:26
 #, fuzzy
 msgid "Access code is required"
 msgstr "访问码已复制。"
 
-#: app/ui/pages/share_access.py:76
-msgid "Access granted"
-msgstr "访问权限已授予"
-
-#: app/ui/pages/share_access.py:86
+#: app/ui/pages/share_access.py:30
 msgid "Invalid access code"
 msgstr "无效的访问码"
 
-#: app/ui/pages/share_access.py:94
+#: app/ui/pages/share_access.py:34
+msgid "Access granted"
+msgstr "访问权限已授予"
+
+#: app/ui/pages/share_access.py:53
+#, fuzzy, python-brace-format
+msgid "Access shared {item_type}"
+msgstr "分享日期"
+
+#: app/ui/pages/share_access.py:57
+#, fuzzy, python-brace-format
+msgid "Enter the access code to continue"
+msgstr "输入访问码来访问这个{}"
+
+#: app/ui/pages/share_access.py:63
+#, fuzzy, python-brace-format
+msgid "Name: {name}"
+msgstr "名称：{}"
+
+#: app/ui/pages/share_access.py:66
+#, fuzzy, python-brace-format
+msgid "Shared by {user}"
+msgstr "分享来自用户：{}"
+
+#: app/ui/pages/share_access.py:86
 msgid "Continue"
 msgstr ""
 
@@ -1343,4 +1437,13 @@ msgstr ""
 
 #~ msgid "Submit"
 #~ msgstr "提交"
+
+#~ msgid "Profile"
+#~ msgstr "个人中心"
+
+#~ msgid "Welcome to {app_name}"
+#~ msgstr "欢迎使用 {}"
+
+#~ msgid "Enter access code"
+#~ msgstr "访问码"
 

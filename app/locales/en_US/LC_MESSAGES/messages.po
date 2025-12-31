@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.0\n"
 "Report-Msgid-Bugs-To: me@qqays.xyz\n"
-"POT-Creation-Date: 2025-12-25 23:39+0800\n"
+"POT-Creation-Date: 2025-12-31 16:31+0800\n"
 "PO-Revision-Date: 2025-12-09 14:17+0800\n"
 "Last-Translator: Jinx <me@qqays.xyz>\n"
 "Language: en_US\n"
@@ -76,6 +76,30 @@ msgstr ""
 
 #: app/security/guards.py:80
 msgid "You don’t have access to this page."
+msgstr ""
+
+#: app/security/password.py:15
+msgid "New password must be at least 8 characters long."
+msgstr ""
+
+#: app/security/password.py:17
+msgid "New password must contain at least one digit."
+msgstr ""
+
+#: app/security/password.py:19
+msgid "New password must contain at least one uppercase letter."
+msgstr ""
+
+#: app/security/password.py:21
+msgid "New password must contain at least one lowercase letter."
+msgstr ""
+
+#: app/security/password.py:23
+msgid "New password must contain at least one special character."
+msgstr ""
+
+#: app/security/password.py:24
+msgid "New password is valid."
 msgstr ""
 
 #: app/services/file_service.py:175
@@ -177,12 +201,15 @@ msgstr ""
 msgid "User already exists"
 msgstr ""
 
-#: app/services/user_service.py:195 app/services/user_service.py:218
-#: app/services/user_service.py:238
+#: app/services/user_service.py:199
+msgid "Invalid current password"
+msgstr ""
+
+#: app/services/user_service.py:222 app/services/user_service.py:242
 msgid "User does not exist"
 msgstr ""
 
-#: app/services/user_service.py:257
+#: app/services/user_service.py:261
 #, python-brace-format
 msgid "Error getting user timezone: {error}"
 msgstr ""
@@ -307,6 +334,22 @@ msgstr ""
 msgid "File or directory not found: {path}"
 msgstr ""
 
+#: app/ui/components/base.py:107 app/ui/pages/profile.py:157
+msgid "Logout"
+msgstr ""
+
+#: app/ui/components/base.py:108
+msgid "Are you sure you want to logout?"
+msgstr ""
+
+#: app/ui/components/base.py:116
+msgid "Logged out"
+msgstr ""
+
+#: app/ui/components/base.py:123
+msgid "Logout failed"
+msgstr ""
+
 #: app/ui/components/clipboard.py:25
 msgid "Failed to copy to clipboard"
 msgstr ""
@@ -316,382 +359,366 @@ msgstr ""
 msgid "Search in {folder}"
 msgstr ""
 
-#: app/ui/components/dialog.py:133
+#: app/ui/components/dialog.py:135
 msgid "No more results"
 msgstr ""
 
-#: app/ui/components/dialog.py:136
+#: app/ui/components/dialog.py:138
 msgid "Try searching in a different folder."
 msgstr ""
 
-#: app/ui/components/dialog.py:140
+#: app/ui/components/dialog.py:142
 #, python-brace-format
 msgid "Current folder: **{path}**"
 msgstr ""
 
-#: app/ui/components/dialog.py:173 app/ui/components/dialog.py:205
-#: app/ui/components/dialog.py:265 app/ui/components/dialog.py:509
-#: app/ui/components/dialog.py:708
+#: app/ui/components/dialog.py:175 app/ui/components/dialog.py:207
+#: app/ui/components/dialog.py:267 app/ui/components/dialog.py:511
+#: app/ui/components/dialog.py:710
 msgid "Confirm"
 msgstr ""
 
-#: app/ui/components/dialog.py:178 app/ui/components/dialog.py:210
-#: app/ui/components/dialog.py:266 app/ui/components/dialog.py:510
-#: app/ui/components/dialog.py:712
+#: app/ui/components/dialog.py:180 app/ui/components/dialog.py:212
+#: app/ui/components/dialog.py:268 app/ui/components/dialog.py:512
+#: app/ui/components/dialog.py:714
 msgid "Cancel"
 msgstr ""
 
-#: app/ui/components/dialog.py:219
+#: app/ui/components/dialog.py:221
 #, python-brace-format
 msgid "Rename {name}"
 msgstr ""
 
-#: app/ui/components/dialog.py:220
+#: app/ui/components/dialog.py:222
 msgid "New name"
 msgstr ""
 
-#: app/ui/components/dialog.py:228
+#: app/ui/components/dialog.py:230
 msgid "Current name"
 msgstr ""
 
-#: app/ui/components/dialog.py:240
+#: app/ui/components/dialog.py:242
 msgid "New name cannot be empty"
 msgstr ""
 
-#: app/ui/components/dialog.py:243
+#: app/ui/components/dialog.py:245
 msgid "New name cannot be the same as the current name"
 msgstr ""
 
-#: app/ui/components/dialog.py:247
+#: app/ui/components/dialog.py:249
 #, python-brace-format
 msgid "File name cannot contain: {chars}"
 msgstr ""
 
-#: app/ui/components/dialog.py:253
+#: app/ui/components/dialog.py:255
 msgid "File name cannot end with a dot"
 msgstr ""
 
-#: app/ui/components/dialog.py:256
+#: app/ui/components/dialog.py:258
 msgid "Confirm Rename"
 msgstr ""
 
-#: app/ui/components/dialog.py:258
+#: app/ui/components/dialog.py:260
 #, python-brace-format
 msgid "Are you sure you want to rename **{old}** to **{new}**?"
 msgstr ""
 
-#: app/ui/components/dialog.py:273
+#: app/ui/components/dialog.py:275
 #, python-brace-format
 msgid "Share {file}"
 msgstr ""
 
-#: app/ui/components/dialog.py:296
+#: app/ui/components/dialog.py:298
 #, python-brace-format
 msgid "{count} sharing links"
 msgstr ""
 
-#: app/ui/components/dialog.py:305 app/ui/components/dialog.py:842
+#: app/ui/components/dialog.py:307 app/ui/components/dialog.py:844
 msgid "Confirm Delete"
 msgstr ""
 
-#: app/ui/components/dialog.py:306
+#: app/ui/components/dialog.py:308
 msgid "Are you sure you want to delete this share link?"
 msgstr ""
 
-#: app/ui/components/dialog.py:318
+#: app/ui/components/dialog.py:320
 msgid "Share link deleted"
 msgstr ""
 
-#: app/ui/components/dialog.py:322
+#: app/ui/components/dialog.py:324
 #, python-brace-format
 msgid "Failed to delete share link: {error}"
 msgstr ""
 
-#: app/ui/components/dialog.py:336
+#: app/ui/components/dialog.py:338
 msgid "Share link"
 msgstr ""
 
-#: app/ui/components/dialog.py:345
+#: app/ui/components/dialog.py:347
 msgid "Public Access"
 msgstr ""
 
-#: app/ui/components/dialog.py:349
+#: app/ui/components/dialog.py:351
 msgid "Expired"
 msgstr ""
 
-#: app/ui/components/dialog.py:351
+#: app/ui/components/dialog.py:353
 msgid "Valid"
 msgstr ""
 
-#: app/ui/components/dialog.py:358 app/ui/pages/share_access.py:51
+#: app/ui/components/dialog.py:360 app/ui/pages/share_access.py:69
 #, python-brace-format
 msgid "Expires at {time}"
 msgstr ""
 
-#: app/ui/components/dialog.py:362 app/ui/components/dialog.py:440
+#: app/ui/components/dialog.py:364 app/ui/components/dialog.py:442
 msgid "Copy"
 msgstr ""
 
-#: app/ui/components/dialog.py:365
+#: app/ui/components/dialog.py:367
 msgid "Share link copied to clipboard."
 msgstr ""
 
-#: app/ui/components/dialog.py:369
+#: app/ui/components/dialog.py:371
 msgid "Open"
 msgstr ""
 
-#: app/ui/components/dialog.py:376 app/ui/components/dialog.py:801
+#: app/ui/components/dialog.py:378 app/ui/components/dialog.py:803
 msgid "Delete"
 msgstr ""
 
-#: app/ui/components/dialog.py:387
+#: app/ui/components/dialog.py:389
 msgid "Create new sharing link"
 msgstr ""
 
-#: app/ui/components/dialog.py:391 app/ui/components/dialog.py:420
-#: app/ui/components/dialog.py:477
+#: app/ui/components/dialog.py:393 app/ui/components/dialog.py:422
+#: app/ui/components/dialog.py:479
 msgid "Expire after"
 msgstr ""
 
-#: app/ui/components/dialog.py:391 app/ui/components/dialog.py:419
+#: app/ui/components/dialog.py:393 app/ui/components/dialog.py:421
 msgid "Expire after days"
 msgstr ""
 
-#: app/ui/components/dialog.py:396
+#: app/ui/components/dialog.py:398
 msgid "Expire date"
 msgstr ""
 
-#: app/ui/components/dialog.py:401
+#: app/ui/components/dialog.py:403
 msgid "Expire time"
 msgstr ""
 
-#: app/ui/components/dialog.py:408
+#: app/ui/components/dialog.py:410
 msgid "Expire days"
 msgstr ""
 
-#: app/ui/components/dialog.py:424 app/ui/components/dialog.py:429
-#: app/ui/pages/share_access.py:61
+#: app/ui/components/dialog.py:426 app/ui/components/dialog.py:431
+#: app/ui/pages/share_access.py:77
 msgid "Access code"
 msgstr ""
 
-#: app/ui/components/dialog.py:426
+#: app/ui/components/dialog.py:428
 msgid "Generate"
 msgstr ""
 
-#: app/ui/components/dialog.py:430
+#: app/ui/components/dialog.py:432
 msgid "Will be generated automatically"
 msgstr ""
 
-#: app/ui/components/dialog.py:436
+#: app/ui/components/dialog.py:438
 msgid "Regenerate"
 msgstr ""
 
-#: app/ui/components/dialog.py:443
+#: app/ui/components/dialog.py:445
 msgid "Access code copied."
 msgstr ""
 
-#: app/ui/components/dialog.py:473
+#: app/ui/components/dialog.py:475
 msgid ""
 "Maximum number of share links reached. Delete some before creating a new "
 "one."
 msgstr ""
 
-#: app/ui/components/dialog.py:479
+#: app/ui/components/dialog.py:481
 msgid "Please select a valid expire time"
 msgstr ""
 
-#: app/ui/components/dialog.py:490
+#: app/ui/components/dialog.py:492
 msgid "Expire date cannot be before now"
 msgstr ""
 
-#: app/ui/components/dialog.py:537 app/ui/components/dialog.py:748
+#: app/ui/components/dialog.py:539 app/ui/components/dialog.py:750
 #: app/ui/components/table.py:110
 msgid "Name"
 msgstr ""
 
-#: app/ui/components/dialog.py:540 app/ui/components/dialog.py:751
-#: app/ui/components/dialog.py:777 app/ui/components/table.py:133
+#: app/ui/components/dialog.py:542 app/ui/components/dialog.py:753
+#: app/ui/components/dialog.py:779 app/ui/components/table.py:133
 #: app/ui/pages/share.py:182
 msgid "Size"
 msgstr ""
 
-#: app/ui/components/dialog.py:563 app/ui/components/dialog.py:666
+#: app/ui/components/dialog.py:565 app/ui/components/dialog.py:668
 msgid "Back to parent directory"
 msgstr ""
 
-#: app/ui/components/dialog.py:569
+#: app/ui/components/dialog.py:571
 msgid "No files or directories found."
 msgstr ""
 
-#: app/ui/components/dialog.py:582
+#: app/ui/components/dialog.py:584
 msgid "Already at the share root directory. Cannot go back further."
 msgstr ""
 
-#: app/ui/components/dialog.py:592
+#: app/ui/components/dialog.py:594
 #, python-brace-format
 msgid "Browsing {path}"
 msgstr ""
 
-#: app/ui/components/dialog.py:616 app/ui/components/dialog.py:918
+#: app/ui/components/dialog.py:618 app/ui/components/dialog.py:920
 #: app/ui/components/table.py:436
 msgid "Confirm Download"
 msgstr ""
 
-#: app/ui/components/dialog.py:617
+#: app/ui/components/dialog.py:619
 #, python-brace-format
 msgid "Are you sure you want to download **`{name}`**?"
 msgstr ""
 
-#: app/ui/components/dialog.py:652
+#: app/ui/components/dialog.py:654
 msgid "Directory"
 msgstr ""
 
-#: app/ui/components/dialog.py:672
+#: app/ui/components/dialog.py:674
 msgid "No directories found."
 msgstr ""
 
-#: app/ui/components/dialog.py:678
+#: app/ui/components/dialog.py:680
 #, python-brace-format
 msgid "Move {items} to {path}"
 msgstr ""
 
-#: app/ui/components/dialog.py:740
+#: app/ui/components/dialog.py:742
 msgid "Metadata"
 msgstr ""
 
-#: app/ui/components/dialog.py:749
+#: app/ui/components/dialog.py:751
 msgid "Path"
 msgstr ""
 
-#: app/ui/components/dialog.py:750 app/ui/components/table.py:117
+#: app/ui/components/dialog.py:752 app/ui/components/table.py:117
 #: app/ui/pages/share.py:181
 msgid "Type"
 msgstr ""
 
-#: app/ui/components/dialog.py:753
+#: app/ui/components/dialog.py:755
 msgid "Direct children"
 msgstr ""
 
-#: app/ui/components/dialog.py:758 app/ui/components/table.py:124
+#: app/ui/components/dialog.py:760 app/ui/components/table.py:124
 #: app/ui/pages/share.py:183
 msgid "Extension"
 msgstr ""
 
-#: app/ui/components/dialog.py:760
+#: app/ui/components/dialog.py:762
 msgid "Accessed"
 msgstr ""
 
-#: app/ui/components/dialog.py:763 app/ui/pages/share.py:189
+#: app/ui/components/dialog.py:765 app/ui/pages/share.py:189
 msgid "Created"
 msgstr ""
 
-#: app/ui/components/dialog.py:766 app/ui/pages/share.py:190
+#: app/ui/components/dialog.py:768 app/ui/pages/share.py:190
 msgid "Modified"
 msgstr ""
 
-#: app/ui/components/dialog.py:769
+#: app/ui/components/dialog.py:771
 msgid "Status Changed"
 msgstr ""
 
-#: app/ui/components/dialog.py:779
+#: app/ui/components/dialog.py:781
 msgid "Click to calculate"
 msgstr ""
 
-#: app/ui/components/dialog.py:791
+#: app/ui/components/dialog.py:793
 msgid "Calculate directory size"
 msgstr ""
 
-#: app/ui/components/dialog.py:795
+#: app/ui/components/dialog.py:797
 msgid "Directory is empty"
 msgstr ""
 
-#: app/ui/components/dialog.py:807
+#: app/ui/components/dialog.py:809
 msgid "Move"
 msgstr ""
 
-#: app/ui/components/dialog.py:813
+#: app/ui/components/dialog.py:815
 msgid "Rename"
 msgstr ""
 
-#: app/ui/components/dialog.py:821 app/ui/pages/share.py:78
+#: app/ui/components/dialog.py:823 app/ui/pages/share.py:78
 msgid "Share"
 msgstr ""
 
-#: app/ui/components/dialog.py:827 app/ui/pages/share.py:230
+#: app/ui/components/dialog.py:829 app/ui/pages/share.py:230
 msgid "Download"
 msgstr ""
 
-#: app/ui/components/dialog.py:836
+#: app/ui/components/dialog.py:838
 msgid "Calculating..."
 msgstr ""
 
-#: app/ui/components/dialog.py:843
+#: app/ui/components/dialog.py:845
 #, python-brace-format
 msgid "Are you sure you want to delete **`{name}`**"
 msgstr ""
 
-#: app/ui/components/dialog.py:851
+#: app/ui/components/dialog.py:853
 msgid "Deleted successfully"
 msgstr ""
 
-#: app/ui/components/dialog.py:863
+#: app/ui/components/dialog.py:865
 msgid "A file or folder with this name already exists."
 msgstr ""
 
-#: app/ui/components/dialog.py:867
+#: app/ui/components/dialog.py:869
 msgid "Renamed successfully"
 msgstr ""
 
-#: app/ui/components/dialog.py:878
+#: app/ui/components/dialog.py:880
 msgid "Cannot move to the same folder."
 msgstr ""
 
-#: app/ui/components/dialog.py:885
+#: app/ui/components/dialog.py:887
 #, python-brace-format
 msgid "Moved successfully to {path}"
 msgstr ""
 
-#: app/ui/components/dialog.py:909
+#: app/ui/components/dialog.py:911
 msgid "Share link copied."
 msgstr ""
 
-#: app/ui/components/dialog.py:914
+#: app/ui/components/dialog.py:916
 #, python-brace-format
 msgid ""
 "You selected a folder. It will be compressed into a single tar.gz file. "
 "Download **`{name}`**?"
 msgstr ""
 
-#: app/ui/components/dialog.py:917
+#: app/ui/components/dialog.py:919
 #, python-brace-format
 msgid "Download **`{name}`**?"
 msgstr ""
 
-#: app/ui/components/header.py:22 app/ui/components/header.py:69
-msgid "Logout"
-msgstr ""
-
-#: app/ui/components/header.py:23
-msgid "Are you sure you want to logout?"
-msgstr ""
-
-#: app/ui/components/header.py:31
-msgid "Logged out"
-msgstr ""
-
-#: app/ui/components/header.py:38
-msgid "Logout failed"
-msgstr ""
-
-#: app/ui/components/header.py:57 app/ui/pages/profile.py:25
-msgid "Profile"
-msgstr ""
-
-#: app/ui/components/header.py:64 app/ui/pages/console.py:74
+#: app/ui/components/header.py:36 app/ui/pages/console.py:74
 msgid "Console"
 msgstr ""
 
-#: app/ui/components/header.py:72
+#: app/ui/components/header.py:42 app/ui/pages/profile.py:31
+msgid "Account"
+msgstr ""
+
+#: app/ui/components/header.py:49
 msgid "Login"
 msgstr ""
 
@@ -986,9 +1013,8 @@ msgstr ""
 msgid "You are already signed in"
 msgstr ""
 
-#: app/ui/pages/login.py:63
-#, python-brace-format
-msgid "Welcome to {app_name}"
+#: app/ui/pages/login.py:64
+msgid "Sign in to your account"
 msgstr ""
 
 #: app/ui/pages/login.py:79
@@ -999,25 +1025,88 @@ msgstr ""
 msgid "Signed in successfully"
 msgstr ""
 
-#: app/ui/pages/login.py:93
+#: app/ui/pages/login.py:94
 msgid "Email"
 msgstr ""
 
-#: app/ui/pages/login.py:97
+#: app/ui/pages/login.py:98
 msgid "Invalid email address"
 msgstr ""
 
-#: app/ui/pages/login.py:107
+#: app/ui/pages/login.py:109
 msgid "Password"
 msgstr ""
 
-#: app/ui/pages/login.py:117
+#: app/ui/pages/login.py:120
 msgid "Sign in"
 msgstr ""
 
-#: app/ui/pages/profile.py:33
-#, python-brace-format
-msgid "Language changed to {}"
+#: app/ui/pages/profile.py:42
+msgid "Account Information"
+msgstr ""
+
+#: app/ui/pages/profile.py:46
+msgid "ID"
+msgstr ""
+
+#: app/ui/pages/profile.py:51
+msgid "Username"
+msgstr ""
+
+#: app/ui/pages/profile.py:58
+msgid "Preferences"
+msgstr ""
+
+#: app/ui/pages/profile.py:64
+msgid "Language"
+msgstr ""
+
+#: app/ui/pages/profile.py:74
+msgid "Language unchanged"
+msgstr ""
+
+#: app/ui/pages/profile.py:78
+msgid "Language changed"
+msgstr ""
+
+#: app/ui/pages/profile.py:87
+msgid "Save language"
+msgstr ""
+
+#: app/ui/pages/profile.py:95
+msgid "Security"
+msgstr ""
+
+#: app/ui/pages/profile.py:98
+msgid "Current password"
+msgstr ""
+
+#: app/ui/pages/profile.py:103
+msgid "New password"
+msgstr ""
+
+#: app/ui/pages/profile.py:108
+msgid "Confirm new password"
+msgstr ""
+
+#: app/ui/pages/profile.py:115
+msgid "Passwords do not match"
+msgstr ""
+
+#: app/ui/pages/profile.py:126
+msgid "Password changed successfully"
+msgstr ""
+
+#: app/ui/pages/profile.py:139
+msgid "Change password"
+msgstr ""
+
+#: app/ui/pages/profile.py:147
+msgid "Danger Zone"
+msgstr ""
+
+#: app/ui/pages/profile.py:155
+msgid "Log out from this account"
 msgstr ""
 
 #: app/ui/pages/share.py:50
@@ -1098,50 +1187,46 @@ msgstr ""
 msgid "Browse"
 msgstr ""
 
-#: app/ui/pages/share_access.py:20
+#: app/ui/pages/share_access.py:15
 msgid "Folder"
 msgstr ""
 
-#: app/ui/pages/share_access.py:20
+#: app/ui/pages/share_access.py:15
 msgid "File"
 msgstr ""
 
-#: app/ui/pages/share_access.py:33
+#: app/ui/pages/share_access.py:26
+msgid "Access code is required"
+msgstr ""
+
+#: app/ui/pages/share_access.py:30
+msgid "Invalid access code"
+msgstr ""
+
+#: app/ui/pages/share_access.py:34
+msgid "Access granted"
+msgstr ""
+
+#: app/ui/pages/share_access.py:53
 #, python-brace-format
-msgid "Enter the access code to view this {item_type}"
+msgid "Access shared {item_type}"
 msgstr ""
 
-#: app/ui/pages/share_access.py:40
-msgid "Shared item"
+#: app/ui/pages/share_access.py:57
+msgid "Enter the access code to continue"
 msgstr ""
 
-#: app/ui/pages/share_access.py:41
+#: app/ui/pages/share_access.py:63
 #, python-brace-format
 msgid "Name: {name}"
 msgstr ""
 
-#: app/ui/pages/share_access.py:46
+#: app/ui/pages/share_access.py:66
 #, python-brace-format
 msgid "Shared by {user}"
 msgstr ""
 
-#: app/ui/pages/share_access.py:62
-msgid "Enter access code"
-msgstr ""
-
-#: app/ui/pages/share_access.py:72
-msgid "Access code is required"
-msgstr ""
-
-#: app/ui/pages/share_access.py:76
-msgid "Access granted"
-msgstr ""
-
 #: app/ui/pages/share_access.py:86
-msgid "Invalid access code"
-msgstr ""
-
-#: app/ui/pages/share_access.py:94
 msgid "Continue"
 msgstr ""
 
@@ -1620,5 +1705,23 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Submit"
+#~ msgstr ""
+
+#~ msgid "Profile"
+#~ msgstr ""
+
+#~ msgid "Welcome to {app_name}"
+#~ msgstr ""
+
+#~ msgid "Language changed to {}"
+#~ msgstr ""
+
+#~ msgid "Enter the access code to view this {item_type}"
+#~ msgstr ""
+
+#~ msgid "Shared item"
+#~ msgstr ""
+
+#~ msgid "Enter access code"
 #~ msgstr ""
 
