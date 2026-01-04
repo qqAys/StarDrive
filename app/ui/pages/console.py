@@ -13,6 +13,7 @@ from app.ui.components.base import BaseLayout
 from app.ui.components.dialog import ConfirmDialog
 from app.ui.components.json_edit import style
 from app.ui.components.notify import notify
+from app.ui.theme import theme
 
 this_page_routes = "/console"
 
@@ -111,7 +112,7 @@ async def console_page(request: Request, client: Client):
                     ),
                 )
 
-                app_reload_button = ui.button(_("Reload app"), color="red")
+                app_reload_button = ui.button(_("Reload app"), color=theme().positive)
 
             @require_user(superuser=True)
             async def on_app_reload_click():
@@ -119,6 +120,7 @@ async def console_page(request: Request, client: Client):
                 confirm = await ConfirmDialog(
                     title=_("Reload app"),
                     message=_("This will restart the application. Continue?"),
+                    warning=True
                 ).open()
 
                 if confirm:

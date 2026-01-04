@@ -9,6 +9,7 @@ from app.security.validators import is_valid_email
 from app.services.user_service import get_user_timezone_from_browser
 from app.ui.components.base import BaseLayout
 from app.ui.components.notify import notify
+from app.ui.theme import theme
 
 this_page_routes = "/login"
 
@@ -59,9 +60,9 @@ async def login_page(redirect_to: str | None = None):
         ):
             # App branding
             ui.image("/android-chrome-512x512.png").classes("w-15 h-15")
-            ui.label(settings.APP_NAME).classes("text-2xl font-bold")
+            ui.label(settings.APP_NAME).classes(f"text-2xl font-bold text-[{theme().text_primary}]")
 
-            ui.label(_("Sign in to your account")).classes("text-sm text-gray-500")
+            ui.label(_("Sign in to your account")).classes(f"text-sm text-[{theme().text_secondary}]")
 
             async def try_login():
                 """Attempt to log in the user with the provided credentials."""

@@ -2,6 +2,7 @@ from nicegui import ui
 
 from app.config import settings
 from app.ui.components.link import link
+from app.ui.theme import theme
 
 
 class Footer:
@@ -14,10 +15,10 @@ class Footer:
     @staticmethod
     def app_info():
         with ui.row().classes(
-            "w-full h-full flex justify-end items-center pr-4 gap-4 text-sm text-gray-500"
+            "w-full h-full flex justify-end items-center pr-4 gap-4 text-sm"
         ):
             ui.label(f"{settings.APP_NAME} v{settings.APP_VERSION}").classes(
-                "text-grey-5 font-bold"
+                f"text-[{theme().text_secondary}] font-bold"
             )
             link(settings.APP_GITHUB_URL, text="GitHub", bold=True, _blank=True)
 

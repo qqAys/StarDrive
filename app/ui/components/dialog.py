@@ -25,6 +25,7 @@ from app.services.file_service import (
 from app.services.user_service import get_user_timezone
 from app.ui.components.clipboard import copy_to_clipboard
 from app.ui.components.notify import notify
+from app.ui.theme import theme
 from app.utils.size import bytes_to_human_readable
 from app.utils.time import timestamp_to_human_readable, utc_now
 
@@ -174,7 +175,7 @@ class InputDialog(Dialog):
                 ui.button(
                     _("Confirm"),
                     on_click=lambda: self.dialog.submit(input_component.value.strip()),
-                    color="green",
+                    color=theme().positive,
                 )
                 ui.button(
                     _("Cancel"),

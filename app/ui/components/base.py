@@ -10,6 +10,7 @@ from app.ui.components.dialog import ConfirmDialog
 from app.ui.components.footer import Footer
 from app.ui.components.header import Header
 from app.ui.components.notify import notify
+from app.ui.theme import theme, set_theme, DefaultTheme
 
 
 class BaseLayout:
@@ -21,8 +22,7 @@ class BaseLayout:
     """
 
     def __init__(self):
-        # Apply the primary color defined in app settings
-        ui.colors(primary=settings.APP_PRIMARY_COLOR)
+        set_theme(DefaultTheme)
 
         if settings.USE_MISANS:
             ui.add_head_html(

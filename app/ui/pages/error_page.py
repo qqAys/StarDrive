@@ -4,6 +4,7 @@ from nicegui import ui
 
 from app.config import settings
 from app.core.i18n import _
+from app.ui.theme import theme, set_theme, DefaultTheme
 
 
 @ui.page("/404")
@@ -27,7 +28,7 @@ def render_404(
         custom_note: An optional additional note to show below the main message.
         back_button: Whether to show a "Back" navigation button.
     """
-    ui.colors(primary=settings.APP_PRIMARY_COLOR)
+    set_theme(DefaultTheme)
     ui.add_head_html(
         """
     <style>
@@ -82,7 +83,7 @@ def render_50x(request_uuid: str, exception: str = ""):
         request_uuid: Unique ID of the failed request (for support tracking).
         exception: Brief description of the error (used in bug report title).
     """
-    ui.colors(primary=settings.APP_PRIMARY_COLOR)
+    set_theme(DefaultTheme)
     ui.add_head_html(
         """
     <style>

@@ -7,6 +7,7 @@ from app.config import settings
 from app.core.i18n import _
 from app.models.user_model import User
 from app.ui.components.fake_button import nav_button
+from app.ui.theme import theme
 
 
 class Header:
@@ -25,7 +26,7 @@ class Header:
         with self.header().classes(
             "fixed h-12 p-2 flex items-center gap-4 z-50"
         ) as header:
-            with ui.link(target="/home/").classes("text-white no-underline"):
+            with ui.link(target="/home/").classes(f"text-[{theme().text_inverted}] no-underline"):
                 ui.label(settings.APP_NAME).classes("font-bold")
 
             ui.space()
