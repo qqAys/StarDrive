@@ -43,7 +43,6 @@ class Config(BaseSettings):
     APP_SECRET: str = None
 
     APP_DEFAULT_LANGUAGE: str = "en-US"
-    APP_PRIMARY_COLOR: str = "#424242"
 
     APP_INIT_USER: EmailStr = "admin@stardrive.abc"
 
