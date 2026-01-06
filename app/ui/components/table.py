@@ -24,7 +24,7 @@ from app.ui.components.dialog import (
     MoveDialog,
     InputDialog,
     SearchDialog,
-    MetadataDialog,
+    MetadataDialog, ImageDialog,
 )
 from app.ui.components.notify import notify
 from app.utils.size import bytes_to_human_readable
@@ -325,7 +325,7 @@ class FileBrowserTable:
                 "body-cell-action",
                 f"""
                 <q-td :props="props">
-                    <q-btn icon="info" @click="() => $parent.$emit('info', props.row)" flat dense><q-tooltip>{_("Show file information")}</q-tooltip></q-btn>
+                    <q-btn icon="info" @click.stop="$parent.$emit('info', props.row)"  flat dense><q-tooltip>{_("Show file information")}</q-tooltip></q-btn>
                 </q-td>
             """,
             )
@@ -410,7 +410,7 @@ class FileBrowserTable:
             str(self.current_path), message=_("Path copied to clipboard.")
         )
 
-    def handle_row_click(self, e: events.GenericEventArguments):
+    async def handle_row_click(self, e: events.GenericEventArguments):
         click_event_params, click_row, click_index = e.args
 
         # In select mode
@@ -419,6 +419,10 @@ class FileBrowserTable:
                 self.browser_table.selected.remove(click_row)
             else:
                 self.browser_table.selected.append(click_row)
+        # In view mode
+        else:
+            if click_row["extension"].lower() in ImageDialog.ALLOWED_EXTENSIONS:
+                await ImageDialog(self.file_manager, Path(click_row["path"])).open()
 
     async def handle_row_double_click(self, e: events.GenericEventArguments):
         if self.is_select_mode:
