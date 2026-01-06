@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional, Callable
 
 from nicegui import ui, events
+from nicegui.events import KeyEventArguments
 
 from app.core.i18n import _
 from app.models.user_model import User
@@ -20,7 +21,7 @@ from app.services.file_service import (
     delete_download_link,
     StorageManager,
     get_file_icon,
-    generate_download_url,
+    generate_download_url, get_image_info,
 )
 from app.services.user_service import get_user_timezone
 from app.ui.components.clipboard import copy_to_clipboard
@@ -928,3 +929,50 @@ class MetadataDialog(Dialog):
             )
             if download_url:
                 ui.navigate.to(download_url)
+
+class ImageDialog(Dialog):
+
+    ALLOWED_EXTENSIONS = [
+            ".jpeg",
+            ".jpg",
+            ".png",
+            ".svg",
+            ".gif",
+            ".webp",
+        ]
+
+    def __init__(self, file_manager: StorageManager, image_path: Path):
+        super().__init__()
+        self.file_manager = file_manager
+        self.image_path = self.file_manager.get_full_path(str(image_path))
+
+        self.image_info = get_image_info(self.image_path, str(image_path))
+
+        self.dialog = ui.dialog().props(self.dialog_props)
+
+        self.keyboard = ui.keyboard(on_key=self.handle_key)
+        self.keyboard.active = True
+
+    def handle_key(self, e: KeyEventArguments):
+        if e.key.space:
+            self.dialog.submit(None)
+
+    async def open(self):
+        with self.dialog, ui.card().tight().classes("w-[1200px] max-w-[90vw]"):
+            # 图片展示
+            ui.image(self.image_path).classes("w-full max-h-[600px] object-contain")
+            with ui.card_section():
+                with ui.row():
+                    for k, v in self.image_info.items():
+                        ui.label(f"{k}: {v}").classes("break-words")
+
+            # GPS地图列（可选显示）
+            if "GPS" in self.image_info:
+                gps_info = self.image_info["GPS"]
+                image_map = ui.leaflet(
+                    center=(gps_info["Latitude"], gps_info["Longitude"]),
+                    zoom=15
+                ).classes("w-[350px] h-[300px]")
+                image_map.marker(latlng=image_map.center)
+
+        return await self.dialog

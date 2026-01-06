@@ -2,6 +2,7 @@ import asyncio
 import sys
 import tarfile
 from datetime import datetime, timedelta
+from numbers import Number
 from pathlib import Path
 from typing import (
     Dict,
@@ -9,9 +10,11 @@ from typing import (
     Generator,
     AsyncIterator,
     List,
-    AsyncGenerator,
+    AsyncGenerator, Any,
 )
 
+from PIL import Image
+from PIL.ExifTags import TAGS, GPSTAGS
 from nicegui import app
 from sqlalchemy import select
 
@@ -28,6 +31,7 @@ from app.services.local_db_service import get_db_context
 from app.storage.base import StorageBackend
 from app.storage.local_storage import LocalStorage
 from app.ui.components.notify import notify
+from app.utils.size import bytes_to_human_readable
 
 
 # storage_key = "temp_public_download_key"
@@ -41,7 +45,7 @@ def get_file_icon(type_: str, extension: str):
     if not extension.strip():
         return "❓"
     else:
-        extension = extension.replace(".", "")
+        extension = extension.replace(".", "").lower()
 
         # --- Documents / Text Files ---
         if extension in ["txt", "md", "log", "cfg", "ini", "conf"]:
@@ -584,3 +588,185 @@ def validate_filename(name: str, allow_subdirs: bool = False) -> tuple[bool, str
                 )
 
     return True, _("Name is valid.")
+
+def bytes_to_human_readable(size: int) -> str:
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if size < 1024:
+            return f"{size:.2f} {unit}"
+        size /= 1024
+    return f"{size:.2f} PB"
+
+
+def rational_to_float(value):
+    """EXIF Rational / number → float | None"""
+    if value is None:
+        return None
+    try:
+        if hasattr(value, "numerator") and hasattr(value, "denominator"):
+            return value.numerator / value.denominator if value.denominator else None
+        if isinstance(value, Number):
+            return float(value)
+    except Exception:
+        pass
+    return None
+
+
+def format_exposure_time(value):
+    t = rational_to_float(value)
+    if not t or t <= 0:
+        return None
+    if t >= 1:
+        return f"{t:.1f} s"
+    return f"1/{round(1 / t)} s"
+
+
+# ============================================================
+# GPS helpers
+# ============================================================
+
+def dms_to_decimal(dms, ref):
+    """(deg, min, sec) + N/S/E/W → decimal degrees"""
+    if not dms or not ref:
+        return None
+    try:
+        deg, minute, sec = dms
+        value = float(deg) + float(minute) / 60 + float(sec) / 3600
+        if ref in ("S", "W"):
+            value = -value
+        return round(value, 6)
+    except Exception:
+        return None
+
+
+def extract_gps_coordinates(gps: dict) -> tuple[float | None, float | None]:
+    lat = dms_to_decimal(
+        gps.get("GPSLatitude"),
+        gps.get("GPSLatitudeRef"),
+    )
+    lon = dms_to_decimal(
+        gps.get("GPSLongitude"),
+        gps.get("GPSLongitudeRef"),
+    )
+    return lat, lon
+
+
+def bearing_to_text(deg):
+    if deg is None:
+        return None
+    dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    return dirs[int((deg + 22.5) // 45) % 8]
+
+
+def gps_to_ui_fields(gps: dict) -> dict:
+    lat, lon = extract_gps_coordinates(gps)
+
+    direction = gps.get("GPSImgDirection")
+    direction_text = bearing_to_text(direction)
+
+    ui = {
+        "Latitude": lat,
+        "Longitude": lon,
+        "Altitude": (
+            f"{float(gps.get('GPSAltitude')):.1f} m"
+            if gps.get("GPSAltitude") is not None else None
+        ),
+        "Speed": (
+            f"{float(gps.get('GPSSpeed')):.1f} km/h"
+            if gps.get("GPSSpeed") is not None else None
+        ),
+        "Direction": (
+            f"{float(direction):.1f}° ({direction_text})"
+            if direction is not None else None
+        ),
+        "Position accuracy": (
+            f"±{float(gps.get('GPSHPositioningError')):.1f} m"
+            if gps.get("GPSHPositioningError") is not None else None
+        ),
+    }
+
+    return {k: v for k, v in ui.items() if v not in (None, "", {}, [])}
+
+
+# ============================================================
+# Main
+# ============================================================
+
+def get_image_info(image_path: Path, display_name: str) -> dict:
+    image_path = Path(image_path)
+
+    info: Dict[str, Any] = {
+        "File name": image_path.name,
+        "Path": display_name,
+        "File size": bytes_to_human_readable(image_path.stat().st_size),
+    }
+
+    try:
+        with Image.open(image_path) as img:
+            # 基础图像信息
+            info.update({
+                "Format": img.format,
+                "Size": f"{img.width} × {img.height}",
+                "Color mode": img.mode,
+            })
+
+            if "dpi" in img.info:
+                info["DPI"] = img.info["dpi"]
+
+            exif_raw = img.getexif()
+            if not exif_raw:
+                return info
+
+            # EXIF → 可读字典
+            exif = {
+                TAGS.get(tag_id, tag_id): value
+                for tag_id, value in exif_raw.items()
+            }
+
+            # 拍摄信息
+            info.update({
+                "Camera make": exif.get("Make"),
+                "Camera model": exif.get("Model"),
+                "Lens model": exif.get("LensModel"),
+                "Software": exif.get("Software"),
+                "Date taken": exif.get("DateTimeOriginal"),
+                "Date modified": exif.get("DateTime"),
+            })
+
+            # 曝光参数
+            info.update({
+                "Exposure time": format_exposure_time(exif.get("ExposureTime")),
+                "F number": (
+                    f"f/{rational_to_float(exif.get('FNumber'))}"
+                    if exif.get("FNumber") else None
+                ),
+                "ISO": exif.get("ISOSpeedRatings"),
+                "Focal length": (
+                    f"{rational_to_float(exif.get('FocalLength'))} mm"
+                    if exif.get("FocalLength") else None
+                ),
+                "Exposure bias": rational_to_float(exif.get("ExposureBiasValue")),
+                "Metering mode": exif.get("MeteringMode"),
+                "Flash": exif.get("Flash"),
+                "White balance": exif.get("WhiteBalance"),
+            })
+
+            # GPS（原始 + UI 友好）
+            try:
+                gps_ifd = exif_raw.get_ifd(0x8825)
+                if gps_ifd:
+                    gps_raw = {
+                        GPSTAGS.get(k, k): v
+                        for k, v in gps_ifd.items()
+                    }
+                    info["GPS"] = gps_to_ui_fields(gps_raw)
+            except Exception:
+                pass
+
+    except Exception as e:
+        info["Error"] = str(e)
+
+    # UI 友好：清理空值
+    return {
+        k: v for k, v in info.items()
+        if v not in (None, "", {}, [])
+    }
