@@ -760,7 +760,7 @@ class MetadataDialog(Dialog):
                         ),
                         _(
                             "Extension"
-                        ): f"{self.metadata.extension} ({get_file_icon(self.metadata.type, self.metadata.extension)})",
+                        ): self.metadata.extension or "-",
                         _("Accessed"): timestamp_to_human_readable(
                             self.metadata.accessed_at, self.user_timezone
                         ),
@@ -915,7 +915,7 @@ class MetadataDialog(Dialog):
     async def on_download_button_click(self):
         if self.metadata.is_dir:
             message = _(
-                "You selected a folder. It will be compressed into a single tar.gz file. Download **`{name}`**?"
+                "You selected a folder. It will be compressed into a **single tar.gz file**. Download **`{name}.tar.gz`**?"
             ).format(name=self.metadata.name)
         else:
             message = _("Download **`{name}`**?").format(name=self.metadata.name)
