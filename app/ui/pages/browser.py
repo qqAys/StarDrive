@@ -66,6 +66,8 @@ async def index():
         user_last_path = get_user_last_path()
         initial_path = "" if user_last_path is None else f"./{user_last_path}"
 
+        footer_container = footer.inject()
+
         # Initialize and render the file browser
         file_browser_component = FileBrowserTable(
             file_manager=file_manager,
@@ -74,5 +76,6 @@ async def index():
             upload_component=upload_component,
             upload_dialog=upload_dialog,
             upload_dialog_close_button=dialog_close_button,
+            footer_container=footer_container,
         )
         await file_browser_component.refresh()

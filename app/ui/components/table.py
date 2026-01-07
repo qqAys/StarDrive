@@ -76,6 +76,7 @@ class FileBrowserTable:
         upload_component: ui.upload = None,
         upload_dialog: ui.dialog = None,
         upload_dialog_close_button: ui.button = None,
+        footer_container: Optional[ui.element] = None,
     ):
 
         self.file_manager = file_manager
@@ -112,6 +113,8 @@ class FileBrowserTable:
 
         self.has_dialog_open = False
         self.keyboard_event_registered = False
+
+        self.footer_container = footer_container
 
         self.file_list = []
 
@@ -220,7 +223,7 @@ class FileBrowserTable:
                         ).props("flat dense")
                         home_button.tooltip(_("Navigate to home directory"))
 
-                        ui.icon("chevron_right").classes("text-xl text-gray-500 mx-0.5")
+                        ui.icon("chevron_right").classes("text-xl mx-0.5")
 
                     # Breadcrumb navigation - build cumulative path
                     MAX_DISPLAY_PARTS = 3
@@ -257,9 +260,7 @@ class FileBrowserTable:
                                     ),
                                 ).props(f"no-caps flat dense")
                                 # Separator after button
-                                ui.icon("chevron_right").classes(
-                                    "text-xl text-gray-500 mx-0.5"
-                                )
+                                ui.icon("chevron_right").classes("text-xl mx-0.5")
                             else:
                                 ui.button(p, on_click=self.copy_path_clipboard).props(
                                     "no-caps flat dense"
@@ -267,9 +268,7 @@ class FileBrowserTable:
 
                         elif index == 1 and len(path_parts) > MAX_DISPLAY_PARTS:
                             ui.button("...").props("flat dense disable")
-                            ui.icon("chevron_right").classes(
-                                "text-xl text-gray-500 mx-0.5"
-                            )
+                            ui.icon("chevron_right").classes("text-xl mx-0.5")
 
             with self.browser_table.add_slot("top-right"):
                 with ui.row().classes("items-center gap-4"):
@@ -349,7 +348,7 @@ class FileBrowserTable:
                 "body-cell-action",
                 f"""
                 <q-td :props="props">
-                    <q-btn icon="info" @click.stop="$parent.$emit('info', props.row)"  flat dense><q-tooltip>{_("Show file information")}</q-tooltip></q-btn>
+                    <q-btn icon="info" @click.stop="$parent.$emit('info', props.row)" class="text-primary" flat dense><q-tooltip>{_("Show file information")}</q-tooltip></q-btn>
                 </q-td>
             """,
             )
@@ -441,6 +440,8 @@ class FileBrowserTable:
     async def handle_row_click(self, e: events.GenericEventArguments):
         click_event_params, click_row, click_index = e.args
 
+        self.footer_container.clear()
+
         # In select mode
         if self.is_select_mode:
             if click_row in self.browser_table.selected:
@@ -450,6 +451,22 @@ class FileBrowserTable:
         # In view mode
         else:
             self.browser_table.selected = [click_row]
+
+            shortcuts = [
+                (_("↑ / ↓: Move Selection"), True),
+                (_("Space: Quick Look"), click_row["type"] != "dir"),
+            ]
+
+            with self.footer_container:
+                with ui.row().classes("gap-2 text-sm items-center"):
+                    first_shown = True
+                    for label, show in shortcuts:
+                        if not show:
+                            continue
+                        if not first_shown:
+                            ui.label("|").classes("text-gray-400")
+                        ui.label(label)
+                        first_shown = False
 
     async def handle_row_double_click(self, e: events.GenericEventArguments):
         if self.is_select_mode:
