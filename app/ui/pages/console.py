@@ -112,7 +112,7 @@ async def console_page(request: Request, client: Client):
                     ),
                 )
 
-                app_reload_button = ui.button(_("Reload app"), color=theme().positive)
+                app_reload_button = ui.button(_("Reload app"), color=theme().negative)
 
             @require_user(superuser=True)
             async def on_app_reload_click():
