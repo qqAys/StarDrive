@@ -1,8 +1,7 @@
 from nicegui import ui
-from nicegui.events import ValueChangeEventArguments
 
-from app.ui.theme.default import DefaultTheme
 from app.ui.theme.base import Theme
+from app.ui.theme.default import DefaultTheme
 
 _current_theme = DefaultTheme
 

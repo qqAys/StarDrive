@@ -4,7 +4,7 @@ from nicegui import ui
 
 from app.config import settings
 from app.core.i18n import _
-from app.ui.theme import theme, set_theme, DefaultTheme
+from app.ui.theme import set_theme, DefaultTheme
 
 
 @ui.page("/404")
