@@ -1,5 +1,7 @@
+import time
+from functools import wraps
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
 
 from nicegui import ui, events
 from nicegui.events import GenericEventArguments
@@ -25,7 +27,8 @@ from app.ui.components.dialog import (
     MoveDialog,
     InputDialog,
     SearchDialog,
-    MetadataDialog, ImageDialog,
+    MetadataDialog,
+    ImageDialog,
 )
 from app.ui.components.notify import notify
 from app.utils.size import bytes_to_human_readable
@@ -44,6 +47,23 @@ size_sort_js = """(a, b, rowA, rowB) => {
 }"""
 
 MultiPartParser.spool_max_size = settings.MULTIPARTPARSER_SPOOL_MAX_SIZE
+
+
+def key_event_debounce(wait_time: float):
+    def decorator(func):
+        last_called = 0
+
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            nonlocal last_called
+            now = time.time()
+            if now - last_called >= wait_time:
+                last_called = now
+                return await func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 class FileBrowserTable:
@@ -91,6 +111,7 @@ class FileBrowserTable:
         self.on_upload = False
 
         self.has_dialog_open = False
+        self.keyboard_event_registered = False
 
         self.file_list = []
 
@@ -163,7 +184,7 @@ class FileBrowserTable:
             self.browser_table = ui.table(
                 columns=columns,
                 rows=[],
-                row_key="name",
+                row_key="raw_name",
                 title=_("File List"),
                 pagination=0,
                 column_defaults={
@@ -363,7 +384,9 @@ class FileBrowserTable:
 
             self.browser_table.on("info", self.handle_info_button_click)
 
-            ui.on("keydown.space.prevent", self.handle_keyboard_event)
+            if not self.keyboard_event_registered:
+                ui.on("keydown.prevent", self.handle_keyboard_event)
+                self.keyboard_event_registered = True
 
             self.browser_table.update()
 
@@ -719,16 +742,115 @@ class FileBrowserTable:
         else:
             notify.error(_("Failed to get file metadata"))
 
+    async def _get_dom_rows(self) -> list[str]:
+        return await ui.run_javascript(
+            """
+            return Array.from(document.querySelectorAll('tbody tr'))
+                .map(tr => {
+                    const b = tr.querySelector('b');
+                    return b ? b.innerText.trim() : null;
+                });
+        """
+        )
+
+    def _row_by_name(self, name: str) -> dict | None:
+        for row in self.browser_table.rows:
+            if row["raw_name"] == name:
+                return row
+        return None
+
     async def handle_keyboard_event(self, e: GenericEventArguments):
+        pressed_key = e.args.get("code")
+        match pressed_key:
+            case "Space":
+                await self.handle_keyboard_space_event()
+            case "ArrowUp":
+                await self.handle_keyboard_arrow_event("up")
+            case "ArrowDown":
+                await self.handle_keyboard_arrow_event("down")
+
+    async def handle_keyboard_space_event(self):
         if not self.has_dialog_open:
             try:
                 self.has_dialog_open = True
                 table_selected = self.browser_table.selected
                 if table_selected:
                     table_selected = table_selected[0]
-                    if table_selected["extension"].lower() in ImageDialog.ALLOWED_EXTENSIONS:
-                        await ImageDialog(self.file_manager, Path(table_selected["path"])).open()
+                    if (
+                        table_selected["extension"].lower()
+                        in ImageDialog.ALLOWED_EXTENSIONS
+                    ):
+                        await ImageDialog(
+                            self.file_manager, Path(table_selected["path"])
+                        ).open()
                         self.has_dialog_open = False
             finally:
                 self.has_dialog_open = False
 
+    async def handle_keyboard_arrow_event(self, action: Literal["up", "down"]):
+        names_in_order = await self._get_dom_rows()
+        if not names_in_order:
+            return
+
+        selected = self.browser_table.selected
+        current_name = selected[0]["raw_name"] if selected else None
+
+        try:
+            idx = names_in_order.index(current_name)
+        except ValueError:
+            idx = -1
+
+        if idx == -1 and action == "up":
+            return
+        elif idx == len(names_in_order) - 1 and action == "down":
+            return
+
+        if action == "down":
+            new_idx = 0 if idx == -1 else min(idx + 1, len(names_in_order) - 1)
+        else:
+            new_idx = len(names_in_order) - 1 if idx == -1 else max(idx - 1, 0)
+
+        target_name = names_in_order[new_idx]
+        target_row = self._row_by_name(target_name)
+
+        if target_row:
+            self.browser_table.selected = [target_row]
+            await self._scroll_dom_row_into_view(new_idx)
+
+    @key_event_debounce(0.3)
+    async def _scroll_dom_row_into_view(self, index: int):
+        await ui.run_javascript(
+            f"""
+            (function() {{
+                const rows = document.querySelectorAll('tbody tr');
+                const row = rows[{index}];
+                if (!row) return;
+
+                const rowRect = row.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                const margin = 10;
+
+                // 获取 Header 和 Footer 的高度
+                const header = document.querySelector('header') || document.querySelector('.q-header');
+                const footer = document.querySelector('footer') || document.querySelector('.q-footer');
+
+                const headerHeight = header ? header.offsetHeight : 0;
+                const footerHeight = footer ? footer.offsetHeight : 0;
+
+                // 定义安全视口区域
+                const safeTop = headerHeight + margin;
+                const safeBottom = viewportHeight - footerHeight - margin;
+
+                // 如果 row 的底部超出了安全区域的底部
+                if (rowRect.bottom > safeBottom) {{
+                    const scrollBy = rowRect.bottom - safeBottom;
+                    window.scrollBy({{ top: scrollBy, behavior: 'smooth' }});
+                }}
+                // 如果 row 的顶部超出了安全区域的顶部
+                else if (rowRect.top < safeTop) {{
+                    const scrollBy = rowRect.top - safeTop;
+                    window.scrollBy({{ top: scrollBy, behavior: 'smooth' }});
+                }}
+            }})();
+        """
+        )
