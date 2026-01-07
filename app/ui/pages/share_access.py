@@ -78,7 +78,7 @@ async def render_share_access_page(
                 )
                 .on("keyup.enter", verify_access_code)
                 .classes("w-full")
-                .props("autofocus rounded outlined dense")
+                .props("autofocus dense")
             )
 
             # Continue button
@@ -87,4 +87,4 @@ async def render_share_access_page(
                 on_click=verify_access_code,
             ).classes(
                 "w-full mt-6 py-2"
-            ).props("rounded unelevated")
+            )
