@@ -168,7 +168,7 @@ async def index(
 
         icon = get_file_icon(file_info.type, file_info.extension)
 
-        with ui.card().classes("w-full max-w-3xl mx-auto p-6 gap-4"):
+        with ui.card().classes("w-full absolute-center max-w-3xl"):
             # Header: icon + filename
             with ui.row().classes("items-center gap-3"):
                 ui.icon(icon).classes("text-4xl text-primary")
@@ -201,7 +201,7 @@ async def index(
             if isinstance(file_info, DirMetadata):
                 ui.separator()
                 with ui.column().classes("w-full gap-2"):
-                    _kv(_("Items"), str(file_info.num_children))
+                    _kv(_("Direct children"), str(file_info.num_children))
 
             ui.separator()
 
