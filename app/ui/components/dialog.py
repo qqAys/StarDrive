@@ -955,8 +955,9 @@ class ImageDialog(Dialog):
         self.keyboard.active = True
 
     def handle_key(self, e: KeyEventArguments):
-        if e.key.space:
-            self.dialog.submit(None)
+        if e.action.keydown:
+            if e.key.space:
+                self.dialog.submit(None)
 
     async def open(self):
         with self.dialog, ui.card().tight().classes("w-[1200px] max-w-[90vw]"):
