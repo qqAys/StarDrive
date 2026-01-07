@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 from nicegui import ui, events
+from nicegui.events import GenericEventArguments
 from starlette.formparsers import MultiPartParser
 
 from app.config import settings
@@ -88,6 +89,8 @@ class FileBrowserTable:
         self.upload_dialog_close_button = upload_dialog_close_button
         self.upload_dialog_close_button.on_click(self.handle_upload_button_click)
         self.on_upload = False
+
+        self.has_dialog_open = False
 
         self.file_list = []
 
@@ -360,6 +363,8 @@ class FileBrowserTable:
 
             self.browser_table.on("info", self.handle_info_button_click)
 
+            ui.on("keydown.space.prevent", self.handle_keyboard_event)
+
             self.browser_table.update()
 
             if self.pending_display_metadata_path is not None:
@@ -421,8 +426,7 @@ class FileBrowserTable:
                 self.browser_table.selected.append(click_row)
         # In view mode
         else:
-            if click_row["extension"].lower() in ImageDialog.ALLOWED_EXTENSIONS:
-                await ImageDialog(self.file_manager, Path(click_row["path"])).open()
+            self.browser_table.selected = [click_row]
 
     async def handle_row_double_click(self, e: events.GenericEventArguments):
         if self.is_select_mode:
@@ -711,5 +715,20 @@ class FileBrowserTable:
                 self.current_path,
                 self.refresh,
             ).open()
+            return
         else:
             notify.error(_("Failed to get file metadata"))
+
+    async def handle_keyboard_event(self, e: GenericEventArguments):
+        if not self.has_dialog_open:
+            try:
+                self.has_dialog_open = True
+                table_selected = self.browser_table.selected
+                if table_selected:
+                    table_selected = table_selected[0]
+                    if table_selected["extension"].lower() in ImageDialog.ALLOWED_EXTENSIONS:
+                        await ImageDialog(self.file_manager, Path(table_selected["path"])).open()
+                        self.has_dialog_open = False
+            finally:
+                self.has_dialog_open = False
+
