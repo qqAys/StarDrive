@@ -85,6 +85,4 @@ async def render_share_access_page(
             ui.button(
                 _("Continue"),
                 on_click=verify_access_code,
-            ).classes(
-                "w-full mt-6 py-2"
-            )
+            ).classes("w-full mt-6 py-2")

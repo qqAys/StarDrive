@@ -25,4 +25,3 @@ def set_theme(theme):
 
 def theme():
     return _current_theme
-

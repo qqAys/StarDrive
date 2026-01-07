@@ -21,7 +21,8 @@ from app.services.file_service import (
     delete_download_link,
     StorageManager,
     get_file_icon,
-    generate_download_url, get_image_info,
+    generate_download_url,
+    get_image_info,
 )
 from app.services.user_service import get_user_timezone
 from app.ui.components.clipboard import copy_to_clipboard
@@ -758,9 +759,7 @@ class MetadataDialog(Dialog):
                             if self.is_dir
                             else {}
                         ),
-                        _(
-                            "Extension"
-                        ): self.metadata.extension or "-",
+                        _("Extension"): self.metadata.extension or "-",
                         _("Accessed"): timestamp_to_human_readable(
                             self.metadata.accessed_at, self.user_timezone
                         ),
@@ -931,16 +930,17 @@ class MetadataDialog(Dialog):
             if download_url:
                 ui.navigate.to(download_url)
 
+
 class ImageDialog(Dialog):
 
     ALLOWED_EXTENSIONS = [
-            ".jpeg",
-            ".jpg",
-            ".png",
-            ".svg",
-            ".gif",
-            ".webp",
-        ]
+        ".jpeg",
+        ".jpg",
+        ".png",
+        ".svg",
+        ".gif",
+        ".webp",
+    ]
 
     def __init__(self, file_manager: StorageManager, image_path: Path):
         super().__init__()
@@ -972,8 +972,7 @@ class ImageDialog(Dialog):
             if "GPS" in self.image_info:
                 gps_info = self.image_info["GPS"]
                 image_map = ui.leaflet(
-                    center=(gps_info["Latitude"], gps_info["Longitude"]),
-                    zoom=15
+                    center=(gps_info["Latitude"], gps_info["Longitude"]), zoom=15
                 ).classes("w-[350px] h-[300px]")
                 image_map.marker(latlng=image_map.center)
 

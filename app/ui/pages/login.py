@@ -60,9 +60,13 @@ async def login_page(redirect_to: str | None = None):
         ):
             # App branding
             ui.image("/android-chrome-512x512.png").classes("w-15 h-15")
-            ui.label(settings.APP_NAME).classes(f"text-2xl font-bold text-[{theme().text_primary}]")
+            ui.label(settings.APP_NAME).classes(
+                f"text-2xl font-bold text-[{theme().text_primary}]"
+            )
 
-            ui.label(_("Sign in to your account")).classes(f"text-sm text-[{theme().text_secondary}]")
+            ui.label(_("Sign in to your account")).classes(
+                f"text-sm text-[{theme().text_secondary}]"
+            )
 
             async def try_login():
                 """Attempt to log in the user with the provided credentials."""

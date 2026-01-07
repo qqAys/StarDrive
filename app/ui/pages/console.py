@@ -120,7 +120,7 @@ async def console_page(request: Request, client: Client):
                 confirm = await ConfirmDialog(
                     title=_("Reload app"),
                     message=_("This will restart the application. Continue?"),
-                    warning=True
+                    warning=True,
                 ).open()
 
                 if confirm:

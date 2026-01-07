@@ -36,7 +36,9 @@ class Link(ui.link):
         super().__init__(text=text or "", target=href, new_tab=_blank)
 
         # Apply base styling
-        self.classes(f"text-[{theme().text_secondary}] items-center no-wrap no-underline")
+        self.classes(
+            f"text-[{theme().text_secondary}] items-center no-wrap no-underline"
+        )
 
         if bold and text:
             self.classes("font-bold")

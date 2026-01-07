@@ -10,7 +10,8 @@ from typing import (
     Generator,
     AsyncIterator,
     List,
-    AsyncGenerator, Any,
+    AsyncGenerator,
+    Any,
 )
 
 from PIL import Image
@@ -589,6 +590,7 @@ def validate_filename(name: str, allow_subdirs: bool = False) -> tuple[bool, str
 
     return True, _("Name is valid.")
 
+
 def bytes_to_human_readable(size: int) -> str:
     for unit in ("B", "KB", "MB", "GB", "TB"):
         if size < 1024:
@@ -623,6 +625,7 @@ def format_exposure_time(value):
 # ============================================================
 # GPS helpers
 # ============================================================
+
 
 def dms_to_decimal(dms, ref):
     """(deg, min, sec) + N/S/E/W → decimal degrees"""
@@ -668,19 +671,23 @@ def gps_to_ui_fields(gps: dict) -> dict:
         "Longitude": lon,
         "Altitude": (
             f"{float(gps.get('GPSAltitude')):.1f} m"
-            if gps.get("GPSAltitude") is not None else None
+            if gps.get("GPSAltitude") is not None
+            else None
         ),
         "Speed": (
             f"{float(gps.get('GPSSpeed')):.1f} km/h"
-            if gps.get("GPSSpeed") is not None else None
+            if gps.get("GPSSpeed") is not None
+            else None
         ),
         "Direction": (
             f"{float(direction):.1f}° ({direction_text})"
-            if direction is not None else None
+            if direction is not None
+            else None
         ),
         "Position accuracy": (
             f"±{float(gps.get('GPSHPositioningError')):.1f} m"
-            if gps.get("GPSHPositioningError") is not None else None
+            if gps.get("GPSHPositioningError") is not None
+            else None
         ),
     }
 
@@ -690,6 +697,7 @@ def gps_to_ui_fields(gps: dict) -> dict:
 # ============================================================
 # Main
 # ============================================================
+
 
 def get_image_info(image_path: Path, display_name: str) -> dict:
     image_path = Path(image_path)
@@ -703,11 +711,13 @@ def get_image_info(image_path: Path, display_name: str) -> dict:
     try:
         with Image.open(image_path) as img:
             # 基础图像信息
-            info.update({
-                "Format": img.format,
-                "Size": f"{img.width} × {img.height}",
-                "Color mode": img.mode,
-            })
+            info.update(
+                {
+                    "Format": img.format,
+                    "Size": f"{img.width} × {img.height}",
+                    "Color mode": img.mode,
+                }
+            )
 
             if "dpi" in img.info:
                 info["DPI"] = img.info["dpi"]
@@ -718,46 +728,48 @@ def get_image_info(image_path: Path, display_name: str) -> dict:
 
             # EXIF → 可读字典
             exif = {
-                TAGS.get(tag_id, tag_id): value
-                for tag_id, value in exif_raw.items()
+                TAGS.get(tag_id, tag_id): value for tag_id, value in exif_raw.items()
             }
 
             # 拍摄信息
-            info.update({
-                "Camera make": exif.get("Make"),
-                "Camera model": exif.get("Model"),
-                "Lens model": exif.get("LensModel"),
-                "Software": exif.get("Software"),
-                "Date taken": exif.get("DateTimeOriginal"),
-                "Date modified": exif.get("DateTime"),
-            })
+            info.update(
+                {
+                    "Camera make": exif.get("Make"),
+                    "Camera model": exif.get("Model"),
+                    "Lens model": exif.get("LensModel"),
+                    "Software": exif.get("Software"),
+                    "Date taken": exif.get("DateTimeOriginal"),
+                    "Date modified": exif.get("DateTime"),
+                }
+            )
 
             # 曝光参数
-            info.update({
-                "Exposure time": format_exposure_time(exif.get("ExposureTime")),
-                "F number": (
-                    f"f/{rational_to_float(exif.get('FNumber'))}"
-                    if exif.get("FNumber") else None
-                ),
-                "ISO": exif.get("ISOSpeedRatings"),
-                "Focal length": (
-                    f"{rational_to_float(exif.get('FocalLength'))} mm"
-                    if exif.get("FocalLength") else None
-                ),
-                "Exposure bias": rational_to_float(exif.get("ExposureBiasValue")),
-                "Metering mode": exif.get("MeteringMode"),
-                "Flash": exif.get("Flash"),
-                "White balance": exif.get("WhiteBalance"),
-            })
+            info.update(
+                {
+                    "Exposure time": format_exposure_time(exif.get("ExposureTime")),
+                    "F number": (
+                        f"f/{rational_to_float(exif.get('FNumber'))}"
+                        if exif.get("FNumber")
+                        else None
+                    ),
+                    "ISO": exif.get("ISOSpeedRatings"),
+                    "Focal length": (
+                        f"{rational_to_float(exif.get('FocalLength'))} mm"
+                        if exif.get("FocalLength")
+                        else None
+                    ),
+                    "Exposure bias": rational_to_float(exif.get("ExposureBiasValue")),
+                    "Metering mode": exif.get("MeteringMode"),
+                    "Flash": exif.get("Flash"),
+                    "White balance": exif.get("WhiteBalance"),
+                }
+            )
 
             # GPS（原始 + UI 友好）
             try:
                 gps_ifd = exif_raw.get_ifd(0x8825)
                 if gps_ifd:
-                    gps_raw = {
-                        GPSTAGS.get(k, k): v
-                        for k, v in gps_ifd.items()
-                    }
+                    gps_raw = {GPSTAGS.get(k, k): v for k, v in gps_ifd.items()}
                     info["GPS"] = gps_to_ui_fields(gps_raw)
             except Exception:
                 pass
@@ -766,7 +778,4 @@ def get_image_info(image_path: Path, display_name: str) -> dict:
         info["Error"] = str(e)
 
     # UI 友好：清理空值
-    return {
-        k: v for k, v in info.items()
-        if v not in (None, "", {}, [])
-    }
+    return {k: v for k, v in info.items() if v not in (None, "", {}, [])}

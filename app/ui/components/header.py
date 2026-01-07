@@ -26,7 +26,9 @@ class Header:
         with self.header().classes(
             "fixed h-12 p-2 flex items-center gap-4 z-50"
         ) as header:
-            with ui.link(target="/home/").classes(f"text-[{theme().text_inverted}] no-underline"):
+            with ui.link(target="/home/").classes(
+                f"text-[{theme().text_inverted}] no-underline"
+            ):
                 ui.label(settings.APP_NAME).classes("font-bold")
 
             ui.space()
