@@ -3,7 +3,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Optional, Literal
 
-from nicegui import ui, events
+from nicegui import ui, events, app
 from nicegui.events import GenericEventArguments
 from starlette.formparsers import MultiPartParser
 
@@ -31,6 +31,7 @@ from app.ui.components.dialog import (
     ImageDialog,
 )
 from app.ui.components.notify import notify
+from app.utils.platform import normalize_key
 from app.utils.size import bytes_to_human_readable
 from app.utils.time import timestamp_to_human_readable
 
@@ -60,6 +61,7 @@ def key_event_debounce(wait_time: float):
             if now - last_called >= wait_time:
                 last_called = now
                 return await func(*args, **kwargs)
+            return None
 
         return wrapper
 
@@ -378,6 +380,14 @@ class FileBrowserTable:
                 for p in self.file_list
             ]
 
+            if self.browser_table.rows:
+                click_event = GenericEventArguments(
+                    sender=self.browser_table,
+                    args=[None, self.browser_table.rows[0], 0],
+                    client=app.storage.client,
+                )
+                await self.handle_row_click(click_event)
+
             self.browser_table.on("row-click", self.handle_row_click)
             self.browser_table.on("row-dblclick", self.handle_row_double_click)
 
@@ -453,26 +463,58 @@ class FileBrowserTable:
             self.browser_table.selected = [click_row]
 
             shortcuts = [
-                (_("↑ / ↓: Move Selection"), True),
-                (_("Space: Quick Look"), click_row["type"] != "dir"),
+                ([normalize_key("Command"), "F"], _("Search"), True),
+                (
+                    (normalize_key("Up"), normalize_key("Down")),
+                    _("Move Selection"),
+                    True,
+                ),
+                (normalize_key("Space"), _("Quick Look"), click_row["type"] != "dir"),
+                (
+                    normalize_key("Enter"),
+                    _("Enter Directory"),
+                    click_row["type"] == "dir",
+                ),
+                (normalize_key("Backspace"), _("Back to Parent Directory"), True),
             ]
 
             with self.footer_container:
                 with ui.row().classes("gap-2 text-sm items-center"):
                     first_shown = True
-                    for label, show in shortcuts:
+                    for key, label, show in shortcuts:
                         if not show:
                             continue
                         if not first_shown:
                             ui.label("|").classes("text-gray-400")
+
+                        def render_kbd(_key) -> str:
+                            def k(_k: str) -> str:
+                                return f"<kbd>{_k}</kbd>"
+
+                            if isinstance(key, list):
+                                return " + ".join(k(x) for x in key)
+
+                            if isinstance(key, tuple):
+                                return " / ".join(k(x) for x in key)
+
+                            return k(key)
+
+                        ui.html(render_kbd(key), sanitize=False).classes(
+                            "text-gray-400"
+                        )
                         ui.label(label)
                         first_shown = False
 
-    async def handle_row_double_click(self, e: events.GenericEventArguments):
+    async def handle_row_double_click(
+        self, e: events.GenericEventArguments, from_keyboard: bool = False
+    ):
         if self.is_select_mode:
             return
 
-        click_event_params, click_row, click_index = e.args
+        if from_keyboard:
+            click_row = self.browser_table.selected[0]
+        else:
+            click_event_params, click_row, click_index = e.args
         target_path = click_row["path"]
         file_name = click_row["raw_name"]
 
@@ -759,32 +801,33 @@ class FileBrowserTable:
         else:
             notify.error(_("Failed to get file metadata"))
 
-    async def _get_dom_rows(self) -> list[str]:
-        return await ui.run_javascript(
-            """
-            return Array.from(document.querySelectorAll('tbody tr'))
-                .map(tr => {
-                    const b = tr.querySelector('b');
-                    return b ? b.innerText.trim() : null;
-                });
-        """
-        )
-
-    def _row_by_name(self, name: str) -> dict | None:
-        for row in self.browser_table.rows:
-            if row["raw_name"] == name:
-                return row
-        return None
-
     async def handle_keyboard_event(self, e: GenericEventArguments):
+        if e.args.get("key") in ("Meta", "Control", "Alt", "Shift"):
+            return
+
         pressed_key = e.args.get("code")
+        control_pressed = e.args.get("ctrlKey") or e.args.get("metaKey")
         match pressed_key:
+            # navigation
             case "Space":
                 await self.handle_keyboard_space_event()
             case "ArrowUp":
                 await self.handle_keyboard_arrow_event("up")
             case "ArrowDown":
                 await self.handle_keyboard_arrow_event("down")
+            case "Enter":
+                await self.handle_row_double_click(e, from_keyboard=True)
+            case "Backspace":
+                await self.back_func()
+
+            # search
+            case "KeyF":
+                if control_pressed:
+                    await self.handle_search_button_click()
+
+            # other
+            case _:
+                notify.warning(e)
 
     async def handle_keyboard_space_event(self):
         if not self.has_dialog_open:
@@ -804,35 +847,11 @@ class FileBrowserTable:
             finally:
                 self.has_dialog_open = False
 
-    async def handle_keyboard_arrow_event(self, action: Literal["up", "down"]):
-        names_in_order = await self._get_dom_rows()
-        if not names_in_order:
-            return
-
-        selected = self.browser_table.selected
-        current_name = selected[0]["raw_name"] if selected else None
-
-        try:
-            idx = names_in_order.index(current_name)
-        except ValueError:
-            idx = -1
-
-        if idx == -1 and action == "up":
-            return
-        elif idx == len(names_in_order) - 1 and action == "down":
-            return
-
-        if action == "down":
-            new_idx = 0 if idx == -1 else min(idx + 1, len(names_in_order) - 1)
-        else:
-            new_idx = len(names_in_order) - 1 if idx == -1 else max(idx - 1, 0)
-
-        target_name = names_in_order[new_idx]
-        target_row = self._row_by_name(target_name)
-
-        if target_row:
-            self.browser_table.selected = [target_row]
-            await self._scroll_dom_row_into_view(new_idx)
+    def _row_by_name(self, name: str) -> dict | None:
+        for row in self.browser_table.rows:
+            if row["raw_name"] == name:
+                return row
+        return None
 
     @key_event_debounce(0.3)
     async def _scroll_dom_row_into_view(self, index: int):
@@ -871,3 +890,48 @@ class FileBrowserTable:
             }})();
         """
         )
+
+    async def handle_keyboard_arrow_event(self, action: Literal["up", "down"]):
+        names_in_order = await ui.run_javascript(
+            """
+            return Array.from(document.querySelectorAll('tbody tr'))
+                .map(tr => {
+                    const b = tr.querySelector('b');
+                    return b ? b.innerText.trim() : null;
+                });
+        """
+        )
+
+        if not names_in_order:
+            return
+
+        selected = self.browser_table.selected
+        current_name = selected[0]["raw_name"] if selected else None
+
+        try:
+            idx = names_in_order.index(current_name)
+        except ValueError:
+            idx = -1
+
+        if idx == -1 and action == "up":
+            return
+        elif idx == len(names_in_order) - 1 and action == "down":
+            notify.info(self.browser_table.pagination)
+            return
+
+        if action == "down":
+            new_idx = 0 if idx == -1 else min(idx + 1, len(names_in_order) - 1)
+        else:
+            new_idx = len(names_in_order) - 1 if idx == -1 else max(idx - 1, 0)
+
+        target_name = names_in_order[new_idx]
+        target_row = self._row_by_name(target_name)
+
+        if target_row:
+            click_event = GenericEventArguments(
+                sender=self.browser_table,
+                args=[None, target_row, 0],
+                client=app.storage.client,
+            )
+            await self.handle_row_click(click_event)
+            await self._scroll_dom_row_into_view(new_idx)
