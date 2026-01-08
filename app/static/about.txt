@@ -1,0 +1,12 @@
+This favicon was generated using the following font:
+
+- Font Title: Liu Jian Mao Cao
+- Font Author: undefined
+- Font Source: https://fonts.gstatic.com/s/liujianmaocao/v23/845DNN84HJrccNonurqXILGpvCOoferVKGWsUo8.ttf
+- Font License: undefined)
+
+- Background: Circle
+- Font Color: #FFFFFF
+- Background Color: #7E75F2
+- Font Variant: Regular 400 Normal
+- Font Size: 100
