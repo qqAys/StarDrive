@@ -2,6 +2,8 @@ from contextlib import contextmanager
 
 from nicegui import ui
 
+from app.ui.components.label import label, dynamic_classes
+
 
 @contextmanager
 def disable(button: ui.button):
@@ -22,3 +24,25 @@ def disable(button: ui.button):
         yield
     finally:
         button.enable()
+
+
+def breadcrumb_button(
+    text: str | None = None,
+    icon: str | None = None,
+    on_click=None,
+    tooltip: str | None = None,
+    disabled: bool = False,
+):
+    props = "no-caps flat dense"
+    if disabled:
+        props += " disable"
+
+    with ui.button(on_click=on_click).props(props) as btn:
+        if icon:
+            ui.icon(icon).classes(dynamic_classes)
+        if text:
+            label(text)
+        if tooltip:
+            ui.tooltip(tooltip)
+
+    return btn
