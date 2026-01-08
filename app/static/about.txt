@@ -5,7 +5,7 @@ This favicon was generated using the following font:
 - Font Source: https://fonts.gstatic.com/s/liujianmaocao/v23/845DNN84HJrccNonurqXILGpvCOoferVKGWsUo8.ttf
 - Font License: undefined)
 
-- Background: Circle
+- Background: Rounded
 - Font Color: #FFFFFF
 - Background Color: #7E75F2
 - Font Variant: Regular 400 Normal
