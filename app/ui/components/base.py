@@ -10,7 +10,7 @@ from app.ui.components.dialog import ConfirmDialog
 from app.ui.components.footer import Footer
 from app.ui.components.header import Header
 from app.ui.components.notify import notify
-from app.ui.theme import set_theme, DefaultTheme
+from app.ui.theme import set_theme, DefaultTheme, theme
 
 
 class BaseLayout:
@@ -64,18 +64,19 @@ class BaseLayout:
         )
 
         ui.add_css(
-            """
-kbd {
+            f"""
+kbd {{
   display: inline-block;
   padding: 0.15em 0.45em;
   font-size: 0.85em;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: #24292f;
+  font-weight: 600;
+  font-family: "ui-sans-serif","-apple-system","system-ui","Segoe UI","Helvetica","Apple Color Emoji","Arial","sans-serif","Segoe UI Emoji","Segoe UI Symbol";
+  color: {theme().text_primary};
   background-color: #f6f8fa;
   border: 1px solid #d0d7de;
   border-radius: 6px;
   box-shadow: inset 0 -1px 0 #d0d7de;
-}"""
+}}"""
         )
 
         self.header_component = Header()
