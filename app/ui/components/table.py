@@ -21,6 +21,7 @@ from app.services.file_service import (
     get_user_last_path,
 )
 from app.services.user_service import get_user_timezone
+from app.ui.components.button import breadcrumb_button
 from app.ui.components.clipboard import copy_to_clipboard
 from app.ui.components.dialog import (
     ConfirmDialog,
@@ -31,6 +32,7 @@ from app.ui.components.dialog import (
     ImageDialog,
 )
 from app.ui.components.notify import notify
+from app.ui.components.separator import breadcrumb_separator
 from app.utils.platform import normalize_key
 from app.utils.size import bytes_to_human_readable
 from app.utils.time import timestamp_to_human_readable
@@ -213,19 +215,24 @@ class FileBrowserTable:
             with self.browser_table.add_slot("top-left"):
                 with ui.row().classes("items-center gap-x-0"):
                     # Back to parent directory button
-                    ui.button(icon="arrow_upward", on_click=self.back_func).props(
-                        "flat dense"
-                    ).tooltip(_("Navigate to parent directory"))
+                    # ui.button(icon="arrow_upward", on_click=self.back_func).props(
+                    #     "flat dense"
+                    # ).tooltip(_("Navigate to parent directory"))
+                    #
+                    breadcrumb_button(
+                        icon="arrow_upward",
+                        on_click=self.back_func,
+                        tooltip=_("Navigate to home directory"),
+                    )
 
                     # Path separator
                     if self.current_path.parts:
-                        home_button = ui.button(
+                        breadcrumb_button(
                             text=_("Home"),
                             on_click=lambda: self.goto_func(Path(initial_path)),
-                        ).props("flat dense")
-                        home_button.tooltip(_("Navigate to home directory"))
-
-                        ui.icon("chevron_right").classes("text-xl mx-0.5")
+                            tooltip=_("Navigate to home directory"),
+                        )
+                        breadcrumb_separator()
 
                     # Breadcrumb navigation - build cumulative path
                     MAX_DISPLAY_PARTS = 3
@@ -255,22 +262,26 @@ class FileBrowserTable:
                         if should_display_button:
                             # Navigation button itself
                             if not is_last:
-                                ui.button(
-                                    p,
+                                breadcrumb_button(
+                                    text=p,
                                     on_click=lambda path_to_go=target_path: self.goto_func(
                                         path_to_go
                                     ),
-                                ).props(f"no-caps flat dense")
-                                # Separator after button
-                                ui.icon("chevron_right").classes("text-xl mx-0.5")
+                                )
+                                breadcrumb_separator()
                             else:
-                                ui.button(p, on_click=self.copy_path_clipboard).props(
-                                    "no-caps flat dense"
-                                ).tooltip(str(self.current_path))
+                                breadcrumb_button(
+                                    text=p,
+                                    on_click=self.copy_path_clipboard,
+                                    tooltip=str(self.current_path),
+                                )
 
                         elif index == 1 and len(path_parts) > MAX_DISPLAY_PARTS:
-                            ui.button("...").props("flat dense disable")
-                            ui.icon("chevron_right").classes("text-xl mx-0.5")
+                            breadcrumb_button(
+                                text="...",
+                                disabled=True,
+                            )
+                            breadcrumb_separator()
 
             with self.browser_table.add_slot("top-right"):
                 with ui.row().classes("items-center gap-4"):
