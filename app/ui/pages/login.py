@@ -10,6 +10,7 @@ from app.services.user_service import get_user_timezone_from_browser
 from app.ui.components.base import BaseLayout
 from app.ui.components.notify import notify
 from app.ui.theme import theme
+from app.utils.platform import detect_platform
 
 this_page_routes = "/login"
 
@@ -89,6 +90,10 @@ async def login_page(redirect_to: str | None = None):
                 # Store user's timezone from browser
                 user_timezone = await get_user_timezone_from_browser()
                 app.storage.user.update({"timezone": user_timezone})
+
+                # Store user's platform
+                platform_info = await detect_platform()
+                app.storage.user.update({"is_mac": platform_info.get("is_mac", False)})
 
                 redirect()
 

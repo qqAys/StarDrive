@@ -7,6 +7,7 @@ from app.security.guards import require_user
 from app.services.file_service import get_user_last_path
 from app.ui.components.base import BaseLayout
 from app.ui.components.table import FileBrowserTable
+from app.utils.platform import detect_platform
 
 this_page_routes = "/home"
 
