@@ -28,6 +28,7 @@ from app.services.user_service import get_user_timezone
 from app.ui.components.button import custom_button
 from app.ui.components.clipboard import copy_to_clipboard
 from app.ui.components.notify import notify
+from app.ui.components.label import label
 from app.ui.theme import theme
 from app.utils.size import bytes_to_human_readable
 from app.utils.time import timestamp_to_human_readable, utc_now
@@ -960,20 +961,43 @@ class ImageDialog(Dialog):
                 self.dialog.submit(None)
 
     async def open(self):
-        with self.dialog, ui.card().tight().classes("w-[1200px] max-w-[90vw]"):
-            # 图片展示
-            ui.image(self.image_path).classes("w-full max-h-[600px] object-contain")
-            with ui.card_section():
-                with ui.row():
-                    for k, v in self.image_info.items():
-                        ui.label(f"{k}: {v}").classes("break-words")
+        with self.dialog, ui.card().tight().classes(
+                "w-[1200px] max-w-[90vw] overflow-hidden"
+        ):
 
-            # GPS地图列（可选显示）
-            if "GPS" in self.image_info:
-                gps_info = self.image_info["GPS"]
-                image_map = ui.leaflet(
-                    center=(gps_info["Latitude"], gps_info["Longitude"]), zoom=15
-                ).classes("w-[350px] h-[300px]")
-                image_map.marker(latlng=image_map.center)
+            ui.image(self.image_path).classes(
+                "w-full max-h-[600px] object-contain"
+            )
 
-        return await self.dialog
+            # ===== 信息 & 地图区 =====
+            with ui.card_section().classes("w-full"):
+                with ui.row(wrap=False).classes("w-full items-start gap-6"):
+
+                    # 左侧信息
+                    with ui.column().classes("flex-1 min-w-0"):
+                        label(_("Image Information"), extra_classes="text-lg font-bold")
+
+                        with ui.column().classes("gap-2 text-sm"):
+                            for k, v in self.image_info.items():
+                                if k == _("GPS"):
+                                    continue
+                                with ui.row().classes("gap-2 break-all"):
+                                    ui.label(k).classes("w-24 shrink-0 font-medium")
+                                    ui.label(str(v)).classes("flex-1")
+
+                    # 右侧地图
+                    if _("GPS") in self.image_info:
+                        gps_info = self.image_info[_("GPS")]
+
+                        with ui.column().classes("flex-1 min-w-[300px]"):
+                            label(_("Location"), extra_classes="text-lg font-bold")
+
+                            image_map = ui.leaflet(
+                                center=(gps_info["Latitude"], gps_info["Longitude"]),
+                                zoom=15,
+                            ).classes("w-full h-full1 rounded-l overflow-hidden")
+
+                            image_map.marker(latlng=image_map.center)
+
+            return await self.dialog
+

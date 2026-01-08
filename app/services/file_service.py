@@ -591,14 +591,6 @@ def validate_filename(name: str, allow_subdirs: bool = False) -> tuple[bool, str
     return True, _("Name is valid.")
 
 
-def bytes_to_human_readable(size: int) -> str:
-    for unit in ("B", "KB", "MB", "GB", "TB"):
-        if size < 1024:
-            return f"{size:.2f} {unit}"
-        size /= 1024
-    return f"{size:.2f} PB"
-
-
 def rational_to_float(value):
     """EXIF Rational / number → float | None"""
     if value is None:
@@ -693,40 +685,39 @@ def gps_to_ui_fields(gps: dict) -> dict:
 
     return {k: v for k, v in ui.items() if v not in (None, "", {}, [])}
 
-
-# ============================================================
-# Main
-# ============================================================
-
-
 def get_image_info(image_path: Path, display_name: str) -> dict:
     image_path = Path(image_path)
 
     info: Dict[str, Any] = {
-        "File name": image_path.name,
-        "Path": display_name,
-        "File size": bytes_to_human_readable(image_path.stat().st_size),
+        _("File name"): image_path.name,
+        _("Path"): display_name,
+        _("File size"): bytes_to_human_readable(image_path.stat().st_size),
     }
+
+    if image_path.suffix.lower() == ".svg":
+        info[_("Format")] = "SVG"
+        info[_("Type")] = "Vector image"
+        return info
 
     try:
         with Image.open(image_path) as img:
             # 基础图像信息
             info.update(
                 {
-                    "Format": img.format,
-                    "Size": f"{img.width} × {img.height}",
-                    "Color mode": img.mode,
+                    _("Format"): img.format,
+                    _("Size"): f"{img.width} × {img.height}",
+                    _("Color mode"): img.mode,
                 }
             )
 
             if "dpi" in img.info:
-                info["DPI"] = img.info["dpi"]
+                info[_("DPI")] = img.info["dpi"]
 
             exif_raw = img.getexif()
             if not exif_raw:
                 return info
 
-            # EXIF → 可读字典
+            # EXIF
             exif = {
                 TAGS.get(tag_id, tag_id): value for tag_id, value in exif_raw.items()
             }
@@ -734,48 +725,25 @@ def get_image_info(image_path: Path, display_name: str) -> dict:
             # 拍摄信息
             info.update(
                 {
-                    "Camera make": exif.get("Make"),
-                    "Camera model": exif.get("Model"),
-                    "Lens model": exif.get("LensModel"),
-                    "Software": exif.get("Software"),
-                    "Date taken": exif.get("DateTimeOriginal"),
-                    "Date modified": exif.get("DateTime"),
+                    _("Camera make"): exif.get("Make"),
+                    _("Camera model"): exif.get("Model"),
+                    _("Lens model"): exif.get("LensModel"),
+                    _("Software"): exif.get("Software"),
+                    _("Date taken"): exif.get("DateTimeOriginal"),
+                    _("Date modified"): exif.get("DateTime"),
                 }
             )
 
-            # 曝光参数
-            info.update(
-                {
-                    "Exposure time": format_exposure_time(exif.get("ExposureTime")),
-                    "F number": (
-                        f"f/{rational_to_float(exif.get('FNumber'))}"
-                        if exif.get("FNumber")
-                        else None
-                    ),
-                    "ISO": exif.get("ISOSpeedRatings"),
-                    "Focal length": (
-                        f"{rational_to_float(exif.get('FocalLength'))} mm"
-                        if exif.get("FocalLength")
-                        else None
-                    ),
-                    "Exposure bias": rational_to_float(exif.get("ExposureBiasValue")),
-                    "Metering mode": exif.get("MeteringMode"),
-                    "Flash": exif.get("Flash"),
-                    "White balance": exif.get("WhiteBalance"),
-                }
-            )
-
-            # GPS（原始 + UI 友好）
+            # GPS
             try:
                 gps_ifd = exif_raw.get_ifd(0x8825)
                 if gps_ifd:
                     gps_raw = {GPSTAGS.get(k, k): v for k, v in gps_ifd.items()}
-                    info["GPS"] = gps_to_ui_fields(gps_raw)
+                    info[_("GPS")] = gps_to_ui_fields(gps_raw)
             except Exception:
                 pass
 
     except Exception as e:
-        info["Error"] = str(e)
+        pass
 
-    # UI 友好：清理空值
     return {k: v for k, v in info.items() if v not in (None, "", {}, [])}
