@@ -36,7 +36,7 @@ StarDrive 采用了现代化的 Python 技术栈：
 
 1.  **安装 uv**:
     ```shell
-    curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+    curl -LsSf https://astral.sh/uv/install.sh | sh
     ```
 2.  **安装依赖并运行**:
     ```shell
