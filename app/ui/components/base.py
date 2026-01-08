@@ -63,6 +63,21 @@ class BaseLayout:
     <link rel="manifest" href="/site.webmanifest" />"""
         )
 
+        ui.add_css(
+            """
+kbd {
+  display: inline-block;
+  padding: 0.15em 0.45em;
+  font-size: 0.85em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #24292f;
+  background-color: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  box-shadow: inset 0 -1px 0 #d0d7de;
+}"""
+        )
+
         self.header_component = Header()
         self.footer_component = Footer()
 
