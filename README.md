@@ -1,4 +1,4 @@
-# StarDrive
+# <img src="app/static/android-chrome-512x512.png" width="20" height="20" /> StarDrive
 
 <p align="center">
   <img src="https://img.shields.io/github/license/qqAys/StarDrive" alt="License">
