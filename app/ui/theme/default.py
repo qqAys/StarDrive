@@ -5,9 +5,9 @@ class DefaultTheme(Theme):
 
     # Brand
     primary = "#001921"
-    secondary = "#6B7280"
-    dark = "#1F1F1F"
-    accent = "#1F2937"
+    secondary = "#26A69A"
+    dark = "#1D1D1D"
+    accent = "#121212"
 
     # Status, Notification
     positive = "#22C55E"
