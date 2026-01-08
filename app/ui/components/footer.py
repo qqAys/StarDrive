@@ -18,12 +18,12 @@ class Footer:
             "w-full h-full flex justify-end items-center pr-4 gap-4 text-sm"
         ):
             ui.label(f"{settings.APP_NAME} v{settings.APP_VERSION}").classes(
-                f"text-[{theme().text_secondary}] font-bold"
+                f"text-[{theme().text_muted}] font-bold"
             )
             link(settings.APP_GITHUB_URL, text="GitHub", bold=True, _blank=True)
 
     def render(self, from_login_page: bool = False, *args, **kwargs):
-        bg_class = "bg-transparent" if from_login_page else ""
+        bg_class = "bg-transparent" if from_login_page else f"bg-[{theme().dark}]"
         with self.footer().classes(f"fixed bottom-0 left-0 right-0 p-2 {bg_class} "):
             self.content_container = ui.element().classes(
                 "absolute inset-y-0 left-0 right-50 px-4 flex items-center gap-4"
