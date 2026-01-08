@@ -26,7 +26,7 @@ def disable(button: ui.button):
         button.enable()
 
 
-def breadcrumb_button(
+def custom_button(
     text: str | None = None,
     icon: str | None = None,
     on_click=None,

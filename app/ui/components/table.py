@@ -21,7 +21,7 @@ from app.services.file_service import (
     get_user_last_path,
 )
 from app.services.user_service import get_user_timezone
-from app.ui.components.button import breadcrumb_button
+from app.ui.components.button import custom_button
 from app.ui.components.clipboard import copy_to_clipboard
 from app.ui.components.dialog import (
     ConfirmDialog,
@@ -33,6 +33,7 @@ from app.ui.components.dialog import (
 )
 from app.ui.components.notify import notify
 from app.ui.components.separator import breadcrumb_separator
+from app.ui.theme import theme
 from app.utils.platform import normalize_key
 from app.utils.size import bytes_to_human_readable
 from app.utils.time import timestamp_to_human_readable
@@ -215,11 +216,7 @@ class FileBrowserTable:
             with self.browser_table.add_slot("top-left"):
                 with ui.row().classes("items-center gap-x-0"):
                     # Back to parent directory button
-                    # ui.button(icon="arrow_upward", on_click=self.back_func).props(
-                    #     "flat dense"
-                    # ).tooltip(_("Navigate to parent directory"))
-                    #
-                    breadcrumb_button(
+                    custom_button(
                         icon="arrow_upward",
                         on_click=self.back_func,
                         tooltip=_("Navigate to home directory"),
@@ -227,7 +224,7 @@ class FileBrowserTable:
 
                     # Path separator
                     if self.current_path.parts:
-                        breadcrumb_button(
+                        custom_button(
                             text=_("Home"),
                             on_click=lambda: self.goto_func(Path(initial_path)),
                             tooltip=_("Navigate to home directory"),
@@ -262,7 +259,7 @@ class FileBrowserTable:
                         if should_display_button:
                             # Navigation button itself
                             if not is_last:
-                                breadcrumb_button(
+                                custom_button(
                                     text=p,
                                     on_click=lambda path_to_go=target_path: self.goto_func(
                                         path_to_go
@@ -270,14 +267,14 @@ class FileBrowserTable:
                                 )
                                 breadcrumb_separator()
                             else:
-                                breadcrumb_button(
+                                custom_button(
                                     text=p,
                                     on_click=self.copy_path_clipboard,
                                     tooltip=str(self.current_path),
                                 )
 
                         elif index == 1 and len(path_parts) > MAX_DISPLAY_PARTS:
-                            breadcrumb_button(
+                            custom_button(
                                 text="...",
                                 disabled=True,
                             )
@@ -474,7 +471,7 @@ class FileBrowserTable:
             self.browser_table.selected = [click_row]
 
             shortcuts = [
-                ([normalize_key("Command"), "F"], _("Search"), True),
+                ("/", _("Search"), True),
                 (
                     (normalize_key("Up"), normalize_key("Down")),
                     _("Move Selection"),
@@ -496,7 +493,7 @@ class FileBrowserTable:
                         if not show:
                             continue
                         if not first_shown:
-                            ui.label("|").classes("text-gray-400")
+                            ui.label("|").classes(f"text-[{theme().text_muted}]")
 
                         def render_kbd(_key) -> str:
                             def k(_k: str) -> str:
@@ -511,9 +508,9 @@ class FileBrowserTable:
                             return k(key)
 
                         ui.html(render_kbd(key), sanitize=False).classes(
-                            "text-gray-400"
+                            f"text-[{theme().text_muted}]"
                         )
-                        ui.label(label)
+                        ui.label(label).classes(f"text-[{theme().text_muted}]")
                         first_shown = False
 
     async def handle_row_double_click(
@@ -820,8 +817,6 @@ class FileBrowserTable:
         control_pressed = e.args.get("ctrlKey") or e.args.get("metaKey")
         match pressed_key:
             # navigation
-            case "Space":
-                await self.handle_keyboard_space_event()
             case "ArrowUp":
                 await self.handle_keyboard_arrow_event("up")
             case "ArrowDown":
@@ -832,13 +827,16 @@ class FileBrowserTable:
                 await self.back_func()
 
             # search
-            case "KeyF":
-                if control_pressed:
-                    await self.handle_search_button_click()
+            case "Slash":
+                await self.handle_search_button_click()
+
+            # quick look
+            case "Space":
+                await self.handle_keyboard_space_event()
 
             # other
             case _:
-                notify.warning(e)
+                pass
 
     async def handle_keyboard_space_event(self):
         if not self.has_dialog_open:

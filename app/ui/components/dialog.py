@@ -25,6 +25,7 @@ from app.services.file_service import (
     get_image_info,
 )
 from app.services.user_service import get_user_timezone
+from app.ui.components.button import custom_button
 from app.ui.components.clipboard import copy_to_clipboard
 from app.ui.components.notify import notify
 from app.ui.theme import theme
@@ -134,10 +135,9 @@ class SearchDialog(Dialog):
         with self.results_list:
             with ui.item().props("disabled"):
                 with ui.column().classes("w-full items-center gap-1"):
-                    ui.button(
-                        text=_("No more results"),
-                        icon="search_off",
-                    ).props("flat no-caps")
+                    custom_button(
+                        text=_("No more results"), icon="search_off", disabled=True
+                    )
                     ui.markdown(_("Try searching in a different folder.")).classes(
                         "text-xs my-0 py-0"
                     )
