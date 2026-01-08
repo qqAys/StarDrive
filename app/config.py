@@ -60,7 +60,7 @@ class Config(BaseSettings):
     MULTIPARTPARSER_SPOOL_MAX_SIZE: ClassVar[int] = 1024 * 1024 * 5
     STREAM_CHUNK_SIZE: ClassVar[int] = 1024 * 10
 
-    USE_MISANS: ClassVar[bool] = True
+    USE_MISANS: ClassVar[bool] = False
 
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
