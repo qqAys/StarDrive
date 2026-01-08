@@ -210,7 +210,7 @@ class ConfirmDialog(Dialog):
                     _("Confirm"),
                     on_click=lambda: self.dialog.submit(True),
                     color="negative" if self.warning else "positive",
-                )
+                ).props("autofocus")
                 ui.button(
                     _("Cancel"),
                     on_click=lambda: self.dialog.submit(False),
