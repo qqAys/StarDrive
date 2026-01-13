@@ -925,7 +925,6 @@ class FileBrowserTable:
         if idx == -1 and action == "up":
             return
         elif idx == len(names_in_order) - 1 and action == "down":
-            notify.info(self.browser_table.pagination)
             return
 
         if action == "down":
