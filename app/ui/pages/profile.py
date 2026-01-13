@@ -89,10 +89,11 @@ async def index():
                 ).classes("mt-4")
 
             # =============================
-            # Change Password Card
+            # Danger Zone
             # =============================
-            with ui.card().classes("w-full"):
-                ui.label(_("Security")).classes("text-lg font-semibold mb-4")
+            with ui.card().classes("w-full border border-red-300"):
+
+                ui.label(_("Security")).classes("text-lg font-semibold mb-4 text-red-600")
 
                 old_password = ui.input(
                     _("Current password"),
@@ -140,13 +141,9 @@ async def index():
                     on_click=handle_change_password,
                 ).classes("mt-4")
 
-            # =============================
-            # Danger Zone
-            # =============================
-            with ui.card().classes("w-full border border-red-300"):
-                ui.label(_("Danger Zone")).classes(
-                    "text-lg font-semibold text-red-600 mb-4"
-                )
+                ui.separator()
+
+                ui.label(_("Account")).classes("text-lg font-semibold mb-4 text-red-600")
 
                 async def handle_logout():
                     await logout(user_manager)
