@@ -93,7 +93,12 @@ async def login_page(redirect_to: str | None = None):
 
                 # Store user's platform
                 platform_info = await detect_platform()
-                app.storage.user.update({"is_mac": platform_info.get("is_mac", False)})
+                app.storage.user.update(
+                    {
+                        "is_mac": platform_info.get("is_mac", False),
+                        "is_mobile": platform_info.get("is_mobile", False),
+                    }
+                )
 
                 redirect()
 

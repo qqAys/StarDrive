@@ -486,32 +486,33 @@ class FileBrowserTable:
                 (normalize_key("Backspace"), _("Back to Parent Directory"), True),
             ]
 
-            with self.footer_container:
-                with ui.row().classes("gap-2 text-sm items-center"):
-                    first_shown = True
-                    for key, label, show in shortcuts:
-                        if not show:
-                            continue
-                        if not first_shown:
-                            ui.label("|").classes(f"text-[{theme().text_muted}]")
+            if not app.storage.user["is_mobile"]:
+                with self.footer_container:
+                    with ui.row().classes("gap-2 text-sm items-center"):
+                        first_shown = True
+                        for key, label, show in shortcuts:
+                            if not show:
+                                continue
+                            if not first_shown:
+                                ui.label("|").classes(f"text-[{theme().text_muted}]")
 
-                        def render_kbd(_key) -> str:
-                            def k(_k: str) -> str:
-                                return f"<kbd>{_k}</kbd>"
+                            def render_kbd(_key) -> str:
+                                def k(_k: str) -> str:
+                                    return f"<kbd>{_k}</kbd>"
 
-                            if isinstance(key, list):
-                                return " + ".join(k(x) for x in key)
+                                if isinstance(key, list):
+                                    return " + ".join(k(x) for x in key)
 
-                            if isinstance(key, tuple):
-                                return " / ".join(k(x) for x in key)
+                                if isinstance(key, tuple):
+                                    return " / ".join(k(x) for x in key)
 
-                            return k(key)
+                                return k(key)
 
-                        ui.html(render_kbd(key), sanitize=False).classes(
-                            f"text-[{theme().text_muted}]"
-                        )
-                        ui.label(label).classes(f"text-[{theme().text_muted}]")
-                        first_shown = False
+                            ui.html(render_kbd(key), sanitize=False).classes(
+                                f"text-[{theme().text_muted}]"
+                            )
+                            ui.label(label).classes(f"text-[{theme().text_muted}]")
+                            first_shown = False
 
     async def handle_row_double_click(
         self, e: events.GenericEventArguments, from_keyboard: bool = False

@@ -39,10 +39,18 @@ def normalize_key(key: str) -> str:
 async def detect_platform():
     return await ui.run_javascript(
         """
+        const ua = navigator.userAgent || "";
+        const platform = navigator.platform || "";
+
+        const is_mobile =
+            /Android|iPhone|iPad|iPod/i.test(ua)
+            || (platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
         return {
-            is_mac: navigator.platform.includes("Mac"),
-            platform: navigator.platform,
-            user_agent: navigator.userAgent,
+            is_mac: platform.includes("Mac"),
+            is_mobile: is_mobile,
+            platform: platform,
+            user_agent: ua,
         }
         """
     )
