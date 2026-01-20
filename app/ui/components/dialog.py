@@ -932,72 +932,134 @@ class MetadataDialog(Dialog):
                 ui.navigate.to(download_url)
 
 
-class ImageDialog(Dialog):
+from pathlib import Path
+from enum import Enum
 
-    ALLOWED_EXTENSIONS = [
-        ".jpeg",
-        ".jpg",
-        ".png",
-        ".svg",
-        ".gif",
-        ".webp",
-    ]
 
-    def __init__(self, file_manager: StorageManager, image_path: Path):
+class MediaType(Enum):
+    IMAGE = "image"
+    VIDEO = "video"
+    AUDIO = "audio"
+
+
+class MediaDialog(Dialog):
+
+    IMAGE_EXTS = {".jpeg", ".jpg", ".png", ".svg", ".gif", ".webp"}
+    VIDEO_EXTS = {".mp4", ".mov", ".mkv", ".webm", ".avi"}
+    AUDIO_EXTS = {".mp3", ".wav", ".ogg", ".flac", ".aac"}
+
+    def __init__(self, file_manager: StorageManager, media_path: Path):
         super().__init__()
-        self.file_manager = file_manager
-        self.image_path = self.file_manager.get_full_path(str(image_path))
 
-        self.image_info = get_image_info(self.image_path, str(image_path))
+        self.file_manager = file_manager
+        self.media_path = self.file_manager.get_full_path(str(media_path))
+        self.suffix = media_path.suffix.lower()
+
+        self.media_type = self._detect_media_type()
 
         self.dialog = ui.dialog().props(self.dialog_props)
 
         self.keyboard = ui.keyboard(on_key=self.handle_key)
         self.keyboard.active = True
 
-    def handle_key(self, e: KeyEventArguments):
-        if e.action.keydown:
-            if e.key.space:
-                self.dialog.submit(None)
+        # refs
+        self.video_ref = None
+        self.audio_ref = None
 
+        # image only
+        self.image_info = None
+        if self.media_type == MediaType.IMAGE:
+            self.image_info = get_image_info(self.media_path, str(media_path))
+
+    # -------------------------
+    # type detect
+    # -------------------------
+    def _detect_media_type(self) -> MediaType:
+        if self.suffix in self.IMAGE_EXTS:
+            return MediaType.IMAGE
+        if self.suffix in self.VIDEO_EXTS:
+            return MediaType.VIDEO
+        if self.suffix in self.AUDIO_EXTS:
+            return MediaType.AUDIO
+        raise ValueError(f"Unsupported media type: {self.suffix}")
+
+    # -------------------------
+    # keyboard
+    # -------------------------
+    def handle_key(self, e: KeyEventArguments):
+        if not e.action.keydown:
+            return
+
+        if e.key.escape or e.key.space:
+            self.dialog.submit(None)
+
+    # -------------------------
+    # open
+    # -------------------------
     async def open(self):
         with self.dialog, ui.card().tight().classes(
-                "w-[1200px] max-w-[90vw] overflow-hidden"
+            "w-[1200px] max-w-[90vw] overflow-hidden"
         ):
+            if self.media_type == MediaType.IMAGE:
+                self._render_image()
+            elif self.media_type == MediaType.VIDEO:
+                self._render_video()
+            elif self.media_type == MediaType.AUDIO:
+                self._render_audio()
 
-            ui.image(self.image_path).classes(
-                "w-full max-h-[600px] object-contain"
-            )
+        return await self.dialog
 
-            # ===== 信息 & 地图区 =====
-            with ui.card_section().classes("w-full"):
-                with ui.row(wrap=False).classes("w-full items-start gap-6"):
+    def _render_image(self):
+        ui.image(self.media_path).classes(
+            "w-full max-h-[600px] object-contain"
+        )
 
-                    # 左侧信息
-                    with ui.column().classes("flex-1 min-w-0"):
-                        label(_("Image Information"), extra_classes="text-lg font-bold")
+        with ui.card_section().classes("w-full"):
+            with ui.row(wrap=False).classes("w-full items-start gap-6"):
 
-                        with ui.column().classes("gap-2 text-sm"):
-                            for k, v in self.image_info.items():
-                                if k == _("GPS"):
-                                    continue
-                                with ui.row().classes("gap-2 break-all"):
-                                    ui.label(k).classes("w-24 shrink-0 font-medium")
-                                    ui.label(str(v)).classes("flex-1")
+                # 左侧信息
+                with ui.column().classes("flex-1 min-w-0"):
+                    label(_("Image Information"), extra_classes="text-lg font-bold")
 
-                    # 右侧地图
-                    if _("GPS") in self.image_info:
-                        gps_info = self.image_info[_("GPS")]
+                    with ui.column().classes("gap-2 text-sm"):
+                        for k, v in self.image_info.items():
+                            if k == _("GPS"):
+                                continue
+                            with ui.row().classes("gap-2 break-all"):
+                                ui.label(k).classes("w-24 shrink-0 font-medium")
+                                ui.label(str(v)).classes("flex-1")
 
-                        with ui.column().classes("flex-1 min-w-[300px]"):
-                            label(_("Location"), extra_classes="text-lg font-bold")
+                # 右侧地图
+                if _("GPS") in self.image_info:
+                    gps = self.image_info[_("GPS")]
+                    with ui.column().classes("flex-1 min-w-[300px]"):
+                        label(_("Location"), extra_classes="text-lg font-bold")
 
-                            image_map = ui.leaflet(
-                                center=(gps_info["Latitude"], gps_info["Longitude"]),
-                                zoom=15,
-                            ).classes("w-full h-full1 rounded-l overflow-hidden")
+                        m = ui.leaflet(
+                            center=(gps["Latitude"], gps["Longitude"]),
+                            zoom=15,
+                        ).classes("w-full rounded-l overflow-hidden")
+                        m.marker(latlng=m.center)
 
-                            image_map.marker(latlng=image_map.center)
+    def _render_video(self):
+        self.video_ref = ui.video(
+            self.media_path,
+            controls=True,
+            autoplay=False,
+        ).classes(
+            "w-full max-h-[600px] object-contain bg-black"
+        )
 
-            return await self.dialog
+    def _render_audio(self):
+        with ui.column().classes("w-full items-center gap-4 p-6"):
+            ui.icon("music_note", size="64px")
+            ui.label(Path(self.media_path).name).classes("text-lg")
+
+            self.audio_ref = ui.audio(
+                self.media_path,
+                controls=True,
+                autoplay=False,
+            ).classes("w-full")
+
+
 

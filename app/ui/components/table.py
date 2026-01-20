@@ -29,7 +29,7 @@ from app.ui.components.dialog import (
     InputDialog,
     SearchDialog,
     MetadataDialog,
-    ImageDialog,
+    MediaDialog,
 )
 from app.ui.components.notify import notify
 from app.ui.components.separator import breadcrumb_separator
@@ -846,14 +846,8 @@ class FileBrowserTable:
                 table_selected = self.browser_table.selected
                 if table_selected:
                     table_selected = table_selected[0]
-                    if (
-                        table_selected["extension"].lower()
-                        in ImageDialog.ALLOWED_EXTENSIONS
-                    ):
-                        await ImageDialog(
-                            self.file_manager, Path(table_selected["path"])
-                        ).open()
-                        self.has_dialog_open = False
+                    await MediaDialog(self.file_manager, Path(table_selected["path"])).open()
+                    self.has_dialog_open = False
             finally:
                 self.has_dialog_open = False
 
