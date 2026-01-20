@@ -612,10 +612,10 @@ class FileBrowserDialog(Dialog):
                     table.rows = rows
 
                 async def handle_row_double_click(e: events.GenericEventArguments):
-                    _, row, _ = e.args
-                    click_path = row["path"]
-                    file_name = row["raw_name"]
-                    if row["is_dir"]:
+                    click_event_params, click_row, click_index = e.args
+                    click_path = click_row["path"]
+                    file_name = click_row["raw_name"]
+                    if click_row["is_dir"]:
                         refresh_table(target_path / file_name)
                     else:
                         confirm = await ConfirmDialog(
@@ -704,7 +704,7 @@ class MoveDialog(Dialog):
             refresh_dir_table(target_path)
 
             async def handle_row_double_click(e: events.GenericEventArguments):
-                _, click_row, _ = e.args
+                click_event_params, click_row, click_index = e.args
                 refresh_dir_table(Path(click_row["path"]))
 
             dir_table.on("row-dblclick", handle_row_double_click)
