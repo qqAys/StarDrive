@@ -135,3 +135,8 @@ async def login_page(redirect_to: str | None = None):
                 _("Sign in"),
                 on_click=try_login,
             ).classes("w-full mt-6 py-2")
+
+            with ui.row().classes("w-full justify-between text-sm"):
+                if await user_manager.is_registration_allowed():
+                    ui.link(_("Create account"), "/register/")
+                ui.link(_("Forgot password?"), "/forgot-password/")

@@ -8,6 +8,9 @@ UNRESTRICTED_PAGE_ROUTES = (
     "/apple-touch-icon*",
     # Public routes
     "/login*",
+    "/register*",
+    "/forgot-password*",
+    "/reset-password*",
     "/share*",
     "/api*",
 )

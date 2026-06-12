@@ -6,10 +6,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
 
 from app.config import settings
-from app.models import file_download_model
+from app import models
 
-# Prevent unused import warning; this import ensures the model is registered with SQLModel metadata.
-_ = file_download_model
+# Ensure all model modules are imported before SQLModel.metadata.create_all().
+_ = models
 
 # Create an asynchronous SQLAlchemy engine using database settings from the configuration.
 async_engine = create_async_engine(

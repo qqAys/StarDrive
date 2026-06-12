@@ -6,13 +6,16 @@ from nicegui import ui, app, APIRouter
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
-from app import globals
 from app.core.i18n import _
 from app.crud.user_crud import UserCRUD
 from app.models.file_download_model import FileDownloadInfo
 from app.schemas.file_schema import FileMetadata, DirMetadata, FileSource
 from app.services.download_service import verify_download_token
-from app.services.file_service import get_file_icon, generate_download_url
+from app.services.file_service import (
+    create_user_storage_manager,
+    get_file_icon,
+    generate_download_url,
+)
 from app.ui.components.base import BaseLayout
 from app.ui.components.dialog import ConfirmDialog, FileBrowserDialog
 from app.ui.pages.error_page import render_404
@@ -52,8 +55,18 @@ async def index(
             back_button=False,
         )
         return
+    if not validated_data.user_id:
+        render_404(
+            request.state.request_uuid,
+            _("This share link is no longer available"),
+            _("It may have expired or the item was removed."),
+            back_button=False,
+        )
+        return
 
-    file_manager = globals.get_storage_manager()
+    from app import globals
+
+    file_manager = create_user_storage_manager(validated_data.user_id)
     user_manager = globals.get_user_manager()
 
     async def get_share_by_user():

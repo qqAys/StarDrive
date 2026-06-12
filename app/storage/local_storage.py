@@ -238,10 +238,7 @@ class LocalStorage(StorageBackend):
 
         Returns metadata for each entry, excluding those starting with a dot.
         """
-        if not remote_path.startswith("/"):
-            full_path = self._get_full_path(remote_path)
-        else:
-            full_path = Path(remote_path)
+        full_path = self._get_full_path(remote_path)
 
         if not full_path.exists():
             raise StorageFileNotFoundError(

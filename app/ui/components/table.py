@@ -15,6 +15,7 @@ from app.schemas.file_schema import DirMetadata, FileMetadata, FileType, FileSou
 from app.security.guards import require_user
 from app.services.file_service import (
     StorageManager,
+    can_user_store_bytes,
     get_file_icon,
     generate_download_url,
     set_user_last_path,
@@ -444,12 +445,7 @@ class FileBrowserTable:
         await self.goto_func(self.current_path.parent)
 
     async def goto_func(self, path: Path):
-        self.current_path = path
-        self.current_path = (
-            self.current_path.resolve()
-            if self.current_path.is_absolute()
-            else self.current_path.resolve().relative_to(Path.cwd())
-        )
+        self.current_path = Path(path)
         await self.refresh()
         return
 
@@ -625,6 +621,19 @@ class FileBrowserTable:
     async def handle_upload(self, e: events.MultiUploadEventArguments):
         uploaded_count = 0
         for f in e.files:
+            upload_size = f.size()
+            if upload_size is not None:
+                allowed, remaining = await can_user_store_bytes(
+                    self.current_user, int(upload_size)
+                )
+                if not allowed:
+                    notify.error(
+                        _("Storage quota exceeded. Remaining: {remaining}").format(
+                            remaining=bytes_to_human_readable(remaining)
+                        )
+                    )
+                    continue
+
             is_valid, message = validate_filename(f.name, allow_subdirs=True)
             if not is_valid:
                 notify.warning(

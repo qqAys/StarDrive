@@ -23,6 +23,7 @@ from app.api import download_form_browser_url_prefix
 from app.config import settings
 from app.core.i18n import _
 from app.core.logging import logger
+from app.core.paths import STORAGE_DIR
 from app.crud.file_download_crud import FileDownloadCRUD
 from app.models.file_download_model import FileDownloadInfo
 from app.models.user_model import User
@@ -158,14 +159,16 @@ class StorageManager:
     to the currently active backend.
     """
 
-    def __init__(self):
+    def __init__(self, root_path: str | Path | None = None):
         # Store all registered backend instances
         self._get_full_path = None
         self._backends: Dict[str, StorageBackend] = {}
         # Name of the currently active storage backend
         self._current_backend_name: Optional[str] = None
         # Register the local storage backend by default
-        self.register_backend(LocalStorage.name, LocalStorage())
+        self.register_backend(
+            LocalStorage.name, LocalStorage(str(root_path or STORAGE_DIR))
+        )
 
     def register_backend(self, name: str, backend_instance: StorageBackend):
         """
@@ -347,6 +350,35 @@ class StorageManager:
         return await backend.search(query, remote_path, offset, limit)
 
 
+USER_STORAGE_DIR = STORAGE_DIR / "users"
+
+
+def get_user_storage_root(user_id: str) -> Path:
+    root = (USER_STORAGE_DIR / user_id).resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def create_user_storage_manager(user_id: str) -> StorageManager:
+    manager = StorageManager(root_path=get_user_storage_root(user_id))
+    manager.set_current_backend(LocalStorage.name)
+    return manager
+
+
+async def get_user_storage_usage(user_id: str) -> int:
+    manager = create_user_storage_manager(user_id)
+    return await manager.get_directory_size(".")
+
+
+async def can_user_store_bytes(user: User, incoming_bytes: int) -> tuple[bool, int]:
+    quota = user.quota_bytes or 0
+    if quota <= 0:
+        return True, 0
+    used = await get_user_storage_usage(user.id)
+    remaining = max(0, quota - used)
+    return incoming_bytes <= remaining, remaining
+
+
 async def generate_download_url(
     target_path: str | list[str],
     name: str | list[str],
@@ -382,13 +414,20 @@ async def generate_download_url(
         this_url_ttl = current_time_utc + settings.DEFAULT_DOWNLOAD_LINK_TTL
 
     async with get_db_context() as session:
+        owner_user_id = current_user.id if current_user else None
+        if owner_user_id is None and share_id:
+            source_download = await FileDownloadCRUD.get(
+                session=session, file_download_id=share_id
+            )
+            owner_user_id = source_download.user_id if source_download else None
+
         download_info = await FileDownloadCRUD.create(
             session=session,
             name=name,
             type=type_,
             path=target_path,
-            base_path=base_path or app.storage.user.get("last_path", ""),
-            user=current_user.id if current_user else None,
+            base_path=base_path or app.storage.user.get("last_path", "."),
+            user=owner_user_id,
             share_id=share_id,
             access_code=access_code,
             source=source,
@@ -684,6 +723,7 @@ def gps_to_ui_fields(gps: dict) -> dict:
     }
 
     return {k: v for k, v in ui.items() if v not in (None, "", {}, [])}
+
 
 def get_image_info(image_path: Path, display_name: str) -> dict:
     image_path = Path(image_path)

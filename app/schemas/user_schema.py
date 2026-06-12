@@ -28,16 +28,16 @@ class UserResetPasswordConfirm(SQLModel):
 
 
 class UserRead(SQLModel):
-    id: int
-    username: str
+    id: str
     email: str
     is_active: bool
     is_superuser: bool
+    quota_bytes: int
     created_at: datetime
 
 
 class UserUpdate(SQLModel):
-    username: str | None = None
     email: str | None = None
     is_active: bool | None = None
     is_superuser: bool | None = None
+    quota_bytes: int | None = None

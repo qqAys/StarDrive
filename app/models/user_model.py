@@ -62,6 +62,7 @@ class User(SQLModel, table=True):
     is_active: bool = Field(default=True)
     is_superuser: bool = Field(default=False)
     token_version: int = Field(default=0)
+    quota_bytes: int = Field(default=0)
     password_hash: str = Field(max_length=128)
     created_at: datetime = Field(
         default_factory=lambda: utc_now(),

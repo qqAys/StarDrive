@@ -1,8 +1,10 @@
 from typing import Optional, Sequence
 
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
+from app.models.system_model import PasswordResetToken
 from app.models.user_model import User, Role, UserRoleLink
 from app.security.hashing import HashingManager
 
@@ -22,6 +24,8 @@ class UserCRUD:
         email: str,
         password: str,
         is_superuser: bool = False,
+        is_active: bool = True,
+        quota_bytes: int = 0,
     ) -> User:
         """
         Create a new user with the provided email and password.
@@ -39,6 +43,8 @@ class UserCRUD:
             email=email,
             password_hash=HashingManager.hash_password(password),
             is_superuser=is_superuser,
+            is_active=is_active,
+            quota_bytes=quota_bytes,
         )
         session.add(user)
         await session.commit()
@@ -88,6 +94,7 @@ class UserCRUD:
         *,
         offset: int = 0,
         limit: int = 20,
+        query: str | None = None,
     ) -> Sequence[User]:
         """
         Retrieve a paginated list of users.
@@ -100,9 +107,20 @@ class UserCRUD:
         Returns:
             A sequence of User instances.
         """
-        stmt = select(User).offset(offset).limit(limit)
+        stmt = select(User)
+        if query:
+            stmt = stmt.where(User.email.contains(query))
+        stmt = stmt.order_by(User.created_at.desc()).offset(offset).limit(limit)
         result = await session.execute(stmt)
         return result.scalars().all()
+
+    @staticmethod
+    async def count(session: AsyncSession, *, query: str | None = None) -> int:
+        stmt = select(func.count()).select_from(User)
+        if query:
+            stmt = stmt.where(User.email.contains(query))
+        result = await session.execute(stmt)
+        return int(result.scalar() or 0)
 
     # Update
     @staticmethod
@@ -155,6 +173,33 @@ class UserCRUD:
         user.is_active = is_active
         session.add(user)
         await session.commit()
+        await session.refresh(user)
+        return user
+
+    @staticmethod
+    async def update_superuser(
+        session: AsyncSession,
+        *,
+        user: User,
+        is_superuser: bool,
+    ) -> User:
+        user.is_superuser = is_superuser
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        return user
+
+    @staticmethod
+    async def update_quota(
+        session: AsyncSession,
+        *,
+        user: User,
+        quota_bytes: int,
+    ) -> User:
+        user.quota_bytes = max(0, quota_bytes)
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
         return user
 
     # Delete
@@ -253,3 +298,42 @@ class UserCRUD:
         if link:
             await session.delete(link)
             await session.commit()
+
+
+class PasswordResetTokenCRUD:
+    @staticmethod
+    async def create(
+        session: AsyncSession,
+        *,
+        user_id: str,
+        token_hash: str,
+        expires_at,
+    ) -> PasswordResetToken:
+        token = PasswordResetToken(
+            user_id=user_id,
+            token_hash=token_hash,
+            expires_at=expires_at,
+        )
+        session.add(token)
+        await session.commit()
+        await session.refresh(token)
+        return token
+
+    @staticmethod
+    async def get_by_hash(
+        session: AsyncSession,
+        token_hash: str,
+    ) -> PasswordResetToken | None:
+        stmt = select(PasswordResetToken).where(
+            PasswordResetToken.token_hash == token_hash
+        )
+        result = await session.execute(stmt)
+        return result.scalar()
+
+    @staticmethod
+    async def mark_used(session: AsyncSession, token: PasswordResetToken, used_at):
+        token.used_at = used_at
+        session.add(token)
+        await session.commit()
+        await session.refresh(token)
+        return token

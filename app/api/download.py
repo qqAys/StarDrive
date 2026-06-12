@@ -7,11 +7,10 @@ from fastapi import Depends
 from fastapi.exceptions import HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 
-from app import globals
 from app.api import download_form_browser_url_prefix, router
 from app.schemas.file_schema import FileType
 from app.services.download_service import verify_download_token
-from app.services.file_service import FileDownloadInfo
+from app.services.file_service import FileDownloadInfo, create_user_storage_manager
 
 
 @router.get("/" + download_form_browser_url_prefix + "/{jwt_token}")
@@ -23,7 +22,10 @@ async def download_form_browser_api(
             status_code=401, detail="Invalid download link or has expired."
         )
 
-    file_manager = globals.get_storage_manager()
+    if not validated_data.user_id:
+        raise HTTPException(status_code=400, detail="Download owner is missing.")
+
+    file_manager = create_user_storage_manager(validated_data.user_id)
 
     is_multi_file = isinstance(validated_data.name, list)
 

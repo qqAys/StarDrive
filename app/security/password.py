@@ -5,9 +5,20 @@ from app.core.i18n import _
 
 
 def generate_random_password(length: int = 10) -> str:
-    return "".join(
-        random.choice(string.ascii_letters + string.digits) for _ in range(length)
-    )
+    length = max(length, 8)
+    required = [
+        random.choice(string.ascii_lowercase),
+        random.choice(string.ascii_uppercase),
+        random.choice(string.digits),
+        random.choice(string.punctuation),
+    ]
+    remaining = [
+        random.choice(string.ascii_letters + string.digits + string.punctuation)
+        for _ in range(length - len(required))
+    ]
+    chars = required + remaining
+    random.shuffle(chars)
+    return "".join(chars)
 
 
 def validate_password(password: str) -> tuple[bool, str]:

@@ -2,7 +2,7 @@ import platform
 from datetime import timedelta, timezone
 from typing import Literal, Any, ClassVar
 
-from pydantic import EmailStr
+from pydantic import EmailStr, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.core.paths import DB_DIR
@@ -45,6 +45,17 @@ class Config(BaseSettings):
     APP_DEFAULT_LANGUAGE: str = "en-US"
 
     APP_INIT_USER: EmailStr = "admin@stardrive.abc"
+    APP_ALLOW_REGISTRATION: bool = True
+    APP_DEFAULT_USER_QUOTA_BYTES: int = 1024 * 1024 * 1024 * 10
+
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: SecretStr | None = None
+    SMTP_SENDER: EmailStr | None = None
+    SMTP_USE_TLS: bool = True
+    PASSWORD_RESET_TOKEN_TTL_MINUTES: int = 30
+    PASSWORD_RESET_BASE_URL: str | None = None
 
     LOCAL_DB_DSN: str = f"sqlite+aiosqlite:///{(DB_DIR / "local.db").as_posix()}"
     LOCAL_DB_ECHO: bool = DEBUG

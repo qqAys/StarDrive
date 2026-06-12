@@ -1,10 +1,9 @@
 from fastapi.responses import RedirectResponse
 from nicegui import APIRouter, app, ui
 
-from app import globals
 from app.core.i18n import _
 from app.security.guards import require_user
-from app.services.file_service import get_user_last_path
+from app.services.file_service import create_user_storage_manager, get_user_last_path
 from app.ui.components.base import BaseLayout
 from app.ui.components.table import FileBrowserTable
 
@@ -40,8 +39,8 @@ async def index():
         footer=True,
         args={"title": _("Home")},
     ) as (header, footer):
-        file_manager = globals.get_storage_manager()
         current_user = header.get_user()
+        file_manager = create_user_storage_manager(current_user.id)
 
         # Upload dialog setup
         with ui.dialog().props("seamless position='bottom'") as upload_dialog:
