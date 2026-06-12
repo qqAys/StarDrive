@@ -1,11 +1,21 @@
 import asyncio
+import csv
+import hashlib
+import html
+import json
+import shutil
+import subprocess
+import tempfile
 from datetime import datetime, timezone, date, time
+from enum import Enum
 from pathlib import Path
 from typing import Optional, Callable
 
 from nicegui import ui, events
 from nicegui.events import KeyEventArguments
 
+from app.api.preview import create_preview_file_url
+from app.core.paths import PREVIEW_CACHE_DIR
 from app.core.i18n import _
 from app.models.user_model import User
 from app.schemas.file_schema import (
@@ -932,21 +942,379 @@ class MetadataDialog(Dialog):
                 ui.navigate.to(download_url)
 
 
-from pathlib import Path
-from enum import Enum
-
-
 class MediaType(Enum):
     IMAGE = "image"
     VIDEO = "video"
     AUDIO = "audio"
+    PDF = "pdf"
+    TEXT = "text"
+    MARKDOWN = "markdown"
+    CSV = "csv"
+    OFFICE = "office"
+    UNSUPPORTED = "unsupported"
+
+
+IMAGE_PREVIEW_EXTS = {
+    ".jpeg",
+    ".jpg",
+    ".png",
+    ".svg",
+    ".gif",
+    ".webp",
+    ".bmp",
+    ".tiff",
+    ".ico",
+}
+VIDEO_PREVIEW_EXTS = {".mp4", ".mov", ".mkv", ".webm", ".avi"}
+AUDIO_PREVIEW_EXTS = {".mp3", ".wav", ".ogg", ".flac", ".aac", ".m4a"}
+MARKDOWN_PREVIEW_EXTS = {".md", ".markdown"}
+CSV_PREVIEW_EXTS = {".csv", ".tsv"}
+TEXT_PREVIEW_EXTS = {
+    ".txt",
+    ".log",
+    ".env",
+    ".py",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".java",
+    ".go",
+    ".rs",
+    ".c",
+    ".cc",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".cs",
+    ".php",
+    ".rb",
+    ".swift",
+    ".kt",
+    ".kts",
+    ".vue",
+    ".svelte",
+    ".html",
+    ".htm",
+    ".css",
+    ".scss",
+    ".sass",
+    ".less",
+    ".json",
+    ".jsonc",
+    ".json5",
+    ".xml",
+    ".yaml",
+    ".yml",
+    ".toml",
+    ".ini",
+    ".cfg",
+    ".conf",
+    ".properties",
+    ".sql",
+    ".sh",
+    ".bash",
+    ".zsh",
+    ".ps1",
+    ".bat",
+    ".dockerfile",
+}
+TEXT_PREVIEW_FILENAMES = {
+    ".dockerignore",
+    ".editorconfig",
+    ".env",
+    ".env.example",
+    ".gitattributes",
+    ".gitignore",
+    "dockerfile",
+    "makefile",
+    "requirements.txt",
+}
+OFFICE_PREVIEW_EXTS = {
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".ppt",
+    ".pptx",
+    ".odt",
+    ".ods",
+    ".odp",
+    ".rtf",
+}
+MAX_TEXT_PREVIEW_BYTES = 1024 * 1024
+MAX_HIGHLIGHT_CHARS = 200_000
+MAX_JSON_HIGHLIGHT_CHARS = 80_000
+MAX_HIGHLIGHT_LINE_CHARS = 20_000
+OFFICE_PREVIEW_CACHE_VERSION = "v2-cjk-fonts"
+CODE_PREVIEW_CSS = """
+  .stardrive-code-preview pre,
+  .stardrive-markdown-preview pre {
+    margin: 0;
+    border: 1px solid rgba(17, 24, 39, 0.12);
+    border-radius: 8px;
+    background: #f6f8fa;
+    color: #24292f;
+  }
+  .stardrive-code-preview code,
+  .stardrive-markdown-preview pre code {
+    display: block;
+    min-width: max-content;
+    padding: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    white-space: pre;
+  }
+  .stardrive-code-preview code.hljs,
+  .stardrive-markdown-preview pre code.hljs {
+    background: transparent;
+  }
+  .stardrive-code-preview-wrap code {
+    min-width: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .stardrive-markdown-preview pre {
+    overflow-x: auto;
+  }
+  .body--dark .stardrive-code-preview pre,
+  .body--dark .stardrive-markdown-preview pre {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: #111827;
+    color: #e5e7eb;
+  }
+  .body--dark .stardrive-code-preview code.hljs,
+  .body--dark .stardrive-markdown-preview pre code.hljs {
+    color: #e5e7eb;
+  }
+"""
+CODE_PREVIEW_STYLE_JS = """
+(() => {
+  if (!document.getElementById('stardrive-highlight-style')) {
+    const style = document.createElement('style');
+    style.id = 'stardrive-highlight-style';
+    style.textContent = __CODE_PREVIEW_CSS__;
+    document.head.appendChild(style);
+  }
+  return true;
+})();
+""".replace("__CODE_PREVIEW_CSS__", json.dumps(CODE_PREVIEW_CSS))
+HIGHLIGHT_RUNTIME_JS = """
+(() => {
+  const styleHref = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css';
+  const scriptSrc = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js';
+  const maxHighlightChars = 200000;
+  const maxLineChars = 20000;
+  if (!document.getElementById('stardrive-highlight-theme')) {
+    const link = document.createElement('link');
+    link.id = 'stardrive-highlight-theme';
+    link.rel = 'stylesheet';
+    link.href = styleHref;
+    document.head.appendChild(link);
+  }
+  if (!document.getElementById('stardrive-highlight-style')) {
+    const style = document.createElement('style');
+    style.id = 'stardrive-highlight-style';
+    style.textContent = __CODE_PREVIEW_CSS__;
+    document.head.appendChild(style);
+  }
+  const shouldSkipBlock = (block) => {
+    const text = block.textContent || '';
+    return text.length > maxHighlightChars || text.split('\\n').some((line) => line.length > maxLineChars);
+  };
+  const collectBlocks = (root = document) => Array.from(
+    root.querySelectorAll(
+      '.stardrive-code-preview code[data-stardrive-highlight="1"], ' +
+      '.stardrive-markdown-preview pre code:not([data-stardrive-highlighted])'
+    )
+  ).filter((block) => block.dataset.stardriveHighlighted !== '1');
+  const highlight = (root = document) => {
+    if (!window.hljs) return;
+    const blocks = collectBlocks(root);
+    const processBatch = () => {
+      const deadline = performance.now() + 24;
+      while (blocks.length && performance.now() < deadline) {
+        const block = blocks.shift();
+        if (block.dataset.stardriveHighlighted === '1') continue;
+        if (!shouldSkipBlock(block)) window.hljs.highlightElement(block);
+        block.dataset.stardriveHighlighted = '1';
+      }
+      if (blocks.length) setTimeout(processBatch, 16);
+    };
+    setTimeout(processBatch, 0);
+  };
+  highlight();
+  if (window.stardriveHighlightObserver) return true;
+  window.stardriveHighlightObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) highlight(node);
+      }
+    }
+  });
+  window.stardriveHighlightObserver.observe(document.body, { childList: true, subtree: true });
+  if (window.hljs) {
+    highlight();
+    return true;
+  }
+  let script = document.querySelector(`script[src="${scriptSrc}"]`);
+  if (!script) {
+    script = document.createElement('script');
+    script.src = scriptSrc;
+    script.onload = () => highlight();
+    document.head.appendChild(script);
+    return true;
+  }
+  script.addEventListener('load', () => highlight(), { once: true });
+  return true;
+})();
+""".replace("__CODE_PREVIEW_CSS__", json.dumps(CODE_PREVIEW_CSS))
+HIGHLIGHT_LANGUAGE_BY_SUFFIX = {
+    ".bash": "bash",
+    ".bat": "dos",
+    ".c": "c",
+    ".cc": "cpp",
+    ".cfg": "ini",
+    ".conf": "nginx",
+    ".cpp": "cpp",
+    ".cs": "csharp",
+    ".css": "css",
+    ".dockerfile": "dockerfile",
+    ".env": "properties",
+    ".go": "go",
+    ".h": "cpp",
+    ".hpp": "cpp",
+    ".htm": "html",
+    ".html": "html",
+    ".ini": "ini",
+    ".java": "java",
+    ".js": "javascript",
+    ".json": "json",
+    ".json5": "json",
+    ".jsonc": "json",
+    ".jsx": "javascript",
+    ".kt": "kotlin",
+    ".kts": "kotlin",
+    ".less": "less",
+    ".log": "plaintext",
+    ".php": "php",
+    ".properties": "properties",
+    ".ps1": "powershell",
+    ".py": "python",
+    ".rb": "ruby",
+    ".rs": "rust",
+    ".sass": "scss",
+    ".scss": "scss",
+    ".sh": "bash",
+    ".sql": "sql",
+    ".svelte": "xml",
+    ".swift": "swift",
+    ".toml": "ini",
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".vue": "xml",
+    ".xml": "xml",
+    ".yaml": "yaml",
+    ".yml": "yaml",
+    ".zsh": "bash",
+}
+HIGHLIGHT_LANGUAGE_BY_FILENAME = {
+    ".dockerignore": "dockerfile",
+    ".editorconfig": "ini",
+    ".env": "properties",
+    ".env.example": "properties",
+    ".gitattributes": "plaintext",
+    ".gitignore": "plaintext",
+    "dockerfile": "dockerfile",
+    "makefile": "makefile",
+    "requirements.txt": "plaintext",
+}
+
+
+def detect_preview_media_type(suffix: str) -> MediaType:
+    suffix = suffix.lower()
+    if suffix in TEXT_PREVIEW_FILENAMES:
+        return MediaType.TEXT
+    if suffix in IMAGE_PREVIEW_EXTS:
+        return MediaType.IMAGE
+    if suffix in VIDEO_PREVIEW_EXTS:
+        return MediaType.VIDEO
+    if suffix in AUDIO_PREVIEW_EXTS:
+        return MediaType.AUDIO
+    if suffix == ".pdf":
+        return MediaType.PDF
+    if suffix in MARKDOWN_PREVIEW_EXTS:
+        return MediaType.MARKDOWN
+    if suffix in CSV_PREVIEW_EXTS:
+        return MediaType.CSV
+    if suffix in TEXT_PREVIEW_EXTS:
+        return MediaType.TEXT
+    if suffix in OFFICE_PREVIEW_EXTS:
+        return MediaType.OFFICE
+    return MediaType.UNSUPPORTED
+
+
+def detect_highlight_language(path: Path) -> str | None:
+    name = path.name.lower()
+    return HIGHLIGHT_LANGUAGE_BY_FILENAME.get(
+        name, HIGHLIGHT_LANGUAGE_BY_SUFFIX.get(path.suffix.lower())
+    )
+
+
+def ensure_highlight_assets():
+    async def apply_highlighting():
+        await ui.run_javascript(HIGHLIGHT_RUNTIME_JS)
+
+    ui.timer(0.1, apply_highlighting, once=True)
+
+
+def ensure_code_preview_style():
+    async def apply_style():
+        await ui.run_javascript(CODE_PREVIEW_STYLE_JS)
+
+    ui.timer(0.1, apply_style, once=True)
+
+
+def should_highlight_text(path: Path, text: str, truncated: bool) -> bool:
+    language = detect_highlight_language(path)
+    if language is None or truncated:
+        return False
+
+    text_length = len(text)
+    if text_length > MAX_HIGHLIGHT_CHARS:
+        return False
+    if language == "json" and text_length > MAX_JSON_HIGHLIGHT_CHARS:
+        return False
+    return not any(len(line) > MAX_HIGHLIGHT_LINE_CHARS for line in text.splitlines())
+
+
+def find_libreoffice_command() -> str | None:
+    for command in ("soffice", "libreoffice"):
+        found = shutil.which(command)
+        if found:
+            return found
+
+    macos_app_command = Path("/Applications/LibreOffice.app/Contents/MacOS/soffice")
+    if macos_app_command.exists():
+        return macos_app_command.as_posix()
+
+    return None
+
+
+def build_office_preview_cache_path(source_path: Path) -> Path:
+    source_path = source_path.resolve()
+    stat = source_path.stat()
+    cache_key = hashlib.sha256(
+        (
+            f"{OFFICE_PREVIEW_CACHE_VERSION}:"
+            f"{source_path.as_posix()}:{stat.st_mtime_ns}:{stat.st_size}"
+        ).encode("utf-8")
+    ).hexdigest()
+    return PREVIEW_CACHE_DIR / f"{cache_key}.pdf"
 
 
 class MediaDialog(Dialog):
-
-    IMAGE_EXTS = {".jpeg", ".jpg", ".png", ".svg", ".gif", ".webp"}
-    VIDEO_EXTS = {".mp4", ".mov", ".mkv", ".webm", ".avi"}
-    AUDIO_EXTS = {".mp3", ".wav", ".ogg", ".flac", ".aac"}
 
     def __init__(self, file_manager: StorageManager, media_path: Path):
         super().__init__()
@@ -954,8 +1322,8 @@ class MediaDialog(Dialog):
         self.file_manager = file_manager
         self.media_path = self.file_manager.get_full_path(str(media_path))
         self.suffix = media_path.suffix.lower()
-
         self.media_type = self._detect_media_type()
+        self.preview_error: str | None = None
 
         self.dialog = ui.dialog().props(self.dialog_props)
 
@@ -969,19 +1337,19 @@ class MediaDialog(Dialog):
         # image only
         self.image_info = None
         if self.media_type == MediaType.IMAGE:
-            self.image_info = get_image_info(self.media_path, str(media_path))
+            try:
+                self.image_info = get_image_info(self.media_path, str(media_path))
+            except Exception:
+                self.image_info = {}
 
     # -------------------------
     # type detect
     # -------------------------
     def _detect_media_type(self) -> MediaType:
-        if self.suffix in self.IMAGE_EXTS:
-            return MediaType.IMAGE
-        if self.suffix in self.VIDEO_EXTS:
-            return MediaType.VIDEO
-        if self.suffix in self.AUDIO_EXTS:
-            return MediaType.AUDIO
-        raise ValueError(f"Unsupported media type: {self.suffix}")
+        media_type = detect_preview_media_type(self.suffix)
+        if media_type == MediaType.UNSUPPORTED:
+            return detect_preview_media_type(Path(self.media_path).name)
+        return media_type
 
     # -------------------------
     # keyboard
@@ -997,8 +1365,9 @@ class MediaDialog(Dialog):
     # open
     # -------------------------
     async def open(self):
-        with self.dialog, ui.card().tight().classes(
-            "w-[1200px] max-w-[90vw] overflow-hidden"
+        with (
+            self.dialog,
+            ui.card().tight().classes("w-[1200px] max-w-[90vw] overflow-hidden"),
         ):
             if self.media_type == MediaType.IMAGE:
                 self._render_image()
@@ -1006,13 +1375,52 @@ class MediaDialog(Dialog):
                 self._render_video()
             elif self.media_type == MediaType.AUDIO:
                 self._render_audio()
+            elif self.media_type == MediaType.PDF:
+                self._render_pdf(self.media_path)
+            elif self.media_type == MediaType.MARKDOWN:
+                self._render_markdown()
+            elif self.media_type == MediaType.CSV:
+                self._render_csv()
+            elif self.media_type == MediaType.TEXT:
+                self._render_text()
+            elif self.media_type == MediaType.OFFICE:
+                await self._render_office()
+            else:
+                self._render_unsupported()
 
         return await self.dialog
 
+    def _render_header(self, title: str):
+        with ui.row().classes("w-full items-center justify-between px-4 py-2"):
+            ui.label(title).classes("font-bold break-all")
+            ui.button(icon="close", on_click=lambda: self.dialog.submit(None)).props(
+                "flat dense"
+            )
+
+    def _render_text_header(self, title: str, preview_id: str):
+        async def toggle_wrap(event):
+            await ui.run_javascript(
+                (
+                    "document.getElementById("
+                    f"{json.dumps(preview_id)}"
+                    ")?.classList.toggle('stardrive-code-preview-wrap', "
+                    f"{json.dumps(bool(event.value))}"
+                    ");"
+                )
+            )
+
+        with ui.row().classes("w-full items-center justify-between gap-3 px-4 py-2"):
+            ui.label(title).classes("font-bold break-all min-w-0")
+            with ui.row(wrap=False).classes("items-center gap-2 shrink-0"):
+                ui.switch(_("Wrap lines"), value=False, on_change=toggle_wrap).props(
+                    "dense"
+                )
+                ui.button(icon="close", on_click=lambda: self.dialog.submit(None)).props(
+                    "flat dense"
+                )
+
     def _render_image(self):
-        ui.image(self.media_path).classes(
-            "w-full max-h-[600px] object-contain"
-        )
+        ui.image(self.media_path).classes("w-full max-h-[600px] object-contain")
 
         with ui.card_section().classes("w-full"):
             with ui.row(wrap=False).classes("w-full items-start gap-6"):
@@ -1042,15 +1450,15 @@ class MediaDialog(Dialog):
                         m.marker(latlng=m.center)
 
     def _render_video(self):
+        self._render_header(Path(self.media_path).name)
         self.video_ref = ui.video(
             self.media_path,
             controls=True,
             autoplay=False,
-        ).classes(
-            "w-full max-h-[600px] object-contain bg-black"
-        )
+        ).classes("w-full max-h-[600px] object-contain bg-black")
 
     def _render_audio(self):
+        self._render_header(Path(self.media_path).name)
         with ui.column().classes("w-full items-center gap-4 p-6"):
             ui.icon("music_note", size="64px")
             ui.label(Path(self.media_path).name).classes("text-lg")
@@ -1061,5 +1469,168 @@ class MediaDialog(Dialog):
                 autoplay=False,
             ).classes("w-full")
 
+    def _render_pdf(self, pdf_path: Path):
+        self._render_header(Path(pdf_path).name)
+        preview_url = create_preview_file_url(pdf_path)
+        ui.html(
+            f'<iframe src="{preview_url}" class="w-full h-[75vh] border-0"></iframe>',
+            sanitize=False,
+        ).classes("w-full")
 
+    def _read_text_preview(self) -> tuple[str, bool]:
+        with self.media_path.open("rb") as file:
+            data = file.read(MAX_TEXT_PREVIEW_BYTES + 1)
+        truncated = len(data) > MAX_TEXT_PREVIEW_BYTES
+        text = data[:MAX_TEXT_PREVIEW_BYTES].decode("utf-8", errors="replace")
+        return text, truncated
 
+    def _render_text_limit_notice(self, truncated: bool):
+        if truncated:
+            ui.label(
+                _("Preview is limited to the first {size} MB.").format(
+                    size=MAX_TEXT_PREVIEW_BYTES // (1024 * 1024)
+                )
+            ).classes("text-xs text-orange-600 px-4 pb-2")
+
+    def _render_text(self):
+        preview_id = "stardrive-code-preview-" + hashlib.sha256(
+            self.media_path.as_posix().encode("utf-8")
+        ).hexdigest()[:12]
+        self._render_text_header(Path(self.media_path).name, preview_id)
+        text, truncated = self._read_text_preview()
+        self._render_text_limit_notice(truncated)
+        should_highlight = should_highlight_text(self.media_path, text, truncated)
+        if should_highlight:
+            ensure_highlight_assets()
+        else:
+            ensure_code_preview_style()
+        escaped = html.escape(text)
+        language = detect_highlight_language(self.media_path)
+        code_class = f"language-{language}" if language else ""
+        highlight_attr = ' data-stardrive-highlight="1"' if should_highlight else ""
+        ui.html(
+            (
+                f'<div id="{preview_id}" class="stardrive-code-preview w-full h-[75vh] overflow-auto">'
+                f'<pre><code class="{code_class}"{highlight_attr}>{escaped}</code></pre>'
+                "</div>"
+            ),
+            sanitize=False,
+        ).classes("w-full")
+
+    def _render_markdown(self):
+        self._render_header(Path(self.media_path).name)
+        text, truncated = self._read_text_preview()
+        self._render_text_limit_notice(truncated)
+        ensure_highlight_assets()
+        with ui.scroll_area().classes("w-full h-[75vh] px-4"):
+            ui.markdown(text).classes("stardrive-markdown-preview w-full")
+
+    def _render_csv(self):
+        self._render_header(Path(self.media_path).name)
+        text, truncated = self._read_text_preview()
+        self._render_text_limit_notice(truncated)
+
+        delimiter = "\t" if self.suffix == ".tsv" else ","
+        rows = list(csv.reader(text.splitlines(), delimiter=delimiter))
+        if not rows:
+            ui.label(_("This file is empty.")).classes("p-6")
+            return
+
+        headers = rows[0][:20]
+        body_rows = rows[1:201]
+        if not headers:
+            self._render_text()
+            return
+
+        columns = [
+            {
+                "name": f"col_{index}",
+                "label": header or f"Column {index + 1}",
+                "field": f"col_{index}",
+                "align": "left",
+            }
+            for index, header in enumerate(headers)
+        ]
+        table_rows = [
+            {
+                f"col_{index}": row[index] if index < len(row) else ""
+                for index in range(len(headers))
+            }
+            for row in body_rows
+        ]
+        ui.table(columns=columns, rows=table_rows, pagination=20).classes(
+            "w-full h-[75vh]"
+        )
+
+    async def _render_office(self):
+        pdf_path, error = await asyncio.to_thread(self._convert_office_to_pdf)
+        if error:
+            self._render_unsupported(error)
+            return
+        self._render_pdf(pdf_path)
+
+    def _convert_office_to_pdf(self) -> tuple[Path | None, str | None]:
+        converter = find_libreoffice_command()
+        if not converter:
+            return None, _(
+                "Preview is not available for {suffix} files because LibreOffice is not installed."
+            ).format(suffix=self.suffix or _("this file type"))
+
+        cache_path = build_office_preview_cache_path(self.media_path)
+        if cache_path.exists():
+            return cache_path, None
+
+        PREVIEW_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=PREVIEW_CACHE_DIR) as temp_dir:
+            command = [
+                converter,
+                "--headless",
+                "--nologo",
+                "--nofirststartwizard",
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                temp_dir,
+                self.media_path.as_posix(),
+            ]
+            try:
+                subprocess.run(
+                    command,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                )
+            except subprocess.TimeoutExpired:
+                return None, _("Preview conversion timed out.")
+            except subprocess.CalledProcessError as error:
+                detail = (error.stderr or error.stdout or "").strip()
+                return None, _(
+                    "Failed to convert this file for preview: {error}"
+                ).format(error=detail or _("unknown error"))
+
+            generated_pdf = Path(temp_dir) / f"{self.media_path.stem}.pdf"
+            if not generated_pdf.exists():
+                candidates = list(Path(temp_dir).glob("*.pdf"))
+                if not candidates:
+                    return None, _("Failed to convert this file for preview.")
+                generated_pdf = candidates[0]
+
+            shutil.move(generated_pdf, cache_path)
+            return cache_path, None
+
+    def _render_unsupported(self, message: str | None = None):
+        suffix = self.suffix or _("unknown")
+        self._render_header(Path(self.media_path).name)
+        with ui.column().classes("w-full items-center gap-4 p-8 text-center"):
+            ui.icon("visibility_off", size="64px").classes("text-orange-500")
+            ui.label(_("Preview unavailable")).classes("text-xl font-bold")
+            ui.label(
+                message
+                or _("Preview is not available for this file type: {suffix}").format(
+                    suffix=suffix
+                )
+            ).classes("text-sm text-gray-600 dark:text-gray-300")
+            ui.button(_("Close"), on_click=lambda: self.dialog.submit(None)).props(
+                "flat"
+            )

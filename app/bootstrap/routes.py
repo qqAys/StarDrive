@@ -1,7 +1,7 @@
 from nicegui import app
 from starlette.responses import RedirectResponse
 
-from app.api import download
+from app.api import download, preview
 from app.ui.pages import console
 from app.ui.pages import login, browser, profile, share
 

@@ -2,7 +2,7 @@ services:
   stardrive:
     build: .
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - ./data:/opt/stardrive/app_data
     environment:

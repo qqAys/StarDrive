@@ -44,6 +44,16 @@ StarDrive 采用了现代化的 Python 技术栈：
     uv run -m app.main
     ```
 
+## 文件预览 (File Preview)
+
+StarDrive 支持图片、视频、音频、PDF、文本/代码、Markdown、CSV/TSV 的在线预览。
+Office 文档（如 doc/docx/xls/xlsx/ppt/pptx）会通过 LibreOffice 转换为 PDF 后预览。
+
+Docker 镜像会内置 LibreOffice 和 Noto CJK 字体，以支持中文等 CJK 文档转换预览。
+若你直接在本机运行 StarDrive 且未安装 LibreOffice，Office 文档会显示“不支持预览，
+需要安装 LibreOffice”，不会影响其他格式预览。本机运行时如果中文显示为方框，
+请安装可用的中文字体。
+
 ## 翻译 (Translations)
 
 我们使用 Weblate 管理多语言翻译。欢迎加入！
