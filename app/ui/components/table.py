@@ -1,3 +1,4 @@
+import asyncio
 import time
 from functools import wraps
 from pathlib import Path
@@ -120,6 +121,7 @@ class FileBrowserTable:
         self.keyboard_event_registered = False
 
         self.footer_container = footer_container
+        self._refresh_lock = asyncio.Lock()
 
         self.file_list = []
 
@@ -415,8 +417,6 @@ class FileBrowserTable:
 
         self.refresh_func = browser_content
 
-        ui.timer(0.1, self.refresh_func, once=True)
-
     @property
     def current_path(self) -> Path:
         return self._current_path
@@ -430,7 +430,11 @@ class FileBrowserTable:
             set_user_last_path(new_path)
 
     async def refresh(self):
-        await self.refresh_func.refresh()
+        async with self._refresh_lock:
+            if not self.refresh_func.targets:
+                await self.refresh_func()
+                return
+            await self.refresh_func.refresh()
 
     async def back_func(self):
         if self.current_path.parent == self.current_path:
@@ -619,7 +623,17 @@ class FileBrowserTable:
 
     @require_user
     async def handle_upload(self, e: events.MultiUploadEventArguments):
+        uploaded_count = 0
         for f in e.files:
+            is_valid, message = validate_filename(f.name, allow_subdirs=True)
+            if not is_valid:
+                notify.warning(
+                    _("Skipped invalid upload path '{path}': {message}").format(
+                        path=f.name,
+                        message=message,
+                    )
+                )
+                continue
 
             if self.file_manager.exists(str(self.current_path / f.name)):
                 confirm = await ConfirmDialog(
@@ -639,10 +653,13 @@ class FileBrowserTable:
                 )
             except Exception as up_e:
                 notify.error(str(up_e))
+            else:
+                uploaded_count += 1
 
-        self.upload_component.clear()
+        self.upload_component.reset()
 
-        await self.refresh()
+        if uploaded_count:
+            await self.refresh()
 
     def handle_edit_button_click(self):
         self.is_select_mode = not self.is_select_mode
@@ -846,8 +863,14 @@ class FileBrowserTable:
                 table_selected = self.browser_table.selected
                 if table_selected:
                     table_selected = table_selected[0]
-                    await MediaDialog(self.file_manager, Path(table_selected["path"])).open()
-                    self.has_dialog_open = False
+                    try:
+                        await MediaDialog(
+                            self.file_manager, Path(table_selected["path"])
+                        ).open()
+                    except Exception as e:
+                        notify.error(
+                            _("Failed to open preview: {error}").format(error=str(e))
+                        )
             finally:
                 self.has_dialog_open = False
 
