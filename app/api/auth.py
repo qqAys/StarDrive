@@ -2,12 +2,21 @@ from app.api import auth_url_prefix, router
 from app.core.exceptions import BusinessException
 from app.core.i18n import _
 from app.core.response import ok
+from app.crud.user_crud import UserCRUD
 from app.schemas.user_schema import UserLogin
+from app.security.tokens import create_access_token, create_refresh_token
+from app.services.local_db_service import get_db_context
 
 
 @router.post("/" + auth_url_prefix + "/login")
 async def login_api(user_login: UserLogin):
-    user = await authenticate(user_login)
+    async with get_db_context() as session:
+        user = await UserCRUD.authenticate(
+            session=session,
+            email=user_login.email,
+            password=user_login.password,
+        )
+
     if not user:
         raise BusinessException(
             code=2001,
@@ -15,10 +24,16 @@ async def login_api(user_login: UserLogin):
             http_status=401,
         )
 
+    access_payload = {"sub": user.id}
+    refresh_payload = {
+        **access_payload,
+        "tv": user.token_version,
+    }
+
     return ok(
         {
-            "access_token": "...",
-            "refresh_token": "...",
+            "access_token": create_access_token(access_payload),
+            "refresh_token": create_refresh_token(refresh_payload),
             "expires_in": 900,
         }
     )
