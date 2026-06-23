@@ -78,7 +78,11 @@ async def download_form_browser_api(
         if range_header and range_header.startswith("bytes="):
             try:
                 start_text, end_text = range_header[6:].split("=", 1)[0].split("-", 1)
-                start = int(start_text) if start_text else max(0, metadata.size - int(end_text))
+                start = (
+                    int(start_text)
+                    if start_text
+                    else max(0, metadata.size - int(end_text))
+                )
                 end = int(end_text) if end_text else metadata.size - 1
                 if start < 0 or end < start or start >= metadata.size:
                     raise ValueError
@@ -89,7 +93,9 @@ async def download_form_browser_api(
             except ValueError:
                 raise HTTPException(status_code=416, detail="Invalid range")
         return StreamingResponse(
-            file_manager.download_file_with_stream(str(validated_data.path), start, length),
+            file_manager.download_file_with_stream(
+                str(validated_data.path), start, length
+            ),
             status_code=status_code,
             media_type=mime_type or "application/octet-stream",
             headers=headers,

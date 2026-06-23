@@ -205,7 +205,9 @@ class LocalStorage(StorageBackend):
             src_file.seek(max(0, offset))
             remaining = length
             while True:
-                chunk = src_file.read(chunk_size if remaining is None else min(chunk_size, remaining))
+                chunk = src_file.read(
+                    chunk_size if remaining is None else min(chunk_size, remaining)
+                )
                 if not chunk:
                     break
                 yield chunk

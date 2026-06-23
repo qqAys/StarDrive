@@ -305,17 +305,25 @@ async def console_page(request: Request, client: Client):
                 saved_oss = storage_config.public_oss_config()
                 with ui.grid(columns=2).classes("w-full gap-2"):
                     oss_region = ui.input(_("OSS region"), value=saved_oss["region"])
-                    oss_endpoint = ui.input(_("OSS endpoint"), value=saved_oss["endpoint"])
+                    oss_endpoint = ui.input(
+                        _("OSS endpoint"), value=saved_oss["endpoint"]
+                    )
                     oss_bucket = ui.input(_("OSS bucket"), value=saved_oss["bucket"])
-                    oss_access_key = ui.input(_("AccessKey ID"), value=saved_oss["access_key_id"])
+                    oss_access_key = ui.input(
+                        _("AccessKey ID"), value=saved_oss["access_key_id"]
+                    )
                     oss_secret = ui.input(
-                        _("AccessKey Secret"), password=True, password_toggle_button=True,
+                        _("AccessKey Secret"),
+                        password=True,
+                        password_toggle_button=True,
                     ).props(f"hint='{_('Leave empty to keep the saved secret')}'")
                     oss_prefix = ui.input(_("Object prefix"), value=saved_oss["prefix"])
 
                 def build_oss_config() -> OSSConfig:
                     secret = oss_secret.value or (
-                        storage_config.oss_config.access_key_secret if storage_config.oss_config else ""
+                        storage_config.oss_config.access_key_secret
+                        if storage_config.oss_config
+                        else ""
                     )
                     return OSSConfig(
                         region=(oss_region.value or "").strip(),
@@ -328,15 +336,17 @@ async def console_page(request: Request, client: Client):
 
                 async def test_oss():
                     try:
-                        backend = AliyunOSSStorage(build_oss_config(), "connection-check")
+                        backend = AliyunOSSStorage(
+                            build_oss_config(), "connection-check"
+                        )
                         await asyncio.to_thread(
                             backend.client.get_bucket_info,
-                            oss.GetBucketInfoRequest(
-                                bucket=backend.config.bucket
-                            ),
+                            oss.GetBucketInfoRequest(bucket=backend.config.bucket),
                         )
                     except Exception as exc:
-                        notify.error(_("OSS connection failed: {error}").format(error=str(exc)))
+                        notify.error(
+                            _("OSS connection failed: {error}").format(error=str(exc))
+                        )
                         return False
                     notify.success(_("OSS connection verified."))
                     return True
@@ -356,8 +366,14 @@ async def console_page(request: Request, client: Client):
                     notify.success(_("Storage backend saved."))
 
                 with ui.row().classes("gap-2"):
-                    ui.button(_("Test OSS connection"), icon="wifi_tethering", on_click=test_oss)
-                    ui.button(_("Save storage backend"), icon="save", on_click=save_storage)
+                    ui.button(
+                        _("Test OSS connection"),
+                        icon="wifi_tethering",
+                        on_click=test_oss,
+                    )
+                    ui.button(
+                        _("Save storage backend"), icon="save", on_click=save_storage
+                    )
 
             ui.separator()
 

@@ -93,7 +93,9 @@ async def index():
             # =============================
             with ui.card().classes("w-full border border-red-300"):
 
-                ui.label(_("Security")).classes("text-lg font-semibold mb-4 text-red-600")
+                ui.label(_("Security")).classes(
+                    "text-lg font-semibold mb-4 text-red-600"
+                )
 
                 old_password = ui.input(
                     _("Current password"),
@@ -143,7 +145,9 @@ async def index():
 
                 ui.separator()
 
-                ui.label(_("Account")).classes("text-lg font-semibold mb-4 text-red-600")
+                ui.label(_("Account")).classes(
+                    "text-lg font-semibold mb-4 text-red-600"
+                )
 
                 async def handle_logout():
                     await logout(user_manager)

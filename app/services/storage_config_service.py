@@ -51,14 +51,20 @@ class StorageConfigService:
     @staticmethod
     def _fernet():
         if Fernet is None:
-            raise RuntimeError("Encrypted OSS settings require the 'cryptography' package")
-        key = base64.urlsafe_b64encode(hashlib.sha256(settings.APP_SECRET.encode()).digest())
+            raise RuntimeError(
+                "Encrypted OSS settings require the 'cryptography' package"
+            )
+        key = base64.urlsafe_b64encode(
+            hashlib.sha256(settings.APP_SECRET.encode()).digest()
+        )
         return Fernet(key)
 
     async def load(self) -> None:
         async with get_db_context() as session:
             self.current_backend = (
-                await AppSettingCRUD.get_value(session, CURRENT_BACKEND_KEY, "LocalStorage")
+                await AppSettingCRUD.get_value(
+                    session, CURRENT_BACKEND_KEY, "LocalStorage"
+                )
             ) or "LocalStorage"
             raw = await AppSettingCRUD.get_value(session, OSS_CONFIG_KEY)
         self.oss_config = self._decode(raw) if raw else None
@@ -68,16 +74,18 @@ class StorageConfigService:
     def _decode(self, raw: str) -> OSSConfig | None:
         try:
             data = json.loads(raw)
-            secret = self._fernet().decrypt(data.pop("access_key_secret").encode()).decode()
+            secret = (
+                self._fernet().decrypt(data.pop("access_key_secret").encode()).decode()
+            )
             return OSSConfig(access_key_secret=secret, **data)
         except (KeyError, TypeError, ValueError, InvalidToken):
             return None
 
     async def save_oss(self, config: OSSConfig) -> None:
         payload = asdict(config)
-        payload["access_key_secret"] = self._fernet().encrypt(
-            config.access_key_secret.encode()
-        ).decode()
+        payload["access_key_secret"] = (
+            self._fernet().encrypt(config.access_key_secret.encode()).decode()
+        )
         async with get_db_context() as session:
             await AppSettingCRUD.set_value(session, OSS_CONFIG_KEY, json.dumps(payload))
         self.oss_config = config
@@ -92,9 +100,18 @@ class StorageConfigService:
         self.current_backend = backend
 
     def public_oss_config(self) -> dict[str, str | bool]:
-        return self.oss_config.public() if self.oss_config else {
-            "region": "", "endpoint": "", "bucket": "", "access_key_id": "", "prefix": "", "has_access_key_secret": False
-        }
+        return (
+            self.oss_config.public()
+            if self.oss_config
+            else {
+                "region": "",
+                "endpoint": "",
+                "bucket": "",
+                "access_key_id": "",
+                "prefix": "",
+                "has_access_key_secret": False,
+            }
+        )
 
 
 storage_config = StorageConfigService()

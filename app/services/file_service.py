@@ -323,7 +323,10 @@ class StorageManager:
             info = tarfile.TarInfo(arcname)
             info.size = metadata.size
             info.mtime = int(metadata.modified_at or time.time())
-            tar.addfile(info, io.BufferedReader(_StreamReader(self.download_file_with_stream(path))))
+            tar.addfile(
+                info,
+                io.BufferedReader(_StreamReader(self.download_file_with_stream(path))),
+            )
 
         def tar_worker():
             try:
@@ -418,7 +421,10 @@ def create_user_storage_manager(user_id: str) -> StorageManager:
     )
     manager = StorageManager(root_path=root_path)
     manager.user_id = user_id
-    if storage_config.current_backend == AliyunOSSStorage.name and storage_config.oss_config:
+    if (
+        storage_config.current_backend == AliyunOSSStorage.name
+        and storage_config.oss_config
+    ):
         manager.register_backend(
             AliyunOSSStorage.name, AliyunOSSStorage(storage_config.oss_config, user_id)
         )
