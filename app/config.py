@@ -2,10 +2,11 @@ import platform
 from datetime import timedelta, timezone
 from typing import Literal, Any, ClassVar
 
-from pydantic import EmailStr, SecretStr
+from pydantic import AliasChoices, EmailStr, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.core.paths import DB_DIR
+from app.core.version import app_version
 
 
 class Config(BaseSettings):
@@ -27,6 +28,7 @@ class Config(BaseSettings):
         env_prefix=f"{_PROJECT_NAME_ENV}_",
         env_file_encoding="utf-8",
         case_sensitive=True,
+        extra="ignore",
     )
     SYSTEM_NAME: str = _SYSTEM_NAME
 
@@ -34,13 +36,18 @@ class Config(BaseSettings):
     DEBUG: bool = False
 
     APP_NAME: str = _PROJECT_NAME
-    APP_VERSION: str = None
+    # Package metadata is the only authoritative application version.  Keeping
+    # this a ClassVar also prevents deployment environment variables from
+    # overriding the version displayed by the application.
+    APP_VERSION: ClassVar[str] = app_version()
     APP_GITHUB_URL: ClassVar[str] = "https://github.com/qqAys/StarDrive"
 
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8080
 
-    APP_SECRET: str = None
+    APP_SECRET: str = Field(
+        validation_alias=AliasChoices("STARDRIVE_APP_SECRET", "APP_SECRET")
+    )
 
     APP_DEFAULT_LANGUAGE: str = "en-US"
 

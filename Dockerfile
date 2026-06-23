@@ -1,6 +1,9 @@
 FROM astral/uv:python3.12-bookworm-slim
 LABEL authors="jinx"
 
+ARG APP_VERSION=unknown
+LABEL org.opencontainers.image.version="${APP_VERSION}"
+
 WORKDIR /opt/stardrive
 
 RUN sed -i 's|http://deb.debian.org/debian|https://mirrors.tuna.tsinghua.edu.cn/debian|g; s|http://deb.debian.org/debian-security|https://mirrors.tuna.tsinghua.edu.cn/debian-security|g' /etc/apt/sources.list.d/debian.sources \
@@ -22,7 +25,6 @@ COPY . .
 ENV STARDRIVE_DEBUG=False
 ENV STARDRIVE_LOG_LEVEL=INFO
 
-ENV STARDRIVE_APP_VERSION=0.1.0
 ENV STARDRIVE_APP_DEFAULT_LANGUAGE=en-US
 ENV STARDRIVE_APP_DATA_DIR=app_data
 

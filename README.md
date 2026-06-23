@@ -44,6 +44,23 @@ StarDrive 采用了现代化的 Python 技术栈：
     uv run -m app.main
     ```
 
+## 版本与 Docker 发布 (Versioning and Docker releases)
+
+StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.6.23`**，格式为
+`YYYY.M.D`；同一天的补发版本在末尾增加序号，例如 `2026.6.23.1`。版本仅在
+`pyproject.toml` 中维护；已安装的发行包会从包元数据读取，源码运行时则读取同一份
+`pyproject.toml` 元数据。
+
+构建镜像时使用以下命令，它会同时生成 `qqays/stardrive:2026.6.23` 与
+`qqays/stardrive:latest`，并为镜像写入 OCI 版本元数据：
+
+```shell
+python scripts/build_image.py
+```
+
+需要推送时附加 `--push`。`latest` 仅为便利标签；生产部署请固定使用日期版本，
+例如 `qqays/stardrive:2026.6.23`，以保证部署可复现。
+
 ## 文件预览 (File Preview)
 
 StarDrive 支持图片、视频、音频、PDF、文本/代码、Markdown、CSV/TSV 的在线预览。
