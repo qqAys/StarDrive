@@ -38,11 +38,40 @@ StarDrive 采用了现代化的 Python 技术栈：
     ```shell
     curl -LsSf https://astral.sh/uv/install.sh | sh
     ```
-2.  **安装依赖并运行**:
+2.  **创建本地配置并生成密钥**:
+    ```shell
+    cp .env.example .env
+    openssl rand -hex 32
+    # 将输出填入 .env 的 STARDRIVE_APP_SECRET
+    ```
+3.  **安装依赖并运行**:
     ```shell
     uv sync
     uv run -m app.main
     ```
+
+容器部署同样要求设置稳定的 `STARDRIVE_APP_SECRET`。可将其写入未提交的 `.env`，然后执行
+`docker compose up -d`。容器健康检查和编排系统可访问 `GET /api/healthz`；该接口不需要登录，
+只返回服务状态和版本。
+
+### 数据库升级与备份
+
+启动时会自动执行 SQLite 数据库迁移。首次启动会创建数据库；升级旧版本时，StarDrive 会在
+`app_data/db/` 中创建带 UTC 时间戳的 `local.db.bak.*` 备份，再标记并升级已识别的完整旧结构。
+若发现不完整或未知的旧库，应用会拒绝启动以避免破坏数据：请先保留原库和备份，并使用以下命令
+检查或执行迁移：
+
+```shell
+uv run alembic current
+uv run alembic upgrade head
+```
+
+### 可选的外部集成验证
+
+常规 CI 不需要云端凭据。若要在 push 后验证真实服务，请在 GitHub Actions Secrets 中配置专用、
+可清理的 `STARDRIVE_TEST_OSS_*`（Region、Endpoint、Bucket、Access Key、Prefix）或
+`STARDRIVE_TEST_SMTP_*`（Host、Port、Sender、Recipient，以及可选 TLS/账号/密码）。工作流只在
+对应 Secrets 完整时运行，OSS 测试仅在指定 Prefix 下创建临时对象。
 
 ## 版本与 Docker 发布 (Versioning and Docker releases)
 

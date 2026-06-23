@@ -244,3 +244,9 @@ cython_debug/
 
 # StarDrive
 app_data/
+
+# Docker build context protections
+.env.*
+!.env.example
+.git
+.github

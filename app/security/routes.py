@@ -12,6 +12,7 @@ UNRESTRICTED_PAGE_ROUTES = (
     "/forgot-password*",
     "/reset-password*",
     "/share*",
+    "/api/healthz",
     "/api*",
 )
 

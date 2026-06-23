@@ -1,4 +1,6 @@
-FROM astral/uv:python3.12-bookworm-slim
+# Keep the image parser in lockstep with uv.lock (revision 3). The floating
+# Python tag may be served from Docker's local cache with an older uv release.
+FROM astral/uv:0.11.23-python3.12-trixie-slim
 LABEL authors="jinx"
 
 ARG APP_VERSION=unknown
@@ -28,16 +30,16 @@ ENV STARDRIVE_LOG_LEVEL=INFO
 ENV STARDRIVE_APP_DEFAULT_LANGUAGE=en-US
 ENV STARDRIVE_APP_DATA_DIR=app_data
 
-# 镜像加速
-ENV UV_DEFAULT_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple
-
 # Python优化
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-RUN uv sync
-RUN uv run pybabel compile -d app/locales
+RUN uv sync --locked --no-dev
+RUN uv run --no-dev pybabel compile -d app/locales
 
 EXPOSE 8080
 
-CMD ["uv", "run", "-m", "app.main"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:8080/api/healthz').read()"
+
+CMD ["uv", "run", "--no-dev", "-m", "app.main"]

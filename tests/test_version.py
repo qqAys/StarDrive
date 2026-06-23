@@ -1,5 +1,8 @@
 import os
 
+import pytest
+from pydantic import ValidationError
+
 os.environ.setdefault("STARDRIVE_APP_SECRET", "test-secret")
 
 from app.config import Config
@@ -17,3 +20,13 @@ def test_app_secret_accepts_legacy_unprefixed_environment_variable(monkeypatch):
     monkeypatch.setenv("APP_SECRET", "legacy-local-secret")
 
     assert Config(_env_file=None).APP_SECRET == "legacy-local-secret"
+
+
+def test_app_secret_is_required_when_no_environment_or_env_file_is_available(
+    monkeypatch,
+):
+    monkeypatch.delenv("STARDRIVE_APP_SECRET", raising=False)
+    monkeypatch.delenv("APP_SECRET", raising=False)
+
+    with pytest.raises(ValidationError, match="APP_SECRET"):
+        Config(_env_file=None)

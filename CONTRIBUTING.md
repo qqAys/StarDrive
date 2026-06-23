@@ -86,6 +86,9 @@ Once `uv` is installed, you can install StarDrive's dependencies with this comma
 uv sync
 ```
 
+To run the application locally, create a private `.env` from `.env.example` and replace
+`STARDRIVE_APP_SECRET` with the output of `openssl rand -hex 32`. Do not commit that file.
+
 ### Coding Style & Testing
 
 We use **Black** for formatting and **pytest** for testing.

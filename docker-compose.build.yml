@@ -4,7 +4,13 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
-      - ./data:/opt/stardrive/app_data
+      - ./app_data:/opt/stardrive/app_data
     environment:
-      - STARDRIVE_APP_SECRET="your-secret-here"
+      STARDRIVE_APP_SECRET: ${STARDRIVE_APP_SECRET:?Set STARDRIVE_APP_SECRET in .env or your shell}
     restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8080/api/healthz').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
