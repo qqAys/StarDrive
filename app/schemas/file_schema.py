@@ -1,7 +1,7 @@
 import enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.i18n import _
 
@@ -51,9 +51,7 @@ class FileMetadataBase(BaseModel):
         default=None, description=_("Custom update timestamp (Unix epoch)")
     )
 
-    class Config:
-        extra = "ignore"
-        from_attributes = True
+    model_config = ConfigDict(extra="ignore", from_attributes=True)
 
     @property
     def is_dir(self) -> bool:
