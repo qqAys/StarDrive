@@ -5,7 +5,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
-from app.core.logging import logger
+from app.core.logging import logger, redact_sensitive_data, redact_url
 from app.security.routes import is_route_unrestricted
 
 
@@ -48,7 +48,7 @@ class AuthLoggingMiddleware(BaseHTTPMiddleware):
         log_ctx = {
             "request_uuid": str(request_uuid),
             "method": request.method,
-            "url": str(request.url),
+            "url": redact_url(str(request.url)),
             "client": f"{client_ip}:{request.client.port}",
         }
 
@@ -72,8 +72,8 @@ class AuthLoggingMiddleware(BaseHTTPMiddleware):
             # Log full context for debugging unauthorized access
             full_ctx = {
                 **log_ctx,
-                "headers": dict(request.headers),
-                "cookies": dict(request.cookies),
+                "headers": redact_sensitive_data(dict(request.headers)),
+                "cookies": redact_sensitive_data(dict(request.cookies)),
             }
             logger.warning({"auth": "fail", "reason": "unauthorized", **full_ctx})
             # Redirect to login with original path as redirect target

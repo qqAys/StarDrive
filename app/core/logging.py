@@ -4,6 +4,8 @@ import time
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from typing import Any
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from app.config import settings
 from app.core.paths import LOG_DIR, APP_ROOT
@@ -17,6 +19,60 @@ TIME_FORMAT = "%Y-%m-%d %H:%M:%S %Z"
 
 # List of logger names to suppress (reduce noise in logs)
 SUPPRESS_LOGGERS = ["python_multipart.multipart", "aiosqlite"]
+SENSITIVE_LOG_KEYS = {
+    "authorization",
+    "cookie",
+    "set-cookie",
+    "password",
+    "token",
+    "access_token",
+    "refresh_token",
+}
+TOKEN_PATH_PREFIXES = (
+    "/share/",
+    "/api/preview-file/",
+    "/api/download-form-browser/",
+)
+
+
+def _is_sensitive_log_key(key: str) -> bool:
+    normalized = key.lower()
+    return (
+        normalized in SENSITIVE_LOG_KEYS
+        or "token" in normalized
+        or "password" in normalized
+    )
+
+
+def redact_sensitive_data(value: Any) -> Any:
+    """Return a logging-safe copy without credentials, cookies, or URL tokens."""
+    if isinstance(value, dict):
+        return {
+            key: (
+                "[redacted]"
+                if _is_sensitive_log_key(key)
+                else redact_sensitive_data(item)
+            )
+            for key, item in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        return type(value)(redact_sensitive_data(item) for item in value)
+    return value
+
+
+def redact_url(url: str) -> str:
+    """Redact known sensitive query values while retaining request diagnostics."""
+    parts = urlsplit(url)
+    query = [
+        (key, "[redacted]" if _is_sensitive_log_key(key) else value)
+        for key, value in parse_qsl(parts.query, keep_blank_values=True)
+    ]
+    path = parts.path
+    for prefix in TOKEN_PATH_PREFIXES:
+        if path.startswith(prefix):
+            path = f"{prefix}[redacted]"
+            break
+    return urlunsplit((parts.scheme, parts.netloc, path, urlencode(query), ""))
 
 
 class JsonFormatter(logging.Formatter):
@@ -52,7 +108,7 @@ class JsonFormatter(logging.Formatter):
 
         # Handle message content
         if isinstance(record.msg, dict):
-            log_record.update(record.msg)
+            log_record.update(redact_sensitive_data(record.msg))
         else:
             log_record["message"] = record.getMessage()
 

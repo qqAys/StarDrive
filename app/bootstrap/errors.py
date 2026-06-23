@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from nicegui import app
 
 from app.core.exceptions import BusinessException
-from app.core.logging import logger
+from app.core.logging import logger, redact_sensitive_data
 from app.middlewares.exception_middleware import (
     business_exception_handler,
     http_exception_handler,
@@ -42,9 +42,7 @@ def setup_error_handlers():
                 "request_uuid": str(request_uuid),
                 "exception": str(exception),
                 "traceback": traceback.format_exc(chain=False),
-                "app_storage": dict(
-                    app.storage.user
-                ),  # Serialize to avoid runtime issues
+                "app_storage": redact_sensitive_data(dict(app.storage.user)),
             }
         )
         render_50x(str(request_uuid), str(exception))
