@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import BinaryIO, AsyncIterator
+from typing import BinaryIO, AsyncIterator, Iterator
 
 from app.schemas.file_schema import FileMetadata, DirMetadata
 
@@ -82,10 +82,12 @@ class StorageBackend(ABC):
         """
 
     @abstractmethod
-    def download_file_with_stream(self, remote_path: str) -> BinaryIO:
+    def download_file_with_stream(
+        self, remote_path: str, offset: int = 0, length: int | None = None
+    ) -> Iterator[bytes]:
         """
-        Return a readable binary stream for the file at the given path.
-        The caller is responsible for closing the stream.
+        Yield a file byte stream. ``offset`` and ``length`` support HTTP Range
+        responses without requiring a backend to materialize a local file.
         """
 
     @abstractmethod

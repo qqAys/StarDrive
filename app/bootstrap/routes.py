@@ -17,6 +17,7 @@ def setup_routes():
     app.include_router(profile.router)
     app.include_router(console.router)
     app.include_router(download.router)
+    app.include_router(preview.router)
 
     @app.exception_handler(404)
     def not_found_page(*args, **kwargs):

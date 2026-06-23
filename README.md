@@ -71,6 +71,14 @@ Docker 镜像会内置 LibreOffice 和 Noto CJK 字体，以支持中文等 CJK 
 需要安装 LibreOffice”，不会影响其他格式预览。本机运行时如果中文显示为方框，
 请安装可用的中文字体。
 
+## 阿里云 OSS 后端
+
+超级管理员可在“Console”中录入 OSS Region、endpoint、Bucket、AccessKey ID/Secret 和可选对象前缀，先执行连接校验，再切换当前存储后端。后端使用官方 `alibabacloud-oss-v2` SDK；SDK V2 默认采用 V4 签名，因此 Region 必填。凭据以应用的 `APP_SECRET` 派生密钥加密保存于本地数据库，生产环境必须设置足够强且稳定的 `APP_SECRET`。
+
+启用 OSS 后，每位用户的数据位于 `可选前缀/users/{user_id}/`。文件上传、下载、预览与压缩下载均通过服务器流式代理；不会把 OSS 文件持久化到本地。Office 预览仅在单次请求中创建临时转换文件，并会在响应结束后删除。
+
+给 AccessKey/RAM 用户授予所选 Bucket 的对象读写、列举、复制和删除权限，以及 Bucket 信息读取权限用于连接校验。切换本地与 OSS 后端不会自动迁移任一后端的既有文件。
+
 ## 翻译 (Translations)
 
 我们使用 Weblate 管理多语言翻译。欢迎加入！

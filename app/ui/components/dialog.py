@@ -2,6 +2,7 @@ import asyncio
 import csv
 import hashlib
 import html
+import io
 import json
 import shutil
 import subprocess
@@ -14,7 +15,11 @@ from typing import Optional, Callable
 from nicegui import ui, events
 from nicegui.events import KeyEventArguments
 
-from app.api.preview import create_preview_file_url
+from app.api.preview import (
+    create_preview_file_url,
+    create_storage_preview_url,
+    find_libreoffice_command,
+)
 from app.core.paths import PREVIEW_CACHE_DIR
 from app.core.i18n import _
 from app.models.user_model import User
@@ -534,7 +539,6 @@ class FileBrowserDialog(Dialog):
         super().__init__()
         self.file_manager = file_service
         self.target_path = target_path
-        self.target_root_path = self.file_manager.get_full_path(str(self.target_path))
         self.share_id = share_id
         self.dialog = ui.dialog().props(self.dialog_props)
         self.title_label: Optional[ui.label] = None
@@ -1099,7 +1103,9 @@ CODE_PREVIEW_STYLE_JS = """
   }
   return true;
 })();
-""".replace("__CODE_PREVIEW_CSS__", json.dumps(CODE_PREVIEW_CSS))
+""".replace(
+    "__CODE_PREVIEW_CSS__", json.dumps(CODE_PREVIEW_CSS)
+)
 HIGHLIGHT_RUNTIME_JS = """
 (() => {
   const styleHref = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css';
@@ -1169,7 +1175,9 @@ HIGHLIGHT_RUNTIME_JS = """
   script.addEventListener('load', () => highlight(), { once: true });
   return true;
 })();
-""".replace("__CODE_PREVIEW_CSS__", json.dumps(CODE_PREVIEW_CSS))
+""".replace(
+    "__CODE_PREVIEW_CSS__", json.dumps(CODE_PREVIEW_CSS)
+)
 HIGHLIGHT_LANGUAGE_BY_SUFFIX = {
     ".bash": "bash",
     ".bat": "dos",
@@ -1289,19 +1297,6 @@ def should_highlight_text(path: Path, text: str, truncated: bool) -> bool:
     return not any(len(line) > MAX_HIGHLIGHT_LINE_CHARS for line in text.splitlines())
 
 
-def find_libreoffice_command() -> str | None:
-    for command in ("soffice", "libreoffice"):
-        found = shutil.which(command)
-        if found:
-            return found
-
-    macos_app_command = Path("/Applications/LibreOffice.app/Contents/MacOS/soffice")
-    if macos_app_command.exists():
-        return macos_app_command.as_posix()
-
-    return None
-
-
 def build_office_preview_cache_path(source_path: Path) -> Path:
     source_path = source_path.resolve()
     stat = source_path.stat()
@@ -1314,13 +1309,31 @@ def build_office_preview_cache_path(source_path: Path) -> Path:
     return PREVIEW_CACHE_DIR / f"{cache_key}.pdf"
 
 
+def should_render_image_information(
+    is_streaming_backend: bool, image_info: dict[str, object]
+) -> bool:
+    """Image metadata is only available when the source is a local file."""
+    return not is_streaming_backend and bool(image_info)
+
+
 class MediaDialog(Dialog):
 
     def __init__(self, file_manager: StorageManager, media_path: Path):
         super().__init__()
 
         self.file_manager = file_manager
-        self.media_path = self.file_manager.get_full_path(str(media_path))
+        self.remote_path = str(media_path)
+        self.is_streaming_backend = self.file_manager.backend_name != "LocalStorage"
+        self.media_path = (
+            Path(media_path)
+            if self.is_streaming_backend
+            else self.file_manager.get_full_path(str(media_path))
+        )
+        self.preview_url = (
+            create_storage_preview_url(self.file_manager.user_id, self.remote_path)
+            if self.is_streaming_backend
+            else None
+        )
         self.suffix = media_path.suffix.lower()
         self.media_type = self._detect_media_type()
         self.preview_error: str | None = None
@@ -1335,8 +1348,8 @@ class MediaDialog(Dialog):
         self.audio_ref = None
 
         # image only
-        self.image_info = None
-        if self.media_type == MediaType.IMAGE:
+        self.image_info: dict[str, object] = {}
+        if self.media_type == MediaType.IMAGE and not self.is_streaming_backend:
             try:
                 self.image_info = get_image_info(self.media_path, str(media_path))
             except Exception:
@@ -1415,16 +1428,22 @@ class MediaDialog(Dialog):
                 ui.switch(_("Wrap lines"), value=False, on_change=toggle_wrap).props(
                     "dense"
                 )
-                ui.button(icon="close", on_click=lambda: self.dialog.submit(None)).props(
-                    "flat dense"
-                )
+                ui.button(
+                    icon="close", on_click=lambda: self.dialog.submit(None)
+                ).props("flat dense")
 
     def _render_image(self):
-        ui.image(self.media_path).classes("w-full max-h-[600px] object-contain")
+        ui.image(self.preview_url or self.media_path).classes(
+            "w-full max-h-[600px] object-contain"
+        )
+
+        if not should_render_image_information(
+            self.is_streaming_backend, self.image_info
+        ):
+            return
 
         with ui.card_section().classes("w-full"):
             with ui.row(wrap=False).classes("w-full items-start gap-6"):
-
                 # 左侧信息
                 with ui.column().classes("flex-1 min-w-0"):
                     label(_("Image Information"), extra_classes="text-lg font-bold")
@@ -1452,7 +1471,7 @@ class MediaDialog(Dialog):
     def _render_video(self):
         self._render_header(Path(self.media_path).name)
         self.video_ref = ui.video(
-            self.media_path,
+            self.preview_url or self.media_path,
             controls=True,
             autoplay=False,
         ).classes("w-full max-h-[600px] object-contain bg-black")
@@ -1464,20 +1483,35 @@ class MediaDialog(Dialog):
             ui.label(Path(self.media_path).name).classes("text-lg")
 
             self.audio_ref = ui.audio(
-                self.media_path,
+                self.preview_url or self.media_path,
                 controls=True,
                 autoplay=False,
             ).classes("w-full")
 
-    def _render_pdf(self, pdf_path: Path):
+    def _render_pdf(self, pdf_path: Path | str):
         self._render_header(Path(pdf_path).name)
-        preview_url = create_preview_file_url(pdf_path)
+        preview_url = (
+            self.preview_url
+            if self.is_streaming_backend
+            else create_preview_file_url(pdf_path)
+        )
         ui.html(
             f'<iframe src="{preview_url}" class="w-full h-[75vh] border-0"></iframe>',
             sanitize=False,
         ).classes("w-full")
 
     def _read_text_preview(self) -> tuple[str, bool]:
+        if self.is_streaming_backend:
+            data = b"".join(
+                self.file_manager.download_file_with_stream(
+                    self.remote_path, 0, MAX_TEXT_PREVIEW_BYTES + 1
+                )
+            )
+            truncated = len(data) > MAX_TEXT_PREVIEW_BYTES
+            return (
+                data[:MAX_TEXT_PREVIEW_BYTES].decode("utf-8", errors="replace"),
+                truncated,
+            )
         with self.media_path.open("rb") as file:
             data = file.read(MAX_TEXT_PREVIEW_BYTES + 1)
         truncated = len(data) > MAX_TEXT_PREVIEW_BYTES
@@ -1493,9 +1527,12 @@ class MediaDialog(Dialog):
             ).classes("text-xs text-orange-600 px-4 pb-2")
 
     def _render_text(self):
-        preview_id = "stardrive-code-preview-" + hashlib.sha256(
-            self.media_path.as_posix().encode("utf-8")
-        ).hexdigest()[:12]
+        preview_id = (
+            "stardrive-code-preview-"
+            + hashlib.sha256(self.media_path.as_posix().encode("utf-8")).hexdigest()[
+                :12
+            ]
+        )
         self._render_text_header(Path(self.media_path).name, preview_id)
         text, truncated = self._read_text_preview()
         self._render_text_limit_notice(truncated)
@@ -1563,6 +1600,16 @@ class MediaDialog(Dialog):
         )
 
     async def _render_office(self):
+        if not find_libreoffice_command():
+            self._render_libreoffice_installation_guide()
+            return
+
+        if self.is_streaming_backend:
+            self.preview_url = create_storage_preview_url(
+                self.file_manager.user_id, self.remote_path, office=True
+            )
+            self._render_pdf(self.media_path)
+            return
         pdf_path, error = await asyncio.to_thread(self._convert_office_to_pdf)
         if error:
             self._render_unsupported(error)
@@ -1618,6 +1665,65 @@ class MediaDialog(Dialog):
 
             shutil.move(generated_pdf, cache_path)
             return cache_path, None
+
+    def _render_libreoffice_installation_guide(self):
+        self._render_header(Path(self.media_path).name)
+        with ui.column().classes("w-full items-center gap-5 p-8 text-center"):
+            ui.icon("description", size="64px").style(f"color: {theme().warning}")
+            with ui.column().classes("items-center gap-1"):
+                ui.label(_("Office preview needs LibreOffice")).classes(
+                    "text-xl font-bold"
+                )
+                ui.label(
+                    _(
+                        "LibreOffice is required on the StarDrive server to preview Word, Excel, and PowerPoint files."
+                    )
+                ).classes("text-sm text-gray-600 dark:text-gray-300 max-w-[560px]")
+
+            with ui.card().classes(
+                "w-full max-w-[560px] text-left bg-blue-50 dark:bg-blue-950"
+            ):
+                with ui.row(wrap=False).classes("items-start gap-3"):
+                    ui.icon("info", size="20px").style(f"color: {theme().info}")
+                    ui.label(
+                        _(
+                            "This is a server configuration step. Visitors do not need to install anything on their own computers."
+                        )
+                    ).classes("text-sm")
+
+            with ui.column().classes("w-full max-w-[560px] gap-3 text-left"):
+                ui.label(
+                    _("Ask a server administrator to install LibreOffice:")
+                ).classes("font-medium")
+                for platform, command in (
+                    ("macOS", "brew install --cask libreoffice"),
+                    (
+                        "Ubuntu / Debian",
+                        "sudo apt update && sudo apt install -y libreoffice libreoffice-calc",
+                    ),
+                    (
+                        "Fedora / RHEL",
+                        "sudo dnf install -y libreoffice libreoffice-calc",
+                    ),
+                ):
+                    with ui.column().classes("gap-1"):
+                        ui.label(platform).classes("text-sm font-medium")
+                        ui.label(command).classes(
+                            "w-full rounded bg-gray-100 dark:bg-gray-800 px-3 py-2 "
+                            "font-mono text-xs break-all"
+                        )
+                ui.label(
+                    _(
+                        "For Docker deployments, rebuild and redeploy using this project's Dockerfile; it already includes LibreOffice."
+                    )
+                ).classes("text-sm text-gray-600 dark:text-gray-300")
+
+            ui.label(
+                _("After installation, restart StarDrive and reopen this file.")
+            ).classes("text-sm text-gray-600 dark:text-gray-300")
+            ui.button(_("Close"), on_click=lambda: self.dialog.submit(None)).props(
+                "flat"
+            )
 
     def _render_unsupported(self, message: str | None = None):
         suffix = self.suffix or _("unknown")

@@ -1,7 +1,9 @@
+import asyncio
 import gc
 import os
 
 import psutil
+import alibabacloud_oss_v2 as oss
 from fastapi.requests import Request
 from nicegui import Client, ui, app, APIRouter
 from starlette.responses import RedirectResponse
@@ -11,6 +13,8 @@ from app.core.i18n import _
 from app.security.guards import require_user
 from app import globals
 from app.services.file_service import get_user_storage_usage
+from app.services.storage_config_service import OSSConfig, storage_config
+from app.storage.aliyun_oss_storage import AliyunOSSStorage
 from app.ui.components.base import BaseLayout
 from app.ui.components.dialog import ConfirmDialog
 from app.ui.components.json_edit import style
@@ -287,6 +291,73 @@ async def console_page(request: Request, client: Client):
                 app.storage.general,
                 "service_url",
             )
+
+            ui.separator()
+
+            # Server-side storage configuration. Secrets are never bound to browser storage.
+            with ui.card().props("flat bordered").classes("w-full"):
+                ui.label(_("Storage backend")).classes("font-bold")
+                backend_select = ui.select(
+                    {"LocalStorage": _("Local storage"), "AliyunOSS": _("Aliyun OSS")},
+                    value=storage_config.current_backend,
+                    label=_("Active backend"),
+                ).classes("w-full")
+                saved_oss = storage_config.public_oss_config()
+                with ui.grid(columns=2).classes("w-full gap-2"):
+                    oss_region = ui.input(_("OSS region"), value=saved_oss["region"])
+                    oss_endpoint = ui.input(_("OSS endpoint"), value=saved_oss["endpoint"])
+                    oss_bucket = ui.input(_("OSS bucket"), value=saved_oss["bucket"])
+                    oss_access_key = ui.input(_("AccessKey ID"), value=saved_oss["access_key_id"])
+                    oss_secret = ui.input(
+                        _("AccessKey Secret"), password=True, password_toggle_button=True,
+                    ).props("hint='Leave empty to keep the saved secret'")
+                    oss_prefix = ui.input(_("Object prefix"), value=saved_oss["prefix"])
+
+                def build_oss_config() -> OSSConfig:
+                    secret = oss_secret.value or (
+                        storage_config.oss_config.access_key_secret if storage_config.oss_config else ""
+                    )
+                    return OSSConfig(
+                        region=(oss_region.value or "").strip(),
+                        endpoint=(oss_endpoint.value or "").strip(),
+                        bucket=(oss_bucket.value or "").strip(),
+                        access_key_id=(oss_access_key.value or "").strip(),
+                        access_key_secret=secret.strip(),
+                        prefix=(oss_prefix.value or "").strip(),
+                    )
+
+                async def test_oss():
+                    try:
+                        backend = AliyunOSSStorage(build_oss_config(), "connection-check")
+                        await asyncio.to_thread(
+                            backend.client.get_bucket_info,
+                            oss.GetBucketInfoRequest(
+                                bucket=backend.config.bucket
+                            ),
+                        )
+                    except Exception as exc:
+                        notify.error(_("OSS connection failed: {error}").format(error=str(exc)))
+                        return False
+                    notify.success(_("OSS connection verified."))
+                    return True
+
+                async def save_storage():
+                    selected = backend_select.value
+                    if selected == "AliyunOSS":
+                        if not await test_oss():
+                            return
+                        await storage_config.save_oss(build_oss_config())
+                    try:
+                        await storage_config.select_backend(selected)
+                    except Exception as exc:
+                        notify.error(str(exc))
+                        return
+                    oss_secret.value = ""
+                    notify.success(_("Storage backend saved."))
+
+                with ui.row().classes("gap-2"):
+                    ui.button(_("Test OSS connection"), icon="wifi_tethering", on_click=test_oss)
+                    ui.button(_("Save storage backend"), icon="save", on_click=save_storage)
 
             ui.separator()
 

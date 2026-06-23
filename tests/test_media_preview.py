@@ -8,6 +8,7 @@ from app.ui.components.dialog import (
     build_office_preview_cache_path,
     detect_highlight_language,
     detect_preview_media_type,
+    should_render_image_information,
     should_highlight_text,
 )
 
@@ -41,7 +42,9 @@ def test_detect_highlight_language_for_code_and_config_files():
 
 def test_should_skip_expensive_text_highlighting():
     assert should_highlight_text(Path("main.py"), "print('ok')\n", truncated=False)
-    assert should_highlight_text(Path("settings.json"), '{"ok": true}\n', truncated=False)
+    assert should_highlight_text(
+        Path("settings.json"), '{"ok": true}\n', truncated=False
+    )
 
     large_json = '{"items": [' + ("1," * MAX_JSON_HIGHLIGHT_CHARS) + "0]}"
     assert not should_highlight_text(Path("settings.json"), large_json, truncated=False)
@@ -51,7 +54,9 @@ def test_should_skip_expensive_text_highlighting():
         truncated=False,
     )
     assert not should_highlight_text(Path("main.py"), "print('ok')\n", truncated=True)
-    assert not should_highlight_text(Path("unknown.txt"), "plain text\n", truncated=False)
+    assert not should_highlight_text(
+        Path("unknown.txt"), "plain text\n", truncated=False
+    )
 
 
 def test_code_preview_style_supports_wrap_and_dark_mode():
@@ -71,3 +76,10 @@ def test_office_preview_cache_key_changes_when_source_changes(tmp_path):
     assert first_cache_path != second_cache_path
     assert first_cache_path.suffix == ".pdf"
     assert second_cache_path.suffix == ".pdf"
+
+
+def test_image_metadata_panel_is_not_rendered_for_streaming_backends():
+    assert not should_render_image_information(True, {})
+    assert not should_render_image_information(True, {"Camera": "Example"})
+    assert not should_render_image_information(False, {})
+    assert should_render_image_information(False, {"Camera": "Example"})

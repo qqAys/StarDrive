@@ -1,6 +1,8 @@
 import asyncio
+import io
 import sys
 import tarfile
+import time
 from datetime import datetime, timedelta
 from numbers import Number
 from pathlib import Path
@@ -12,6 +14,7 @@ from typing import (
     List,
     AsyncGenerator,
     Any,
+    Iterator,
 )
 
 from PIL import Image
@@ -31,7 +34,9 @@ from app.schemas.file_schema import FileMetadata, DirMetadata, FileType, FileSou
 from app.security.tokens import create_token
 from app.services.local_db_service import get_db_context
 from app.storage.base import StorageBackend
+from app.storage.aliyun_oss_storage import AliyunOSSStorage
 from app.storage.local_storage import LocalStorage
+from app.services.storage_config_service import storage_config
 from app.ui.components.notify import notify
 from app.utils.size import bytes_to_human_readable
 
@@ -149,6 +154,28 @@ class AsyncStreamWriter:
             yield chunk
 
 
+class _StreamReader(io.RawIOBase):
+    """Adapt a byte iterator to the file interface expected by tarfile."""
+
+    def __init__(self, chunks: Iterator[bytes]):
+        self._chunks = iter(chunks)
+        self._buffer = b""
+
+    def readable(self) -> bool:
+        return True
+
+    def readinto(self, buffer) -> int:
+        wanted = len(buffer)
+        while len(self._buffer) < wanted:
+            try:
+                self._buffer += next(self._chunks)
+            except StopIteration:
+                break
+        data, self._buffer = self._buffer[:wanted], self._buffer[wanted:]
+        buffer[: len(data)] = data
+        return len(data)
+
+
 class BackendNotFoundError(Exception):
     """Exception raised when a storage backend is not found."""
 
@@ -230,6 +257,11 @@ class StorageManager:
             )
         return self._backends[self._current_backend_name]
 
+    @property
+    def backend_name(self) -> str:
+        self._get_current_backend()
+        return self._current_backend_name
+
     # Proxy methods
 
     def exists(self, remote_path: str) -> bool:
@@ -256,11 +288,15 @@ class StorageManager:
         return backend.download_file(remote_path)
 
     def download_file_with_stream(
-        self, remote_path: str
+        self, remote_path: str, offset: int = 0, length: int | None = None
     ) -> Generator[bytes, None, None]:
         """Stream-download a file in chunks."""
         backend = self._get_current_backend()
-        for chunk in backend.download_file_with_stream(remote_path):
+        if offset == 0 and length is None:
+            stream = backend.download_file_with_stream(remote_path)
+        else:
+            stream = backend.download_file_with_stream(remote_path, offset, length)
+        for chunk in stream:
             yield chunk
 
     async def download_file_with_compressed_stream(
@@ -274,6 +310,21 @@ class StorageManager:
         writer = AsyncStreamWriter()
         loop = asyncio.get_running_loop()
 
+        def add_entry(tar: tarfile.TarFile, path: str, arcname: str):
+            metadata = self.get_file_metadata(path)
+            if isinstance(metadata, DirMetadata):
+                info = tarfile.TarInfo(arcname.rstrip("/") + "/")
+                info.type = tarfile.DIRTYPE
+                info.mtime = int(metadata.modified_at or time.time())
+                tar.addfile(info)
+                for child in self.list_files(path):
+                    add_entry(tar, child.path, f"{arcname.rstrip('/')}/{child.name}")
+                return
+            info = tarfile.TarInfo(arcname)
+            info.size = metadata.size
+            info.mtime = int(metadata.modified_at or time.time())
+            tar.addfile(info, io.BufferedReader(_StreamReader(self.download_file_with_stream(path))))
+
         def tar_worker():
             try:
                 with tarfile.open(
@@ -282,13 +333,11 @@ class StorageManager:
                     format=tarfile.PAX_FORMAT,
                     bufsize=settings.STREAM_CHUNK_SIZE,
                 ) as tar:
-                    base_dir = self.get_full_path(base_dir_path)
                     for rel in relative_paths:
                         if not self.exists(rel):
                             continue
-                        full_path = self.get_full_path(rel)
-                        arcname = full_path.relative_to(base_dir)
-                        tar.add(full_path, arcname=str(arcname), recursive=True)
+                        arcname = str(Path(rel).relative_to(base_dir_path))
+                        add_entry(tar, rel, arcname)
             finally:
                 writer.close()
 
@@ -360,8 +409,22 @@ def get_user_storage_root(user_id: str) -> Path:
 
 
 def create_user_storage_manager(user_id: str) -> StorageManager:
-    manager = StorageManager(root_path=get_user_storage_root(user_id))
-    manager.set_current_backend(LocalStorage.name)
+    # Do not create a local per-user directory while OSS is active: OSS data must
+    # remain remote rather than accidentally acquiring a local mirror.
+    root_path = (
+        STORAGE_DIR
+        if storage_config.current_backend == AliyunOSSStorage.name
+        else get_user_storage_root(user_id)
+    )
+    manager = StorageManager(root_path=root_path)
+    manager.user_id = user_id
+    if storage_config.current_backend == AliyunOSSStorage.name and storage_config.oss_config:
+        manager.register_backend(
+            AliyunOSSStorage.name, AliyunOSSStorage(storage_config.oss_config, user_id)
+        )
+        manager.set_current_backend(AliyunOSSStorage.name)
+    else:
+        manager.set_current_backend(LocalStorage.name)
     return manager
 
 

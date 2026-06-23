@@ -180,7 +180,9 @@ class LocalStorage(StorageBackend):
         """
         return self.get_full_path(remote_path)
 
-    def download_file_with_stream(self, remote_path: str):
+    def download_file_with_stream(
+        self, remote_path: str, offset: int = 0, length: int | None = None
+    ):
         """
         Stream the contents of a file in chunks for efficient downloading.
 
@@ -200,11 +202,17 @@ class LocalStorage(StorageBackend):
 
         chunk_size = 8192
         with full_path.open("rb") as src_file:
+            src_file.seek(max(0, offset))
+            remaining = length
             while True:
-                chunk = src_file.read(chunk_size)
+                chunk = src_file.read(chunk_size if remaining is None else min(chunk_size, remaining))
                 if not chunk:
                     break
                 yield chunk
+                if remaining is not None:
+                    remaining -= len(chunk)
+                    if remaining <= 0:
+                        break
 
     def delete_file(self, remote_path: str):
         """
