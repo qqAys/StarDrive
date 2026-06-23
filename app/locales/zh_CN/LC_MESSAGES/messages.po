@@ -5,22 +5,21 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 0.1.0\n"
+"Project-Id-Version:  0.1.0\n"
 "Report-Msgid-Bugs-To: me@qqays.xyz\n"
-"POT-Creation-Date: 2025-12-31 16:31+0800\n"
+"POT-Creation-Date: 2026-06-23 15:36+0800\n"
 "PO-Revision-Date: 2025-12-31 09:28+0000\n"
 "Last-Translator: Jinx <me@qqays.xyz>\n"
-"Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
-"projects/stardrive/stardrive/zh_Hans/>\n"
 "Language: zh_CN\n"
+"Language-Team: Chinese (Simplified Han script) "
+"<https://hosted.weblate.org/projects/stardrive/stardrive/zh_Hans/>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.15.1\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: app/api/auth.py:14
+#: app/api/auth.py:28
 msgid "Invalid username or password"
 msgstr "无效的邮箱或密码"
 
@@ -80,138 +79,227 @@ msgstr "您的账户已被禁用。"
 msgid "You don’t have access to this page."
 msgstr "您没有权限访问此页面。"
 
-#: app/security/password.py:15
+#: app/security/password.py:26
 msgid "New password must be at least 8 characters long."
 msgstr "新密码长度必须至少为8个字符。"
 
-#: app/security/password.py:17
+#: app/security/password.py:28
 msgid "New password must contain at least one digit."
 msgstr "新密码必须至少包含一个数字。"
 
-#: app/security/password.py:19
+#: app/security/password.py:30
 msgid "New password must contain at least one uppercase letter."
 msgstr "新密码必须至少包含一个大写字母。"
 
-#: app/security/password.py:21
+#: app/security/password.py:32
 msgid "New password must contain at least one lowercase letter."
 msgstr "新密码必须至少包含一个小写字母。"
 
-#: app/security/password.py:23
+#: app/security/password.py:34
 msgid "New password must contain at least one special character."
 msgstr "新密码必须至少包含一个特殊字符。"
 
-#: app/security/password.py:24
+#: app/security/password.py:35
 msgid "New password is valid."
 msgstr "新密码有效。"
 
-#: app/services/file_service.py:175
+#: app/services/file_service.py:210
 #, python-brace-format
 msgid "The object '{class_name}' does not implement the StorageBackend interface."
 msgstr "对象 {class_name} 未实现 StorageBackend 接口。"
 
-#: app/services/file_service.py:180
+#: app/services/file_service.py:215
 #, python-brace-format
 msgid "Storage backend '{name}' already exists."
 msgstr "存储后端 '{name}' 已存在。"
 
-#: app/services/file_service.py:184
+#: app/services/file_service.py:219
 #, python-brace-format
 msgid "Storage backend '{name}' has been registered."
 msgstr "存储后端 '{name}' 注册成功。"
 
-#: app/services/file_service.py:199
+#: app/services/file_service.py:234
 #, python-brace-format
 msgid "Current storage backend has been switched to '{name}'."
 msgstr "当前存储已切换至 '{name}'。"
 
-#: app/services/file_service.py:205
+#: app/services/file_service.py:240
 #, python-brace-format
 msgid "Storage backend '{name}' is not registered."
 msgstr "存储后端 '{name}' 尚未注册。"
 
-#: app/services/file_service.py:219
+#: app/services/file_service.py:254
 msgid ""
 "The current storage backend is not set or cannot be found. Please call "
 "set_current_backend() first."
 msgstr "当前存储后端未设置或找不到。请先调用 set_current_backend()。"
 
-#: app/services/file_service.py:363
+#: app/services/file_service.py:463
 msgid ""
 "Service URL is not configured. Please set it in the console before "
 "sharing files."
 msgstr "服务 URL 尚未设置。在分享文件前请先在控制台中配置。"
 
-#: app/services/file_service.py:518
+#: app/services/file_service.py:625
 msgid "Name cannot be empty or consist only of spaces."
 msgstr "名称不能为空或全空格。"
 
-#: app/services/file_service.py:523
+#: app/services/file_service.py:630
 #, python-brace-format
 msgid "Name is too long (maximum {max_length} characters)."
 msgstr "名称过长（最多 {max_length} 个字符）。"
 
-#: app/services/file_service.py:531
+#: app/services/file_service.py:638
 msgid "Name must be a relative path and cannot start with a path separator."
 msgstr "名称必须是相对路径，且不能以路径分隔符开头。"
 
-#: app/services/file_service.py:536
+#: app/services/file_service.py:643
 msgid "Invalid path format."
 msgstr "路径格式无效。"
 
-#: app/services/file_service.py:541
+#: app/services/file_service.py:648
 msgid "Name cannot contain '..' to navigate outside the base directory."
 msgstr "名称不能包含“..”以避免导航到基础目录之外。"
 
-#: app/services/file_service.py:547
+#: app/services/file_service.py:654
 msgid ""
 "Name must be a relative path and cannot start with a path separator or "
 "drive letter."
 msgstr "名称必须是相对路径，且不能以路径分隔符或驱动器盘符开头。"
 
-#: app/services/file_service.py:565
+#: app/services/file_service.py:672
 msgid "Name cannot contain '/' on Linux/Unix systems."
 msgstr "在 Linux/Unix 系统上，名称不能包含“/”字符。"
 
-#: app/services/file_service.py:571
+#: app/services/file_service.py:678
 #, python-brace-format
 msgid "Name cannot contain any of the following characters: {forbidden_chars}"
 msgstr "名称不能包含以下字符：{forbidden_chars}"
 
-#: app/services/file_service.py:577
+#: app/services/file_service.py:684
 #, python-brace-format
 msgid "The name segment '{segment}' is a reserved system name on Windows."
 msgstr "名称片段 '{segment}' 是系统保留名称。"
 
-#: app/services/file_service.py:583
+#: app/services/file_service.py:690
 msgid "Name segments cannot end with a space or a dot on Windows."
 msgstr "在 Windows 系统上文件名段不能以空格或句点结尾。"
 
-#: app/services/file_service.py:586
+#: app/services/file_service.py:693
 msgid "Name is valid."
 msgstr "名称有效。"
 
-#: app/services/user_service.py:53
+#: app/services/file_service.py:795
+msgid "File name"
+msgstr "文件名"
+
+#: app/services/file_service.py:796 app/ui/components/dialog.py:769
+msgid "Path"
+msgstr "路径"
+
+#: app/services/file_service.py:797
+msgid "File size"
+msgstr "文件大小"
+
+#: app/services/file_service.py:801 app/services/file_service.py:810
+msgid "Format"
+msgstr "格式"
+
+#: app/services/file_service.py:802 app/ui/components/dialog.py:770
+#: app/ui/components/table.py:152 app/ui/pages/share.py:194
+msgid "Type"
+msgstr "类型"
+
+#: app/services/file_service.py:811 app/ui/components/dialog.py:560
+#: app/ui/components/dialog.py:771 app/ui/components/dialog.py:795
+#: app/ui/components/table.py:168 app/ui/pages/share.py:195
+msgid "Size"
+msgstr "大小"
+
+#: app/services/file_service.py:812
+msgid "Color mode"
+msgstr "颜色模式"
+
+#: app/services/file_service.py:817
+msgid "DPI"
+msgstr "DPI"
+
+#: app/services/file_service.py:831
+msgid "Camera make"
+msgstr "相机制造商"
+
+#: app/services/file_service.py:832
+msgid "Camera model"
+msgstr "相机型号"
+
+#: app/services/file_service.py:833
+msgid "Lens model"
+msgstr "镜头型号"
+
+#: app/services/file_service.py:834
+msgid "Software"
+msgstr "软件"
+
+#: app/services/file_service.py:835
+msgid "Date taken"
+msgstr "拍摄日期"
+
+#: app/services/file_service.py:836
+msgid "Date modified"
+msgstr "修改日期"
+
+#: app/services/file_service.py:845 app/ui/components/dialog.py:1453
+#: app/ui/components/dialog.py:1460 app/ui/components/dialog.py:1461
+msgid "GPS"
+msgstr "GPS"
+
+#: app/services/user_service.py:72
 #, python-brace-format
 msgid "Administrator account created. Email: {email}, Password: {password}"
 msgstr "管理员账户已创建。邮箱：{email}，密码：{password}"
 
-#: app/services/user_service.py:117
+#: app/services/user_service.py:136
 msgid "Invalid email or password"
 msgstr "邮箱或密码错误"
 
-#: app/services/user_service.py:172
+#: app/services/user_service.py:201
 msgid "User already exists"
 msgstr "用户已存在"
 
-#: app/services/user_service.py:199
+#: app/services/user_service.py:216 app/ui/pages/account.py:67
+msgid "Registration is currently disabled."
+msgstr "当前已禁止注册。"
+
+#: app/services/user_service.py:266
 msgid "Invalid current password"
 msgstr "当前密码无效"
 
-#: app/services/user_service.py:222 app/services/user_service.py:242
+#: app/services/user_service.py:289 app/services/user_service.py:309
+#: app/services/user_service.py:321 app/services/user_service.py:340
 msgid "User does not exist"
 msgstr "用户不存在"
 
-#: app/services/user_service.py:261
+#: app/services/user_service.py:394
+msgid "Reset your StarDrive password"
+msgstr "重置您的 StarDrive 密码"
+
+#: app/services/user_service.py:399
+#, python-brace-format
+msgid ""
+"Use this link to reset your StarDrive password. The link expires soon:\n"
+"\n"
+"{link}"
+msgstr ""
+"使用此链接重置您的 StarDrive 密码。链接即将过期：\n"
+"\n"
+"{link}"
+
+#: app/services/user_service.py:434 app/services/user_service.py:438
+#: app/ui/pages/account.py:202
+msgid "Invalid or expired reset token."
+msgstr "重置令牌无效或已过期。"
+
+#: app/services/user_service.py:462
 #, python-brace-format
 msgid "Error getting user timezone: {error}"
 msgstr "获取用户时区失败：{error}"
@@ -231,8 +319,8 @@ msgstr "解析路径失败：{remote_path}"
 msgid "Access denied: path is outside the allowed root directory: {remote_path}"
 msgstr "访问被拒绝：路径位于允许的根目录之外：{remote_path}"
 
-#: app/storage/local_storage.py:148 app/storage/local_storage.py:192
-#: app/storage/local_storage.py:218
+#: app/storage/local_storage.py:148 app/storage/local_storage.py:194
+#: app/storage/local_storage.py:226
 #, python-brace-format
 msgid "File not found: {remote_path}"
 msgstr "文件不存在：{remote_path}"
@@ -247,108 +335,108 @@ msgstr "写入文件时权限被拒绝：{path}"
 msgid "Failed to write file to: {path}"
 msgstr "写入文件失败：{path}"
 
-#: app/storage/local_storage.py:196
+#: app/storage/local_storage.py:198
 #, python-brace-format
 msgid "Cannot download a directory: {remote_path}"
 msgstr "无法下载目录：{remote_path}"
 
-#: app/storage/local_storage.py:223
+#: app/storage/local_storage.py:231
 #, python-brace-format
 msgid ""
 "Cannot delete a directory using this method. Use delete_directory "
 "instead: {remote_path}"
 msgstr "无法使用此方法删除目录。请改用 delete_directory 方法：{remote_path}"
 
-#: app/storage/local_storage.py:230
+#: app/storage/local_storage.py:238
 #, python-brace-format
 msgid "Permission denied when deleting file: {remote_path}"
 msgstr "删除文件时权限被拒绝：{remote_path}"
 
-#: app/storage/local_storage.py:248 app/storage/local_storage.py:331
-#: app/storage/local_storage.py:449
+#: app/storage/local_storage.py:253 app/storage/local_storage.py:336
+#: app/storage/local_storage.py:454
 #, python-brace-format
 msgid "Directory not found: {path}"
 msgstr "目录不存在：{path}"
 
-#: app/storage/local_storage.py:252 app/storage/local_storage.py:335
-#: app/storage/local_storage.py:453
+#: app/storage/local_storage.py:257 app/storage/local_storage.py:340
+#: app/storage/local_storage.py:458
 #, python-brace-format
 msgid "Path is not a directory: {path}"
 msgstr "路径不是目录：{path}"
 
-#: app/storage/local_storage.py:291
+#: app/storage/local_storage.py:296
 #, python-brace-format
 msgid "Permission denied when reading directory: {path}"
 msgstr "读取目录时权限被拒绝：{path}"
 
-#: app/storage/local_storage.py:297
+#: app/storage/local_storage.py:302
 #, python-brace-format
 msgid "Failed to read directory: {error}"
 msgstr "读取目录失败：{error}"
 
-#: app/storage/local_storage.py:311
+#: app/storage/local_storage.py:316
 #, python-brace-format
 msgid "A file already exists at this path: {path}"
 msgstr "该路径下已存在文件：{path}"
 
-#: app/storage/local_storage.py:317
+#: app/storage/local_storage.py:322
 #, python-brace-format
 msgid "Permission denied when creating directory: {path}"
 msgstr "创建目录时权限被拒绝：{path}"
 
-#: app/storage/local_storage.py:341
+#: app/storage/local_storage.py:346
 #, python-brace-format
 msgid "Failed to delete directory: {error}"
 msgstr "删除目录失败：{error}"
 
-#: app/storage/local_storage.py:355
+#: app/storage/local_storage.py:360
 #, python-brace-format
 msgid "Source not found: {path}"
 msgstr "找不到源文件：{path}"
 
-#: app/storage/local_storage.py:364
+#: app/storage/local_storage.py:369
 #, python-brace-format
 msgid "Insufficient permissions to move from {src} to {dest}"
 msgstr "没有足够的权限将文件从 {src} 移动到 {dest}"
 
-#: app/storage/local_storage.py:370
+#: app/storage/local_storage.py:375
 #, python-brace-format
 msgid "Move operation failed: {error}"
 msgstr "移动操作失败：{error}"
 
-#: app/storage/local_storage.py:384
+#: app/storage/local_storage.py:389
 #, python-brace-format
 msgid "Source is not a valid file: {path}"
 msgstr "源文件不是有效文件：{path}"
 
-#: app/storage/local_storage.py:393
+#: app/storage/local_storage.py:398
 #, python-brace-format
 msgid "Insufficient permissions to copy from {src} to {dest}"
 msgstr "没有足够的权限将文件从 {src} 复制到 {dest}"
 
-#: app/storage/local_storage.py:399
+#: app/storage/local_storage.py:404
 #, python-brace-format
 msgid "Copy operation failed: {error}"
 msgstr "复制操作失败：{error}"
 
-#: app/storage/local_storage.py:409
+#: app/storage/local_storage.py:414
 #, python-brace-format
 msgid "File or directory not found: {path}"
 msgstr "文件或目录不存在：{path}"
 
-#: app/ui/components/base.py:107 app/ui/pages/profile.py:157
+#: app/ui/components/base.py:123 app/ui/pages/profile.py:154
 msgid "Logout"
 msgstr "退出登录"
 
-#: app/ui/components/base.py:108
+#: app/ui/components/base.py:124
 msgid "Are you sure you want to logout?"
 msgstr "您确定要退出登录吗？"
 
-#: app/ui/components/base.py:116
+#: app/ui/components/base.py:132
 msgid "Logged out"
 msgstr "已退出登录"
 
-#: app/ui/components/base.py:123
+#: app/ui/components/base.py:139
 msgid "Logout failed"
 msgstr "退出登录失败"
 
@@ -356,468 +444,565 @@ msgstr "退出登录失败"
 msgid "Failed to copy to clipboard"
 msgstr "复制到剪贴板失败"
 
-#: app/ui/components/dialog.py:63
+#: app/ui/components/dialog.py:83
 #, python-brace-format
 msgid "Search in {folder}"
 msgstr "在 {folder} 中搜索"
 
-#: app/ui/components/dialog.py:135
+#: app/ui/components/dialog.py:155
 msgid "No more results"
 msgstr "没有更多结果"
 
-#: app/ui/components/dialog.py:138
+#: app/ui/components/dialog.py:157
 msgid "Try searching in a different folder."
 msgstr "请尝试在其他文件夹中搜索。"
 
-#: app/ui/components/dialog.py:142
+#: app/ui/components/dialog.py:161
 #, python-brace-format
 msgid "Current folder: **{path}**"
 msgstr "当前目录：**{path}**"
 
-#: app/ui/components/dialog.py:175 app/ui/components/dialog.py:207
-#: app/ui/components/dialog.py:267 app/ui/components/dialog.py:511
-#: app/ui/components/dialog.py:710
+#: app/ui/components/dialog.py:194 app/ui/components/dialog.py:226
+#: app/ui/components/dialog.py:286 app/ui/components/dialog.py:530
+#: app/ui/components/dialog.py:728
 msgid "Confirm"
 msgstr "确定"
 
-#: app/ui/components/dialog.py:180 app/ui/components/dialog.py:212
-#: app/ui/components/dialog.py:268 app/ui/components/dialog.py:512
-#: app/ui/components/dialog.py:714
+#: app/ui/components/dialog.py:199 app/ui/components/dialog.py:231
+#: app/ui/components/dialog.py:287 app/ui/components/dialog.py:531
+#: app/ui/components/dialog.py:732
 msgid "Cancel"
 msgstr "取消"
 
-#: app/ui/components/dialog.py:221
+#: app/ui/components/dialog.py:240
 #, python-brace-format
 msgid "Rename {name}"
 msgstr "重命名 {name}"
 
-#: app/ui/components/dialog.py:222
+#: app/ui/components/dialog.py:241
 msgid "New name"
 msgstr "新名称"
 
-#: app/ui/components/dialog.py:230
+#: app/ui/components/dialog.py:249
 msgid "Current name"
 msgstr "当前名称"
 
-#: app/ui/components/dialog.py:242
+#: app/ui/components/dialog.py:261
 msgid "New name cannot be empty"
 msgstr "新名称不能为空"
 
-#: app/ui/components/dialog.py:245
+#: app/ui/components/dialog.py:264
 msgid "New name cannot be the same as the current name"
 msgstr "新名称不能与当前名称相同"
 
-#: app/ui/components/dialog.py:249
+#: app/ui/components/dialog.py:268
 #, python-brace-format
 msgid "File name cannot contain: {chars}"
 msgstr "文件名不能包含以下字符：{chars}"
 
-#: app/ui/components/dialog.py:255
+#: app/ui/components/dialog.py:274
 msgid "File name cannot end with a dot"
 msgstr "文件名不能以点结尾"
 
-#: app/ui/components/dialog.py:258
+#: app/ui/components/dialog.py:277
 msgid "Confirm Rename"
 msgstr "确认重命名"
 
-#: app/ui/components/dialog.py:260
+#: app/ui/components/dialog.py:279
 #, python-brace-format
 msgid "Are you sure you want to rename **{old}** to **{new}**?"
 msgstr "您确定要将 **{old}** 重命名为 **{new}** 吗？"
 
-#: app/ui/components/dialog.py:275
+#: app/ui/components/dialog.py:294
 #, python-brace-format
 msgid "Share {file}"
 msgstr "分享 {file}"
 
-#: app/ui/components/dialog.py:298
+#: app/ui/components/dialog.py:317
 #, python-brace-format
 msgid "{count} sharing links"
 msgstr "{count} 个分享链接"
 
-#: app/ui/components/dialog.py:307 app/ui/components/dialog.py:844
+#: app/ui/components/dialog.py:326 app/ui/components/dialog.py:860
 msgid "Confirm Delete"
 msgstr "确认删除"
 
-#: app/ui/components/dialog.py:308
+#: app/ui/components/dialog.py:327
 msgid "Are you sure you want to delete this share link?"
 msgstr "您确定要删除这个分享链接吗？"
 
-#: app/ui/components/dialog.py:320
+#: app/ui/components/dialog.py:339
 msgid "Share link deleted"
 msgstr "分享链接已删除"
 
-#: app/ui/components/dialog.py:324
+#: app/ui/components/dialog.py:343
 #, python-brace-format
 msgid "Failed to delete share link: {error}"
 msgstr "删除分享链接失败：{error}"
 
-#: app/ui/components/dialog.py:338
+#: app/ui/components/dialog.py:357
 msgid "Share link"
 msgstr "分享链接"
 
-#: app/ui/components/dialog.py:347
+#: app/ui/components/dialog.py:366
 msgid "Public Access"
 msgstr "公共访问"
 
-#: app/ui/components/dialog.py:351
+#: app/ui/components/dialog.py:370
 msgid "Expired"
 msgstr "已过期"
 
-#: app/ui/components/dialog.py:353
+#: app/ui/components/dialog.py:372
 msgid "Valid"
 msgstr "有效"
 
-#: app/ui/components/dialog.py:360 app/ui/pages/share_access.py:69
+#: app/ui/components/dialog.py:379 app/ui/pages/share_access.py:69
 #, python-brace-format
 msgid "Expires at {time}"
 msgstr "有效期至 {time}"
 
-#: app/ui/components/dialog.py:364 app/ui/components/dialog.py:442
+#: app/ui/components/dialog.py:383 app/ui/components/dialog.py:461
 msgid "Copy"
 msgstr "复制"
 
-#: app/ui/components/dialog.py:367
+#: app/ui/components/dialog.py:386
 msgid "Share link copied to clipboard."
 msgstr "分享链接已复制到剪贴板。"
 
-#: app/ui/components/dialog.py:371
+#: app/ui/components/dialog.py:390
 msgid "Open"
 msgstr "打开"
 
-#: app/ui/components/dialog.py:378 app/ui/components/dialog.py:803
+#: app/ui/components/dialog.py:397 app/ui/components/dialog.py:819
 msgid "Delete"
 msgstr "删除"
 
-#: app/ui/components/dialog.py:389
+#: app/ui/components/dialog.py:408
 msgid "Create new sharing link"
 msgstr "创建新分享链接"
 
-#: app/ui/components/dialog.py:393 app/ui/components/dialog.py:422
-#: app/ui/components/dialog.py:479
+#: app/ui/components/dialog.py:412 app/ui/components/dialog.py:441
+#: app/ui/components/dialog.py:498
 msgid "Expire after"
 msgstr "有效期"
 
-#: app/ui/components/dialog.py:393 app/ui/components/dialog.py:421
+#: app/ui/components/dialog.py:412 app/ui/components/dialog.py:440
 msgid "Expire after days"
 msgstr "有效期（天）"
 
-#: app/ui/components/dialog.py:398
+#: app/ui/components/dialog.py:417
 msgid "Expire date"
 msgstr "过期日期"
 
-#: app/ui/components/dialog.py:403
+#: app/ui/components/dialog.py:422
 msgid "Expire time"
 msgstr "过期时间"
 
-#: app/ui/components/dialog.py:410
+#: app/ui/components/dialog.py:429
 msgid "Expire days"
 msgstr "有效天数"
 
-#: app/ui/components/dialog.py:426 app/ui/components/dialog.py:431
+#: app/ui/components/dialog.py:445 app/ui/components/dialog.py:450
 #: app/ui/pages/share_access.py:77
 msgid "Access code"
 msgstr "访问码"
 
-#: app/ui/components/dialog.py:428
+#: app/ui/components/dialog.py:447
 msgid "Generate"
 msgstr "生成"
 
-#: app/ui/components/dialog.py:432
+#: app/ui/components/dialog.py:451
 msgid "Will be generated automatically"
 msgstr "将会自动生成"
 
-#: app/ui/components/dialog.py:438
+#: app/ui/components/dialog.py:457
 msgid "Regenerate"
 msgstr "重新生成"
 
-#: app/ui/components/dialog.py:445
+#: app/ui/components/dialog.py:464
 msgid "Access code copied."
 msgstr "访问码已复制。"
 
-#: app/ui/components/dialog.py:475
+#: app/ui/components/dialog.py:494
 msgid ""
 "Maximum number of share links reached. Delete some before creating a new "
 "one."
 msgstr "已达到分享链接的最大数量。请删除一些链接后再创建新的链接。"
 
-#: app/ui/components/dialog.py:481
+#: app/ui/components/dialog.py:500
 msgid "Please select a valid expire time"
 msgstr "请选择有效的过期时间"
 
-#: app/ui/components/dialog.py:492
+#: app/ui/components/dialog.py:511
 msgid "Expire date cannot be before now"
 msgstr "过期日期不能早于当前时间"
 
-#: app/ui/components/dialog.py:539 app/ui/components/dialog.py:750
-#: app/ui/components/table.py:110
+#: app/ui/components/dialog.py:557 app/ui/components/dialog.py:768
+#: app/ui/components/table.py:145
 msgid "Name"
 msgstr "名称"
 
-#: app/ui/components/dialog.py:542 app/ui/components/dialog.py:753
-#: app/ui/components/dialog.py:779 app/ui/components/table.py:133
-#: app/ui/pages/share.py:182
-msgid "Size"
-msgstr "大小"
-
-#: app/ui/components/dialog.py:565 app/ui/components/dialog.py:668
+#: app/ui/components/dialog.py:583 app/ui/components/dialog.py:686
 msgid "Back to parent directory"
 msgstr "返回上级目录"
 
-#: app/ui/components/dialog.py:571
+#: app/ui/components/dialog.py:589
 msgid "No files or directories found."
 msgstr "没有找到文件或目录。"
 
-#: app/ui/components/dialog.py:584
+#: app/ui/components/dialog.py:602
 msgid "Already at the share root directory. Cannot go back further."
 msgstr "已位于根目录，无法继续返回。"
 
-#: app/ui/components/dialog.py:594
+#: app/ui/components/dialog.py:612
 #, python-brace-format
 msgid "Browsing {path}"
 msgstr "正在浏览 {path}"
 
-#: app/ui/components/dialog.py:618 app/ui/components/dialog.py:920
-#: app/ui/components/table.py:436
+#: app/ui/components/dialog.py:636 app/ui/components/dialog.py:936
+#: app/ui/components/table.py:535
 msgid "Confirm Download"
 msgstr "确认下载"
 
-#: app/ui/components/dialog.py:619
+#: app/ui/components/dialog.py:637
 #, python-brace-format
 msgid "Are you sure you want to download **`{name}`**?"
 msgstr "您确定要下载 **`{name}`** 吗？"
 
-#: app/ui/components/dialog.py:654
+#: app/ui/components/dialog.py:672
 msgid "Directory"
 msgstr "目录"
 
-#: app/ui/components/dialog.py:674
+#: app/ui/components/dialog.py:692
 msgid "No directories found."
 msgstr "未找到目录。"
 
-#: app/ui/components/dialog.py:680
+#: app/ui/components/dialog.py:698
 #, python-brace-format
 msgid "Move {items} to {path}"
 msgstr "将 {items} 移动到 {path}"
 
-#: app/ui/components/dialog.py:742
+#: app/ui/components/dialog.py:760
 msgid "Metadata"
 msgstr "元数据"
 
-#: app/ui/components/dialog.py:751
-msgid "Path"
-msgstr "路径"
-
-#: app/ui/components/dialog.py:752 app/ui/components/table.py:117
-#: app/ui/pages/share.py:181
-msgid "Type"
-msgstr "类型"
-
-#: app/ui/components/dialog.py:755
+#: app/ui/components/dialog.py:773 app/ui/pages/share.py:217
 msgid "Direct children"
 msgstr "直接子项"
 
-#: app/ui/components/dialog.py:760 app/ui/components/table.py:124
-#: app/ui/pages/share.py:183
+#: app/ui/components/dialog.py:777 app/ui/components/table.py:159
+#: app/ui/pages/share.py:196
 msgid "Extension"
 msgstr "扩展名"
 
-#: app/ui/components/dialog.py:762
+#: app/ui/components/dialog.py:778
 msgid "Accessed"
 msgstr "访问时间"
 
-#: app/ui/components/dialog.py:765 app/ui/pages/share.py:189
+#: app/ui/components/dialog.py:781 app/ui/pages/share.py:202
 msgid "Created"
 msgstr "创建时间"
 
-#: app/ui/components/dialog.py:768 app/ui/pages/share.py:190
+#: app/ui/components/dialog.py:784 app/ui/pages/share.py:203
 msgid "Modified"
 msgstr "修改时间"
 
-#: app/ui/components/dialog.py:771
+#: app/ui/components/dialog.py:787
 msgid "Status Changed"
 msgstr "状态更新时间"
 
-#: app/ui/components/dialog.py:781
+#: app/ui/components/dialog.py:797
 msgid "Click to calculate"
 msgstr "点击计算"
 
-#: app/ui/components/dialog.py:793
+#: app/ui/components/dialog.py:809
 msgid "Calculate directory size"
 msgstr "计算目录大小"
 
-#: app/ui/components/dialog.py:797
+#: app/ui/components/dialog.py:813
 msgid "Directory is empty"
 msgstr "目录为空"
 
-#: app/ui/components/dialog.py:809
+#: app/ui/components/dialog.py:825
 msgid "Move"
 msgstr "移动"
 
-#: app/ui/components/dialog.py:815
+#: app/ui/components/dialog.py:831
 msgid "Rename"
 msgstr "重命名"
 
-#: app/ui/components/dialog.py:823 app/ui/pages/share.py:78
+#: app/ui/components/dialog.py:839 app/ui/pages/share.py:91
 msgid "Share"
 msgstr "分享"
 
-#: app/ui/components/dialog.py:829 app/ui/pages/share.py:230
+#: app/ui/components/dialog.py:845 app/ui/pages/share.py:243
 msgid "Download"
 msgstr "下载"
 
-#: app/ui/components/dialog.py:838
+#: app/ui/components/dialog.py:854
 msgid "Calculating..."
 msgstr "正在计算..."
 
-#: app/ui/components/dialog.py:845
+#: app/ui/components/dialog.py:861
 #, python-brace-format
 msgid "Are you sure you want to delete **`{name}`**"
 msgstr "您确定要删除 **`{name}`** 吗"
 
-#: app/ui/components/dialog.py:853
+#: app/ui/components/dialog.py:869
 msgid "Deleted successfully"
 msgstr "删除成功"
 
-#: app/ui/components/dialog.py:865
+#: app/ui/components/dialog.py:881
 msgid "A file or folder with this name already exists."
 msgstr "已存在同名的文件或文件夹。"
 
-#: app/ui/components/dialog.py:869
+#: app/ui/components/dialog.py:885
 msgid "Renamed successfully"
 msgstr "重命名成功"
 
-#: app/ui/components/dialog.py:880
+#: app/ui/components/dialog.py:896
 msgid "Cannot move to the same folder."
 msgstr "无法移动到同一文件夹。"
 
-#: app/ui/components/dialog.py:887
+#: app/ui/components/dialog.py:903
 #, python-brace-format
 msgid "Moved successfully to {path}"
 msgstr "已成功移动到 {path}"
 
-#: app/ui/components/dialog.py:911
+#: app/ui/components/dialog.py:927
 msgid "Share link copied."
 msgstr "分享链接已复制。"
 
-#: app/ui/components/dialog.py:916
+#: app/ui/components/dialog.py:932
 #, python-brace-format
 msgid ""
-"You selected a folder. It will be compressed into a single tar.gz file. "
-"Download **`{name}`**?"
-msgstr ""
-"您选择了一个文件夹。它将被压缩成一个单独的 tar.gz 文件。是否下载 **`{name}"
-"`**？"
+"You selected a folder. It will be compressed into a **single tar.gz "
+"file**. Download **`{name}.tar.gz`**?"
+msgstr "您选择了一个文件夹。它将被压缩成单个 tar.gz 文件。下载 **`{name}.tar.gz`** 吗？"
 
-#: app/ui/components/dialog.py:919
+#: app/ui/components/dialog.py:935
 #, python-brace-format
 msgid "Download **`{name}`**?"
 msgstr "下载 **`{name}`** 吗？"
 
-#: app/ui/components/header.py:36 app/ui/pages/console.py:74
+#: app/ui/components/dialog.py:1428
+msgid "Wrap lines"
+msgstr "自动换行"
+
+#: app/ui/components/dialog.py:1449
+msgid "Image Information"
+msgstr "图片信息"
+
+#: app/ui/components/dialog.py:1463
+msgid "Location"
+msgstr "位置"
+
+#: app/ui/components/dialog.py:1524
+#, python-brace-format
+msgid "Preview is limited to the first {size} MB."
+msgstr "预览仅限文件前 {size} MB 的内容。"
+
+#: app/ui/components/dialog.py:1573
+msgid "This file is empty."
+msgstr "此文件为空。"
+
+#: app/ui/components/dialog.py:1623
+#, python-brace-format
+msgid ""
+"Preview is not available for {suffix} files because LibreOffice is not "
+"installed."
+msgstr "由于未安装 LibreOffice，无法预览 {suffix} 文件。"
+
+#: app/ui/components/dialog.py:1624
+msgid "this file type"
+msgstr "此类文件"
+
+#: app/ui/components/dialog.py:1652
+msgid "Preview conversion timed out."
+msgstr "预览转换超时。"
+
+#: app/ui/components/dialog.py:1656
+#, python-brace-format
+msgid "Failed to convert this file for preview: {error}"
+msgstr "无法转换此文件以供预览：{error}"
+
+#: app/ui/components/dialog.py:1657
+msgid "unknown error"
+msgstr "未知错误"
+
+#: app/ui/components/dialog.py:1663
+msgid "Failed to convert this file for preview."
+msgstr "无法转换此文件以供预览。"
+
+#: app/ui/components/dialog.py:1674
+msgid "Office preview needs LibreOffice"
+msgstr "Office 预览需要 LibreOffice"
+
+#: app/ui/components/dialog.py:1679
+msgid ""
+"LibreOffice is required on the StarDrive server to preview Word, Excel, "
+"and PowerPoint files."
+msgstr "StarDrive 服务器需要安装 LibreOffice，才能预览 Word、Excel 和 PowerPoint 文件。"
+
+#: app/ui/components/dialog.py:1690
+msgid ""
+"This is a server configuration step. Visitors do not need to install "
+"anything on their own computers."
+msgstr "这是服务器配置步骤。访问者无需在自己的电脑上安装任何内容。"
+
+#: app/ui/components/dialog.py:1696
+msgid "Ask a server administrator to install LibreOffice:"
+msgstr "请服务器管理员安装 LibreOffice："
+
+#: app/ui/components/dialog.py:1717
+msgid ""
+"For Docker deployments, rebuild and redeploy using this project's "
+"Dockerfile; it already includes LibreOffice."
+msgstr "对于 Docker 部署，请使用本项目的 Dockerfile 重新构建并部署；其中已包含 LibreOffice。"
+
+#: app/ui/components/dialog.py:1722
+msgid "After installation, restart StarDrive and reopen this file."
+msgstr "安装后，请重启 StarDrive 并重新打开此文件。"
+
+#: app/ui/components/dialog.py:1724 app/ui/components/dialog.py:1740
+#: app/ui/pages/console.py:247
+msgid "Close"
+msgstr "关闭"
+
+#: app/ui/components/dialog.py:1729
+msgid "unknown"
+msgstr "未知"
+
+#: app/ui/components/dialog.py:1733
+msgid "Preview unavailable"
+msgstr "无法预览"
+
+#: app/ui/components/dialog.py:1736
+#, python-brace-format
+msgid "Preview is not available for this file type: {suffix}"
+msgstr "此文件类型无法预览：{suffix}"
+
+#: app/ui/components/header.py:39 app/ui/pages/console.py:82
 msgid "Console"
 msgstr "控制台"
 
-#: app/ui/components/header.py:42 app/ui/pages/profile.py:31
+#: app/ui/components/header.py:45 app/ui/pages/profile.py:31
+#: app/ui/pages/profile.py:146
 msgid "Account"
 msgstr "账户"
 
-#: app/ui/components/header.py:49
+#: app/ui/components/header.py:52
 msgid "Login"
 msgstr "登录"
 
-#: app/ui/components/table.py:68
+#: app/ui/components/table.py:97
 msgid "Action"
 msgstr "操作"
 
-#: app/ui/components/table.py:99
+#: app/ui/components/table.py:134
 msgid "Path does not exist. Navigating to home directory."
 msgstr "路径不存在。正在跳转到主目录。"
 
-#: app/ui/components/table.py:142
+#: app/ui/components/table.py:177 app/ui/pages/console.py:151
 msgid "Created At"
 msgstr "创建时间"
 
-#: app/ui/components/table.py:150
+#: app/ui/components/table.py:185
 msgid "Updated At"
 msgstr "更新时间"
 
-#: app/ui/components/table.py:164
+#: app/ui/components/table.py:199
 msgid "File List"
 msgstr "文件列表"
 
-#: app/ui/components/table.py:182
+#: app/ui/components/table.py:217
 msgid "No files found."
 msgstr "未找到文件。"
 
-#: app/ui/components/table.py:189
-msgid "Navigate to parent directory"
-msgstr "导航到父目录"
-
-#: app/ui/components/table.py:194 app/ui/pages/browser.py:41
-#: app/ui/pages/error_page.py:68
-msgid "Home"
-msgstr "首页"
-
-#: app/ui/components/table.py:197
+#: app/ui/components/table.py:225 app/ui/components/table.py:233
 msgid "Navigate to home directory"
 msgstr "导航到主目录"
 
-#: app/ui/components/table.py:258 app/ui/pages/browser.py:56
+#: app/ui/components/table.py:231 app/ui/pages/browser.py:40
+#: app/ui/pages/error_page.py:69
+msgid "Home"
+msgstr "首页"
+
+#: app/ui/components/table.py:294 app/ui/pages/browser.py:55
 msgid "Upload files"
 msgstr "上传文件"
 
-#: app/ui/components/table.py:266
+#: app/ui/components/table.py:302
 msgid "Create new directory"
 msgstr "创建新目录"
 
-#: app/ui/components/table.py:274
+#: app/ui/components/table.py:310
 msgid "Delete selected items"
 msgstr "删除选定的项目"
 
-#: app/ui/components/table.py:282
+#: app/ui/components/table.py:318
 msgid "Download selected items"
 msgstr "下载选定的项目"
 
-#: app/ui/components/table.py:290
+#: app/ui/components/table.py:326
 msgid "Move selected items"
 msgstr "移动选定的项目"
 
-#: app/ui/components/table.py:303
+#: app/ui/components/table.py:339
 msgid "Toggle batch actions"
 msgstr "切换批量操作"
 
-#: app/ui/components/table.py:311
+#: app/ui/components/table.py:347
 msgid "Search in current directory"
 msgstr "在当前目录中搜索"
 
-#: app/ui/components/table.py:328
+#: app/ui/components/table.py:364
 msgid "Show file information"
 msgstr "显示文件信息"
 
-#: app/ui/components/table.py:392
+#: app/ui/components/table.py:442
 msgid "Already at the root directory. Cannot go back further."
 msgstr "已位于根目录，无法继续返回。"
 
-#: app/ui/components/table.py:410
+#: app/ui/components/table.py:455
 msgid "Path copied to clipboard."
 msgstr "路径已复制到剪贴板。"
 
-#: app/ui/components/table.py:438
+#: app/ui/components/table.py:474
+msgid "Search"
+msgstr "搜索"
+
+#: app/ui/components/table.py:477
+msgid "Move Selection"
+msgstr "移动所选项"
+
+#: app/ui/components/table.py:480
+msgid "Quick Look"
+msgstr "快速查看"
+
+#: app/ui/components/table.py:483
+msgid "Enter Directory"
+msgstr "进入目录"
+
+#: app/ui/components/table.py:486
+msgid "Back to Parent Directory"
+msgstr "返回上级目录"
+
+#: app/ui/components/table.py:537
 #, python-brace-format
 msgid ""
 "Are you sure you want to download **`{file_name}`**? To **delete**, "
 "**move**, **rename** or **share** this file, please use the "
 "**Information** button(i) next to the file row."
 msgstr ""
-"您确定要下载文件**`{file_name}`**吗？要**删除**、**移动**、**重命名**或**共"
-"享**此文件，请使用文件行旁边的**信息**按钮 (i)。"
+"您确定要下载文件**`{file_name}`**吗？要**删除**、**移动**、**重命名**或**共享**此文件，请使用文件行旁边的**信息**按钮"
+" (i)。"
 
-#: app/ui/components/table.py:457
+#: app/ui/components/table.py:556
 msgid "New Directory"
 msgstr "新建目录"
 
-#: app/ui/components/table.py:459
+#: app/ui/components/table.py:558
 msgid ""
 "Please enter the name of the new directory.\n"
 "\n"
@@ -827,228 +1012,473 @@ msgstr ""
 "\n"
 "可以使用 `/` 创建多级目录，例如 `parent/child`。"
 
-#: app/ui/components/table.py:462
+#: app/ui/components/table.py:561
 msgid "Directory Name"
 msgstr "目录名称"
 
-#: app/ui/components/table.py:477
+#: app/ui/components/table.py:576
 msgid "A directory with the same name already exists. Please choose another name."
 msgstr "同名目录已存在，请尝试其他名称。"
 
-#: app/ui/components/table.py:485
+#: app/ui/components/table.py:584
 #, python-brace-format
 msgid "Failed to create new directory: {error}"
 msgstr "创建新目录失败：{error}"
 
-#: app/ui/components/table.py:491
+#: app/ui/components/table.py:590
 #, python-brace-format
 msgid "New directory created successfully: {path}"
 msgstr "新目录创建成功：{path}"
 
-#: app/ui/components/table.py:507
+#: app/ui/components/table.py:606
 msgid "Upload in Progress"
 msgstr "上传中"
 
-#: app/ui/components/table.py:509
+#: app/ui/components/table.py:608
 msgid "Are you sure you want to cancel? This will stop the ongoing upload."
 msgstr "确定要取消吗？这将中止当前的上传任务。"
 
-#: app/ui/components/table.py:527
+#: app/ui/components/table.py:631
+#, python-brace-format
+msgid "Storage quota exceeded. Remaining: {remaining}"
+msgstr "已超出存储配额。剩余：{remaining}"
+
+#: app/ui/components/table.py:640
+#, python-brace-format
+msgid "Skipped invalid upload path '{path}': {message}"
+msgstr "已跳过无效的上传路径“{path}”：{message}"
+
+#: app/ui/components/table.py:649
 #, python-brace-format
 msgid "File Exists: {filename}"
 msgstr "文件已存在：{filename}"
 
-#: app/ui/components/table.py:528
+#: app/ui/components/table.py:650
 msgid "This file already exists. Do you want to overwrite it?"
 msgstr "该文件已存在，是否覆盖？"
 
-#: app/ui/components/table.py:533
+#: app/ui/components/table.py:655
 #, python-brace-format
 msgid "Cancelled overwrite: {filename}"
 msgstr "已取消覆盖：{filename}"
 
-#: app/ui/components/table.py:552
+#: app/ui/components/table.py:677
 msgid "Multiple selection enabled"
 msgstr "已启用多选模式"
 
-#: app/ui/components/table.py:575 app/ui/components/table.py:603
-#: app/ui/components/table.py:639
+#: app/ui/components/table.py:700 app/ui/components/table.py:728
+#: app/ui/components/table.py:764
 msgid "Please select at least one file"
 msgstr "请至少选择一个文件"
 
-#: app/ui/components/table.py:579
+#: app/ui/components/table.py:704
 msgid "Download Files"
 msgstr "下载文件"
 
-#: app/ui/components/table.py:581
+#: app/ui/components/table.py:706
 msgid ""
 "You selected multiple items or a folder. They will be compressed into a "
 "**single tar.gz file** for download. Do you want to continue?"
 msgstr "您选择了多个项目或文件夹。它们将被打包为 **tar.gz 文件**供下载。是否继续？"
 
-#: app/ui/components/table.py:616
+#: app/ui/components/table.py:741
 msgid ""
 "Cannot move items to the same folder. Please select a different "
 "destination."
 msgstr "无法将项目移动到原所在文件夹。请选择其他目标位置。"
 
-#: app/ui/components/table.py:630
+#: app/ui/components/table.py:755
 #, python-brace-format
 msgid "Moved {count} items"
 msgstr "已移动 {count} 个项目"
 
-#: app/ui/components/table.py:643
+#: app/ui/components/table.py:768
 #, python-brace-format
 msgid "Delete {count} items"
 msgstr "删除 {count} 个项目"
 
-#: app/ui/components/table.py:662
+#: app/ui/components/table.py:787
 #, python-brace-format
 msgid "Deleted {count} items"
 msgstr "已删除 {count} 个项目"
 
-#: app/ui/components/table.py:694
+#: app/ui/components/table.py:819
 msgid "Missing path"
 msgstr "缺少路径"
 
-#: app/ui/components/table.py:711
+#: app/ui/components/table.py:837
 msgid "Failed to get file metadata"
 msgstr "获取文件元数据失败"
 
-#: app/ui/pages/console.py:78
+#: app/ui/components/table.py:881
+#, python-brace-format
+msgid "Failed to open preview: {error}"
+msgstr "无法打开预览：{error}"
+
+#: app/ui/pages/account.py:77 app/ui/pages/account.py:205
+msgid "Passwords do not match."
+msgstr "两次输入的密码不一致。"
+
+#: app/ui/pages/account.py:99
+msgid "Account created successfully"
+msgstr "账户创建成功"
+
+#: app/ui/pages/account.py:107 app/ui/pages/account.py:138
+#: app/ui/pages/login.py:141
+msgid "Create account"
+msgstr "创建账户"
+
+#: app/ui/pages/account.py:107
+msgid "Register a new StarDrive account."
+msgstr "注册新的 StarDrive 账户。"
+
+#: app/ui/pages/account.py:111 app/ui/pages/account.py:176
+#: app/ui/pages/console.py:105 app/ui/pages/console.py:141
+#: app/ui/pages/login.py:109
+msgid "Email"
+msgstr "电子邮箱"
+
+#: app/ui/pages/account.py:115 app/ui/pages/account.py:178
+#: app/ui/pages/login.py:113
+msgid "Invalid email address"
+msgstr "无效的邮箱地址"
+
+#: app/ui/pages/account.py:123 app/ui/pages/console.py:107
+#: app/ui/pages/login.py:124
+msgid "Password"
+msgstr "密码"
+
+#: app/ui/pages/account.py:130 app/ui/pages/account.py:235
+msgid "Confirm password"
+msgstr "确认密码"
+
+#: app/ui/pages/account.py:141 app/ui/pages/account.py:188
+#: app/ui/pages/account.py:246
+msgid "Back to sign in"
+msgstr "返回登录"
+
+#: app/ui/pages/account.py:163
+msgid "Password reset email is not configured. Contact an administrator."
+msgstr "尚未配置密码重置邮件。请联系管理员。"
+
+#: app/ui/pages/account.py:167
+msgid "If the account exists, a reset email has been sent."
+msgstr "如果该账户存在，重置邮件已发送。"
+
+#: app/ui/pages/account.py:171 app/ui/pages/account.py:243
+#: app/ui/pages/console.py:225 app/ui/pages/console.py:275
+msgid "Reset password"
+msgstr "重置密码"
+
+#: app/ui/pages/account.py:172
+msgid "Enter your account email to receive a reset link."
+msgstr "输入您的账户邮箱以接收重置链接。"
+
+#: app/ui/pages/account.py:185
+msgid "Send reset link"
+msgstr "发送重置链接"
+
+#: app/ui/pages/account.py:215
+msgid "Password reset successfully"
+msgstr "密码重置成功"
+
+#: app/ui/pages/account.py:223
+msgid "Set new password"
+msgstr "设置新密码"
+
+#: app/ui/pages/account.py:223
+msgid "Choose a new password for your account."
+msgstr "为您的账户设置新密码。"
+
+#: app/ui/pages/account.py:227 app/ui/pages/console.py:244
+#: app/ui/pages/profile.py:104
+msgid "New password"
+msgstr "新密码"
+
+#: app/ui/pages/console.py:87
+msgid "User management"
+msgstr "用户管理"
+
+#: app/ui/pages/console.py:90
+msgid "Allow registration"
+msgstr "允许注册"
+
+#: app/ui/pages/console.py:98
+msgid "Registration setting saved."
+msgstr "注册设置已保存。"
+
+#: app/ui/pages/console.py:103 app/ui/pages/console.py:132
+msgid "Create user"
+msgstr "创建用户"
+
+#: app/ui/pages/console.py:110 app/ui/pages/console.py:278
+msgid "Quota GiB"
+msgstr "配额（GiB）"
+
+#: app/ui/pages/console.py:112 app/ui/pages/console.py:145
+msgid "Active"
+msgstr "启用"
+
+#: app/ui/pages/console.py:113 app/ui/pages/console.py:146
+msgid "Admin"
+msgstr "管理员"
+
+#: app/ui/pages/console.py:129
+msgid "User created successfully."
+msgstr "用户创建成功。"
+
+#: app/ui/pages/console.py:135
+msgid "Search users"
+msgstr "搜索用户"
+
+#: app/ui/pages/console.py:147
+msgid "Quota"
+msgstr "配额"
+
+#: app/ui/pages/console.py:148
+msgid "Used"
+msgstr "已使用"
+
+#: app/ui/pages/console.py:163
+msgid "Please select a user."
+msgstr "请选择一个用户。"
+
+#: app/ui/pages/console.py:180 app/ui/pages/console.py:182
+msgid "Yes"
+msgstr "是"
+
+#: app/ui/pages/console.py:180 app/ui/pages/console.py:182
+msgid "No"
+msgstr "否"
+
+#: app/ui/pages/console.py:186
+msgid "Unlimited"
+msgstr "无限制"
+
+#: app/ui/pages/console.py:206
+msgid "User status updated."
+msgstr "用户状态已更新。"
+
+#: app/ui/pages/console.py:217
+msgid "User role updated."
+msgstr "用户角色已更新。"
+
+#: app/ui/pages/console.py:226
+#, python-brace-format
+msgid "Generate a new random password for {email}?"
+msgstr "要为 {email} 生成新的随机密码吗？"
+
+#: app/ui/pages/console.py:263
+msgid "Quota updated."
+msgstr "配额已更新。"
+
+#: app/ui/pages/console.py:267
+msgid "Refresh"
+msgstr "刷新"
+
+#: app/ui/pages/console.py:268
+msgid "Enable/Disable"
+msgstr "启用/禁用"
+
+#: app/ui/pages/console.py:270
+msgid "Toggle admin"
+msgstr "切换管理员权限"
+
+#: app/ui/pages/console.py:281
+msgid "Set quota"
+msgstr "设置配额"
+
+#: app/ui/pages/console.py:290
 msgid "Service URL"
 msgstr "服务 URL"
 
-#: app/ui/pages/console.py:92
+#: app/ui/pages/console.py:299
+msgid "Storage backend"
+msgstr "存储后端"
+
+#: app/ui/pages/console.py:301
+msgid "Local storage"
+msgstr "本地存储"
+
+#: app/ui/pages/console.py:301
+msgid "Aliyun OSS"
+msgstr "阿里云 OSS"
+
+#: app/ui/pages/console.py:303
+msgid "Active backend"
+msgstr "启用的后端"
+
+#: app/ui/pages/console.py:307
+msgid "OSS region"
+msgstr "OSS 区域"
+
+#: app/ui/pages/console.py:308
+msgid "OSS endpoint"
+msgstr "OSS 终端节点"
+
+#: app/ui/pages/console.py:309
+msgid "OSS bucket"
+msgstr "OSS 存储桶"
+
+#: app/ui/pages/console.py:310
+msgid "AccessKey ID"
+msgstr "AccessKey ID"
+
+#: app/ui/pages/console.py:312
+msgid "AccessKey Secret"
+msgstr "AccessKey Secret"
+
+#: app/ui/pages/console.py:313
+msgid "Leave empty to keep the saved secret"
+msgstr "留空以保留已保存的密钥"
+
+#: app/ui/pages/console.py:314
+msgid "Object prefix"
+msgstr "对象前缀"
+
+#: app/ui/pages/console.py:339
+#, python-brace-format
+msgid "OSS connection failed: {error}"
+msgstr "OSS 连接失败：{error}"
+
+#: app/ui/pages/console.py:341
+msgid "OSS connection verified."
+msgstr "OSS 连接验证成功。"
+
+#: app/ui/pages/console.py:356
+msgid "Storage backend saved."
+msgstr "存储后端已保存。"
+
+#: app/ui/pages/console.py:359
+msgid "Test OSS connection"
+msgstr "测试 OSS 连接"
+
+#: app/ui/pages/console.py:360
+msgid "Save storage backend"
+msgstr "保存存储后端"
+
+#: app/ui/pages/console.py:371
 msgid "CPU usage"
 msgstr "CPU 使用率"
 
-#: app/ui/pages/console.py:95
+#: app/ui/pages/console.py:374
 msgid "Memory usage"
 msgstr "内存使用率"
 
-#: app/ui/pages/console.py:98
+#: app/ui/pages/console.py:377
 msgid "Disk usage (root)"
 msgstr "磁盘使用率 (根文件系统)"
 
-#: app/ui/pages/console.py:105
+#: app/ui/pages/console.py:384
 msgid "Run garbage collection"
 msgstr "运行垃圾回收"
 
-#: app/ui/pages/console.py:108
+#: app/ui/pages/console.py:387
 msgid "Show object count"
 msgstr "显示对象引用计数"
 
-#: app/ui/pages/console.py:110
+#: app/ui/pages/console.py:389
 #, python-brace-format
 msgid "Object count: {count}"
 msgstr "对象引用计数：{count}"
 
-#: app/ui/pages/console.py:114 app/ui/pages/console.py:120
+#: app/ui/pages/console.py:393 app/ui/pages/console.py:399
 msgid "Reload app"
 msgstr "重启"
 
-#: app/ui/pages/console.py:121
+#: app/ui/pages/console.py:400
 msgid "This will restart the application. Continue?"
 msgstr "这将重启应用程序。是否继续？"
 
-#: app/ui/pages/console.py:126
+#: app/ui/pages/console.py:406
 #, python-brace-format
 msgid "Restarting {app_name}…"
 msgstr "正在重启 {app_name}…"
 
-#: app/ui/pages/console.py:160
+#: app/ui/pages/console.py:440
 msgid "Global storage"
 msgstr "全局存储"
 
-#: app/ui/pages/console.py:166
+#: app/ui/pages/console.py:446
 msgid "User storage"
 msgstr "用户存储"
 
-#: app/ui/pages/console.py:172
+#: app/ui/pages/console.py:452
 msgid "Client storage"
 msgstr "客户端存储"
 
-#: app/ui/pages/console.py:178
+#: app/ui/pages/console.py:458
 msgid "Browser storage"
 msgstr "浏览器存储"
 
-#: app/ui/pages/console.py:192
+#: app/ui/pages/console.py:472
 #, python-brace-format
 msgid "{app_name} memory usage: {value} MB"
 msgstr "{app_name} 内存使用量：{value} MB"
 
-#: app/ui/pages/console.py:197
+#: app/ui/pages/console.py:477
 #, python-brace-format
 msgid "Host load average: {a} {b} {c}"
 msgstr "主机平均负载：{a} {b} {c}"
 
-#: app/ui/pages/error_page.py:17
+#: app/ui/pages/error_page.py:18
 msgid "Page not found"
 msgstr "页面未找到"
 
-#: app/ui/pages/error_page.py:54
+#: app/ui/pages/error_page.py:55
 #, python-brace-format
 msgid "Nothing to see here, but you are still in {app_name}."
 msgstr "这里没什么可看的，但您仍然在 {app_name}。"
 
-#: app/ui/pages/error_page.py:61 app/ui/pages/error_page.py:120
+#: app/ui/pages/error_page.py:62 app/ui/pages/error_page.py:121
 #, python-brace-format
 msgid "Request ID: `{request_id}`"
 msgstr "请求ID：`{request_id}`"
 
-#: app/ui/pages/error_page.py:66 app/ui/pages/error_page.py:133
+#: app/ui/pages/error_page.py:67 app/ui/pages/error_page.py:134
 msgid "Back"
 msgstr "返回"
 
-#: app/ui/pages/error_page.py:105
+#: app/ui/pages/error_page.py:106
 msgid "# 500 · Internal server error"
 msgstr "# 500 - 服务器内部错误"
 
-#: app/ui/pages/error_page.py:109
+#: app/ui/pages/error_page.py:110
 #, python-brace-format
 msgid "Something went wrong while {app_name} was processing your request."
 msgstr "{app_name} 在处理您的请求时出现了一些问题。"
 
-#: app/ui/pages/error_page.py:124
+#: app/ui/pages/error_page.py:125
 msgid "Please help us improve by reporting this issue on GitHub."
 msgstr "请在 GitHub 上报告此问题，帮助我们改进。"
 
-#: app/ui/pages/error_page.py:135
+#: app/ui/pages/error_page.py:136
 msgid "Report issue"
 msgstr "报告问题"
 
-#: app/ui/pages/login.py:50
+#: app/ui/pages/login.py:52
 msgid "You are already signed in"
 msgstr "您已登录"
 
-#: app/ui/pages/login.py:64
+#: app/ui/pages/login.py:68
 msgid "Sign in to your account"
 msgstr "登录您的帐户"
 
-#: app/ui/pages/login.py:79
+#: app/ui/pages/login.py:85
 msgid "Account not found"
 msgstr "未找到帐户"
 
-#: app/ui/pages/login.py:82
+#: app/ui/pages/login.py:88
 msgid "Signed in successfully"
 msgstr "登录成功"
 
-#: app/ui/pages/login.py:94
-msgid "Email"
-msgstr "电子邮箱"
-
-#: app/ui/pages/login.py:98
-msgid "Invalid email address"
-msgstr "无效的邮箱地址"
-
-#: app/ui/pages/login.py:109
-msgid "Password"
-msgstr "密码"
-
-#: app/ui/pages/login.py:120
+#: app/ui/pages/login.py:135
 msgid "Sign in"
 msgstr "登录"
+
+#: app/ui/pages/login.py:142
+msgid "Forgot password?"
+msgstr "忘记密码？"
 
 #: app/ui/pages/profile.py:42
 msgid "Account Information"
@@ -1071,12 +1501,10 @@ msgid "Language"
 msgstr "语言"
 
 #: app/ui/pages/profile.py:74
-#, python-brace-format
 msgid "Language unchanged"
 msgstr "语言保持不变"
 
 #: app/ui/pages/profile.py:78
-#, python-brace-format
 msgid "Language changed"
 msgstr "语言已更改"
 
@@ -1084,117 +1512,105 @@ msgstr "语言已更改"
 msgid "Save language"
 msgstr "保存语言"
 
-#: app/ui/pages/profile.py:95
+#: app/ui/pages/profile.py:96
 msgid "Security"
 msgstr "安全"
 
-#: app/ui/pages/profile.py:98
+#: app/ui/pages/profile.py:99
 msgid "Current password"
 msgstr "当前密码"
 
-#: app/ui/pages/profile.py:103
-msgid "New password"
-msgstr "新密码"
-
-#: app/ui/pages/profile.py:108
+#: app/ui/pages/profile.py:109
 msgid "Confirm new password"
 msgstr "重复新密码"
 
-#: app/ui/pages/profile.py:115
+#: app/ui/pages/profile.py:116
 msgid "Passwords do not match"
 msgstr "密码不匹配"
 
-#: app/ui/pages/profile.py:126
+#: app/ui/pages/profile.py:127
 msgid "Password changed successfully"
 msgstr "密码修改成功"
 
-#: app/ui/pages/profile.py:139
+#: app/ui/pages/profile.py:140
 msgid "Change password"
 msgstr "修改密码"
 
-#: app/ui/pages/profile.py:147
-msgid "Danger Zone"
-msgstr "危险区域"
-
-#: app/ui/pages/profile.py:155
+#: app/ui/pages/profile.py:152
 msgid "Log out from this account"
 msgstr "退出此帐户"
 
-#: app/ui/pages/share.py:50
+#: app/ui/pages/share.py:53 app/ui/pages/share.py:61
 msgid "This share link is no longer available"
 msgstr "此分享链接已失效"
 
-#: app/ui/pages/share.py:51
+#: app/ui/pages/share.py:54 app/ui/pages/share.py:62
 msgid "It may have expired or the item was removed."
 msgstr "链接可能已过期，或者项目已被所有者移除。"
 
-#: app/ui/pages/share.py:63
+#: app/ui/pages/share.py:76
 msgid "Unknown"
 msgstr "未知"
 
-#: app/ui/pages/share.py:111
+#: app/ui/pages/share.py:124
 msgid "Calculate size"
 msgstr "计算大小"
 
-#: app/ui/pages/share.py:116
+#: app/ui/pages/share.py:129
 msgid "Empty folder"
 msgstr "空空如也"
 
-#: app/ui/pages/share.py:125
+#: app/ui/pages/share.py:138
 msgid "Calculating…"
 msgstr "正在计算…"
 
-#: app/ui/pages/share.py:141
+#: app/ui/pages/share.py:154
 msgid "Download folder"
 msgstr "下载目录"
 
-#: app/ui/pages/share.py:143
+#: app/ui/pages/share.py:156
 msgid "The folder will be compressed into a single archive before download."
 msgstr "该目录将在下载前被压缩成一个单独的压缩文件。"
 
-#: app/ui/pages/share.py:145
+#: app/ui/pages/share.py:158
 #, python-brace-format
 msgid " Continue downloading **{name}**?"
 msgstr " 继续下载 **{name}** 吗？"
 
-#: app/ui/pages/share.py:151
+#: app/ui/pages/share.py:164
 msgid "Download file"
 msgstr "下载文件"
 
-#: app/ui/pages/share.py:152
+#: app/ui/pages/share.py:165
 #, python-brace-format
 msgid "Continue downloading **{name}**?"
 msgstr "继续下载 **{name}** 吗？"
 
-#: app/ui/pages/share.py:192
+#: app/ui/pages/share.py:205
 msgid "Last accessed"
 msgstr "最后访问时间"
 
-#: app/ui/pages/share.py:196
+#: app/ui/pages/share.py:209
 msgid "Status updated"
 msgstr "状态更新时间"
 
-#: app/ui/pages/share.py:204
-msgid "Items"
-msgstr "项目"
-
-#: app/ui/pages/share.py:210
+#: app/ui/pages/share.py:223
 msgid "Shared by"
 msgstr "分享来自"
 
-#: app/ui/pages/share.py:211
+#: app/ui/pages/share.py:224
 msgid "Share ID"
 msgstr "分享ID"
 
-#: app/ui/pages/share.py:213
+#: app/ui/pages/share.py:226
 msgid "Shared on"
 msgstr "分享于"
 
-#: app/ui/pages/share.py:217
+#: app/ui/pages/share.py:230
 msgid "Expires on"
 msgstr "有效期至"
 
-#: app/ui/pages/share.py:227
+#: app/ui/pages/share.py:240
 msgid "Browse"
 msgstr "浏览"
 
@@ -1224,7 +1640,6 @@ msgid "Access shared {item_type}"
 msgstr "允许访问共享{item_type}"
 
 #: app/ui/pages/share_access.py:57
-#, python-brace-format
 msgid "Enter the access code to continue"
 msgstr "请输入访问码以继续"
 
@@ -1292,9 +1707,6 @@ msgstr "继续"
 
 #~ msgid "If you still can't find it, try searching in a **different directory**."
 #~ msgstr "如果仍然找不到，请尝试在**其他目录**中搜索。"
-
-#~ msgid "Back to Parent Directory"
-#~ msgstr "返回上级目录"
 
 #~ msgid "Are you sure you want to download **`{}`**?"
 #~ msgstr "确定要下载 **`{}`** 吗？"
@@ -1385,3 +1797,12 @@ msgstr "继续"
 
 #~ msgid "Enter access code"
 #~ msgstr "访问码"
+
+#~ msgid "Navigate to parent directory"
+#~ msgstr "导航到父目录"
+
+#~ msgid "Danger Zone"
+#~ msgstr "危险区域"
+
+#~ msgid "Items"
+#~ msgstr "项目"

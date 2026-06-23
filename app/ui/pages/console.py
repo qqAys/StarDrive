@@ -310,7 +310,7 @@ async def console_page(request: Request, client: Client):
                     oss_access_key = ui.input(_("AccessKey ID"), value=saved_oss["access_key_id"])
                     oss_secret = ui.input(
                         _("AccessKey Secret"), password=True, password_toggle_button=True,
-                    ).props("hint='Leave empty to keep the saved secret'")
+                    ).props(f"hint='{_('Leave empty to keep the saved secret')}'")
                     oss_prefix = ui.input(_("Object prefix"), value=saved_oss["prefix"])
 
                 def build_oss_config() -> OSSConfig:
