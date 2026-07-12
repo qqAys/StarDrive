@@ -96,6 +96,7 @@ class UserManager:
             user = await self.user_crud.get_by_email(session, email)
 
         if not user:
+            app.storage.user.clear()
             return None
 
         if not user.is_active:
@@ -196,7 +197,9 @@ class UserManager:
             quota = max(0, quota_bytes)
 
         async with self.db_context() as session:
-            existing = await self.user_crud.get_by_email(session, email)
+            existing = await self.user_crud.get_by_email(
+                session, email, include_deleted=True
+            )
             if existing:
                 message = _("User already exists")
                 logger.warning(message)
@@ -223,13 +226,24 @@ class UserManager:
         )
 
     async def list_users(
-        self, *, offset: int = 0, limit: int = 20, query: str | None = None
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 20,
+        query: str | None = None,
+        include_deleted: bool = False,
     ):
         async with self.db_context() as session:
             users = await self.user_crud.list(
-                session=session, offset=offset, limit=limit, query=query
+                session=session,
+                offset=offset,
+                limit=limit,
+                query=query,
+                include_deleted=include_deleted,
             )
-            total = await self.user_crud.count(session=session, query=query)
+            total = await self.user_crud.count(
+                session=session, query=query, include_deleted=include_deleted
+            )
             return list(users), total
 
     async def is_registration_allowed(self) -> bool:
@@ -324,6 +338,26 @@ class UserManager:
                 session=session,
                 user=user,
                 quota_bytes=quota_bytes,
+            )
+
+    async def revoke_sessions(self, *, email: str) -> None:
+        async with self.db_context() as session:
+            user = await self.user_crud.get_by_email(session, email)
+            if not user:
+                raise ValueError(_("User does not exist"))
+
+            await self.user_crud.revoke_sessions(session=session, user=user)
+
+    async def soft_delete_user(self, *, email: str) -> None:
+        async with self.db_context() as session:
+            user = await self.user_crud.get_by_email(session, email)
+            if not user:
+                raise ValueError(_("User does not exist"))
+
+            await self.user_crud.soft_delete(
+                session=session,
+                user=user,
+                deleted_at=utc_now(),
             )
 
     async def admin_reset_password(

@@ -78,6 +78,10 @@ class User(SQLModel, table=True):
             server_default=text("CURRENT_TIMESTAMP"),
         ),
     )
+    deleted_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True), nullable=True, index=True),
+    )
 
     roles: List[Role] = Relationship(back_populates="users", link_model=UserRoleLink)
     profile: Optional["UserProfile"] = Relationship(back_populates="user")

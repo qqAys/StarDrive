@@ -56,6 +56,8 @@ class UserCRUD:
     async def get_by_id(
         session: AsyncSession,
         user_id: str,
+        *,
+        include_deleted: bool = False,
     ) -> Optional[User]:
         """
         Retrieve a user by their unique ID.
@@ -67,12 +69,17 @@ class UserCRUD:
         Returns:
             The User instance if found; otherwise, None.
         """
-        return await session.get(User, user_id)
+        user = await session.get(User, user_id)
+        if user and user.deleted_at is not None and not include_deleted:
+            return None
+        return user
 
     @staticmethod
     async def get_by_email(
         session: AsyncSession,
         email: str,
+        *,
+        include_deleted: bool = False,
     ) -> Optional[User]:
         """
         Retrieve a user by their email address.
@@ -85,6 +92,8 @@ class UserCRUD:
             The User instance if found; otherwise, None.
         """
         stmt = select(User).where(User.email == email)
+        if not include_deleted:
+            stmt = stmt.where(User.deleted_at.is_(None))
         result = await session.execute(stmt)
         return result.scalar()
 
@@ -95,6 +104,7 @@ class UserCRUD:
         offset: int = 0,
         limit: int = 20,
         query: str | None = None,
+        include_deleted: bool = False,
     ) -> Sequence[User]:
         """
         Retrieve a paginated list of users.
@@ -108,6 +118,8 @@ class UserCRUD:
             A sequence of User instances.
         """
         stmt = select(User)
+        if not include_deleted:
+            stmt = stmt.where(User.deleted_at.is_(None))
         if query:
             stmt = stmt.where(User.email.contains(query))
         stmt = stmt.order_by(User.created_at.desc()).offset(offset).limit(limit)
@@ -115,8 +127,15 @@ class UserCRUD:
         return result.scalars().all()
 
     @staticmethod
-    async def count(session: AsyncSession, *, query: str | None = None) -> int:
+    async def count(
+        session: AsyncSession,
+        *,
+        query: str | None = None,
+        include_deleted: bool = False,
+    ) -> int:
         stmt = select(func.count()).select_from(User)
+        if not include_deleted:
+            stmt = stmt.where(User.deleted_at.is_(None))
         if query:
             stmt = stmt.where(User.email.contains(query))
         result = await session.execute(stmt)
@@ -202,6 +221,14 @@ class UserCRUD:
         await session.refresh(user)
         return user
 
+    @staticmethod
+    async def revoke_sessions(session: AsyncSession, *, user: User) -> User:
+        user.token_version += 1
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        return user
+
     # Delete
     @staticmethod
     async def delete(
@@ -218,6 +245,16 @@ class UserCRUD:
         """
         await session.delete(user)
         await session.commit()
+
+    @staticmethod
+    async def soft_delete(session: AsyncSession, *, user: User, deleted_at) -> User:
+        user.deleted_at = deleted_at
+        user.is_active = False
+        user.token_version += 1
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        return user
 
     # Authentication
     @staticmethod

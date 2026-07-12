@@ -1,5 +1,5 @@
 from app.models.file_download_model import FileDownloadInfo
-from app.models.system_model import AppSetting, PasswordResetToken
+from app.models.system_model import AppSetting, PasswordResetToken, StorageProfile
 from app.models.user_model import (
     Permission,
     Role,
@@ -16,6 +16,7 @@ __all__ = [
     "Permission",
     "Role",
     "RolePermissionLink",
+    "StorageProfile",
     "User",
     "UserProfile",
     "UserRoleLink",
