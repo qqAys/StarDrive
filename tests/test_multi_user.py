@@ -11,6 +11,7 @@ from app.services.file_service import (
 )
 from app.services.user_service import UserManager
 from app.security.routes import is_route_unrestricted
+from app.ui.pages.console import _build_user_table_row, _modifiable_user_rows
 from app.utils.time import utc_now
 
 
@@ -18,24 +19,33 @@ class FakeUserCRUD:
     users: dict[str, User] = {}
 
     @classmethod
-    async def list(cls, session, offset=0, limit=20, query=None):
+    async def list(cls, session, offset=0, limit=20, query=None, include_deleted=False):
         users = list(cls.users.values())
+        if not include_deleted:
+            users = [user for user in users if user.deleted_at is None]
         if query:
             users = [user for user in users if query in user.email]
         return users[offset : offset + limit]
 
     @classmethod
-    async def count(cls, session, query=None):
-        return len(await cls.list(session, query=query))
+    async def count(cls, session, query=None, include_deleted=False):
+        return len(
+            await cls.list(session, query=query, include_deleted=include_deleted)
+        )
 
     @classmethod
-    async def get_by_email(cls, session, email):
-        return cls.users.get(email)
+    async def get_by_email(cls, session, email, include_deleted=False):
+        user = cls.users.get(email)
+        if user and user.deleted_at is not None and not include_deleted:
+            return None
+        return user
 
     @classmethod
-    async def get_by_id(cls, session, user_id):
+    async def get_by_id(cls, session, user_id, include_deleted=False):
         for user in cls.users.values():
             if user.id == user_id:
+                if user.deleted_at is not None and not include_deleted:
+                    return None
                 return user
         return None
 
@@ -63,7 +73,10 @@ class FakeUserCRUD:
 
     @classmethod
     async def authenticate(cls, session, *, email, password):
-        return cls.users.get(email)
+        user = cls.users.get(email)
+        if not user or not user.is_active or user.deleted_at is not None:
+            return None
+        return user
 
     @classmethod
     async def update_password(cls, session, *, user, new_password, revoke_tokens=True):
@@ -84,6 +97,18 @@ class FakeUserCRUD:
     @classmethod
     async def update_quota(cls, session, *, user, quota_bytes):
         user.quota_bytes = quota_bytes
+        return user
+
+    @classmethod
+    async def revoke_sessions(cls, session, *, user):
+        user.token_version += 1
+        return user
+
+    @classmethod
+    async def soft_delete(cls, session, *, user, deleted_at):
+        user.deleted_at = deleted_at
+        user.is_active = False
+        user.token_version += 1
         return user
 
 
@@ -154,6 +179,88 @@ def test_admin_reset_password_revokes_existing_sessions():
         assert user.token_version == 1
 
     asyncio.run(run_test())
+
+
+def test_soft_deleted_users_are_hidden_and_cannot_authenticate():
+    async def run_test():
+        FakeUserCRUD.users = {}
+        manager = UserManager(user_crud=FakeUserCRUD, db_context=fake_db_context)
+        user = await manager.create_user(
+            email="deleted@example.com",
+            password="Valid123!",
+            quota_bytes=123,
+        )
+
+        await manager.soft_delete_user(email="deleted@example.com")
+
+        visible_users, visible_total = await manager.list_users()
+        all_users, all_total = await manager.list_users(include_deleted=True)
+        authenticated = await FakeUserCRUD.authenticate(
+            SimpleNamespace(), email="deleted@example.com", password="Valid123!"
+        )
+
+        assert user.deleted_at is not None
+        assert user.is_active is False
+        assert user.token_version == 1
+        assert visible_users == []
+        assert visible_total == 0
+        assert all_users == [user]
+        assert all_total == 1
+        assert authenticated is None
+
+    asyncio.run(run_test())
+
+
+def test_admin_can_revoke_user_sessions_without_changing_password():
+    async def run_test():
+        FakeUserCRUD.users = {}
+        manager = UserManager(user_crud=FakeUserCRUD, db_context=fake_db_context)
+        user = await manager.create_user(
+            email="session@example.com",
+            password="Valid123!",
+            quota_bytes=123,
+        )
+
+        await manager.revoke_sessions(email="session@example.com")
+
+        assert user.token_version == 1
+
+    asyncio.run(run_test())
+
+
+def test_console_user_table_row_marks_status_quota_and_deleted_state():
+    deleted_at = utc_now()
+    user = User(
+        id="deleted_user",
+        email="deleted@example.com",
+        password_hash="hash",
+        is_active=False,
+        is_superuser=True,
+        quota_bytes=0,
+        deleted_at=deleted_at,
+    )
+
+    row = _build_user_table_row(user, usage=0)
+
+    assert row["id"] == "deleted_user"
+    assert row["email"] == "deleted@example.com"
+    assert row["is_active"] is False
+    assert row["is_superuser"] is True
+    assert row["quota_bytes"] == 0
+    assert row["is_deleted"] is True
+    assert row["deleted"] == deleted_at.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def test_console_batch_user_rows_skip_deleted_users():
+    rows = [
+        {"email": "active@example.com", "is_deleted": False},
+        {"email": "deleted@example.com", "is_deleted": True},
+        {"email": "missing-flag@example.com"},
+    ]
+
+    modifiable = _modifiable_user_rows(rows)
+
+    assert modifiable == [rows[0], rows[2]]
 
 
 def test_user_storage_roots_are_isolated(tmp_path, mocker):

@@ -10,7 +10,7 @@ from app.ui.components.dialog import ConfirmDialog
 from app.ui.components.footer import Footer
 from app.ui.components.header import Header
 from app.ui.components.notify import notify
-from app.ui.theme import set_theme, DefaultTheme, theme
+from app.ui.theme import apply_page_theme, theme
 
 
 class BaseLayout:
@@ -22,7 +22,7 @@ class BaseLayout:
     """
 
     def __init__(self):
-        set_theme(DefaultTheme)
+        apply_page_theme()
 
         if settings.USE_MISANS:
             ui.add_head_html(
