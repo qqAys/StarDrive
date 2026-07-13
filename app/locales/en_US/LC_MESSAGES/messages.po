@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.0\n"
 "Report-Msgid-Bugs-To: me@qqays.xyz\n"
-"POT-Creation-Date: 2026-06-23 15:36+0800\n"
+"POT-Creation-Date: 2026-07-12 22:13+0800\n"
 "PO-Revision-Date: 2025-12-09 14:17+0800\n"
 "Last-Translator: Jinx <me@qqays.xyz>\n"
 "Language: en_US\n"
@@ -62,7 +62,7 @@ msgstr ""
 msgid "Custom update timestamp (Unix epoch)"
 msgstr ""
 
-#: app/schemas/file_schema.py:74
+#: app/schemas/file_schema.py:72
 msgid "Number of immediate children in the directory"
 msgstr ""
 
@@ -133,121 +133,121 @@ msgid ""
 "set_current_backend() first."
 msgstr ""
 
-#: app/services/file_service.py:463
+#: app/services/file_service.py:469
 msgid ""
 "Service URL is not configured. Please set it in the console before "
 "sharing files."
 msgstr ""
 
-#: app/services/file_service.py:625
+#: app/services/file_service.py:631
 msgid "Name cannot be empty or consist only of spaces."
 msgstr ""
 
-#: app/services/file_service.py:630
+#: app/services/file_service.py:636
 #, python-brace-format
 msgid "Name is too long (maximum {max_length} characters)."
 msgstr ""
 
-#: app/services/file_service.py:638
+#: app/services/file_service.py:644
 msgid "Name must be a relative path and cannot start with a path separator."
 msgstr ""
 
-#: app/services/file_service.py:643
+#: app/services/file_service.py:649
 msgid "Invalid path format."
 msgstr ""
 
-#: app/services/file_service.py:648
+#: app/services/file_service.py:654
 msgid "Name cannot contain '..' to navigate outside the base directory."
 msgstr ""
 
-#: app/services/file_service.py:654
+#: app/services/file_service.py:660
 msgid ""
 "Name must be a relative path and cannot start with a path separator or "
 "drive letter."
 msgstr ""
 
-#: app/services/file_service.py:672
-msgid "Name cannot contain '/' on Linux/Unix systems."
-msgstr ""
-
 #: app/services/file_service.py:678
-#, python-brace-format
-msgid "Name cannot contain any of the following characters: {forbidden_chars}"
+msgid "Name cannot contain '/' on Linux/Unix systems."
 msgstr ""
 
 #: app/services/file_service.py:684
 #, python-brace-format
-msgid "The name segment '{segment}' is a reserved system name on Windows."
+msgid "Name cannot contain any of the following characters: {forbidden_chars}"
 msgstr ""
 
 #: app/services/file_service.py:690
+#, python-brace-format
+msgid "The name segment '{segment}' is a reserved system name on Windows."
+msgstr ""
+
+#: app/services/file_service.py:696
 msgid "Name segments cannot end with a space or a dot on Windows."
 msgstr ""
 
-#: app/services/file_service.py:693
+#: app/services/file_service.py:699
 msgid "Name is valid."
 msgstr ""
 
-#: app/services/file_service.py:795
+#: app/services/file_service.py:801
 msgid "File name"
 msgstr ""
 
-#: app/services/file_service.py:796 app/ui/components/dialog.py:769
+#: app/services/file_service.py:802 app/ui/components/dialog.py:769
 msgid "Path"
 msgstr ""
 
-#: app/services/file_service.py:797
+#: app/services/file_service.py:803
 msgid "File size"
 msgstr ""
 
-#: app/services/file_service.py:801 app/services/file_service.py:810
+#: app/services/file_service.py:807 app/services/file_service.py:816
 msgid "Format"
 msgstr ""
 
-#: app/services/file_service.py:802 app/ui/components/dialog.py:770
+#: app/services/file_service.py:808 app/ui/components/dialog.py:770
 #: app/ui/components/table.py:152 app/ui/pages/share.py:194
 msgid "Type"
 msgstr ""
 
-#: app/services/file_service.py:811 app/ui/components/dialog.py:560
+#: app/services/file_service.py:817 app/ui/components/dialog.py:560
 #: app/ui/components/dialog.py:771 app/ui/components/dialog.py:795
 #: app/ui/components/table.py:168 app/ui/pages/share.py:195
 msgid "Size"
 msgstr ""
 
-#: app/services/file_service.py:812
+#: app/services/file_service.py:818
 msgid "Color mode"
 msgstr ""
 
-#: app/services/file_service.py:817
+#: app/services/file_service.py:823
 msgid "DPI"
 msgstr ""
 
-#: app/services/file_service.py:831
+#: app/services/file_service.py:837
 msgid "Camera make"
 msgstr ""
 
-#: app/services/file_service.py:832
+#: app/services/file_service.py:838
 msgid "Camera model"
 msgstr ""
 
-#: app/services/file_service.py:833
+#: app/services/file_service.py:839
 msgid "Lens model"
 msgstr ""
 
-#: app/services/file_service.py:834
+#: app/services/file_service.py:840
 msgid "Software"
 msgstr ""
 
-#: app/services/file_service.py:835
+#: app/services/file_service.py:841
 msgid "Date taken"
 msgstr ""
 
-#: app/services/file_service.py:836
+#: app/services/file_service.py:842
 msgid "Date modified"
 msgstr ""
 
-#: app/services/file_service.py:845 app/ui/components/dialog.py:1453
+#: app/services/file_service.py:851 app/ui/components/dialog.py:1453
 #: app/ui/components/dialog.py:1460 app/ui/components/dialog.py:1461
 msgid "GPS"
 msgstr ""
@@ -257,32 +257,33 @@ msgstr ""
 msgid "Administrator account created. Email: {email}, Password: {password}"
 msgstr ""
 
-#: app/services/user_service.py:136
+#: app/services/user_service.py:137
 msgid "Invalid email or password"
 msgstr ""
 
-#: app/services/user_service.py:201
+#: app/services/user_service.py:204
 msgid "User already exists"
 msgstr ""
 
-#: app/services/user_service.py:216 app/ui/pages/account.py:67
+#: app/services/user_service.py:219 app/ui/pages/account.py:67
 msgid "Registration is currently disabled."
 msgstr ""
 
-#: app/services/user_service.py:266
+#: app/services/user_service.py:280
 msgid "Invalid current password"
 msgstr ""
 
-#: app/services/user_service.py:289 app/services/user_service.py:309
-#: app/services/user_service.py:321 app/services/user_service.py:340
+#: app/services/user_service.py:303 app/services/user_service.py:323
+#: app/services/user_service.py:335 app/services/user_service.py:347
+#: app/services/user_service.py:355 app/services/user_service.py:374
 msgid "User does not exist"
 msgstr ""
 
-#: app/services/user_service.py:394
+#: app/services/user_service.py:428
 msgid "Reset your StarDrive password"
 msgstr ""
 
-#: app/services/user_service.py:399
+#: app/services/user_service.py:433
 #, python-brace-format
 msgid ""
 "Use this link to reset your StarDrive password. The link expires soon:\n"
@@ -290,12 +291,12 @@ msgid ""
 "{link}"
 msgstr ""
 
-#: app/services/user_service.py:434 app/services/user_service.py:438
+#: app/services/user_service.py:468 app/services/user_service.py:472
 #: app/ui/pages/account.py:202
 msgid "Invalid or expired reset token."
 msgstr ""
 
-#: app/services/user_service.py:462
+#: app/services/user_service.py:496
 #, python-brace-format
 msgid "Error getting user timezone: {error}"
 msgstr ""
@@ -316,7 +317,7 @@ msgid "Access denied: path is outside the allowed root directory: {remote_path}"
 msgstr ""
 
 #: app/storage/local_storage.py:148 app/storage/local_storage.py:194
-#: app/storage/local_storage.py:226
+#: app/storage/local_storage.py:228
 #, python-brace-format
 msgid "File not found: {remote_path}"
 msgstr ""
@@ -336,91 +337,91 @@ msgstr ""
 msgid "Cannot download a directory: {remote_path}"
 msgstr ""
 
-#: app/storage/local_storage.py:231
+#: app/storage/local_storage.py:233
 #, python-brace-format
 msgid ""
 "Cannot delete a directory using this method. Use delete_directory "
 "instead: {remote_path}"
 msgstr ""
 
-#: app/storage/local_storage.py:238
+#: app/storage/local_storage.py:240
 #, python-brace-format
 msgid "Permission denied when deleting file: {remote_path}"
 msgstr ""
 
-#: app/storage/local_storage.py:253 app/storage/local_storage.py:336
-#: app/storage/local_storage.py:454
+#: app/storage/local_storage.py:255 app/storage/local_storage.py:338
+#: app/storage/local_storage.py:456
 #, python-brace-format
 msgid "Directory not found: {path}"
 msgstr ""
 
-#: app/storage/local_storage.py:257 app/storage/local_storage.py:340
-#: app/storage/local_storage.py:458
+#: app/storage/local_storage.py:259 app/storage/local_storage.py:342
+#: app/storage/local_storage.py:460
 #, python-brace-format
 msgid "Path is not a directory: {path}"
 msgstr ""
 
-#: app/storage/local_storage.py:296
+#: app/storage/local_storage.py:298
 #, python-brace-format
 msgid "Permission denied when reading directory: {path}"
 msgstr ""
 
-#: app/storage/local_storage.py:302
+#: app/storage/local_storage.py:304
 #, python-brace-format
 msgid "Failed to read directory: {error}"
 msgstr ""
 
-#: app/storage/local_storage.py:316
+#: app/storage/local_storage.py:318
 #, python-brace-format
 msgid "A file already exists at this path: {path}"
 msgstr ""
 
-#: app/storage/local_storage.py:322
+#: app/storage/local_storage.py:324
 #, python-brace-format
 msgid "Permission denied when creating directory: {path}"
 msgstr ""
 
-#: app/storage/local_storage.py:346
+#: app/storage/local_storage.py:348
 #, python-brace-format
 msgid "Failed to delete directory: {error}"
 msgstr ""
 
-#: app/storage/local_storage.py:360
+#: app/storage/local_storage.py:362
 #, python-brace-format
 msgid "Source not found: {path}"
 msgstr ""
 
-#: app/storage/local_storage.py:369
+#: app/storage/local_storage.py:371
 #, python-brace-format
 msgid "Insufficient permissions to move from {src} to {dest}"
 msgstr ""
 
-#: app/storage/local_storage.py:375
+#: app/storage/local_storage.py:377
 #, python-brace-format
 msgid "Move operation failed: {error}"
 msgstr ""
 
-#: app/storage/local_storage.py:389
+#: app/storage/local_storage.py:391
 #, python-brace-format
 msgid "Source is not a valid file: {path}"
 msgstr ""
 
-#: app/storage/local_storage.py:398
+#: app/storage/local_storage.py:400
 #, python-brace-format
 msgid "Insufficient permissions to copy from {src} to {dest}"
 msgstr ""
 
-#: app/storage/local_storage.py:404
+#: app/storage/local_storage.py:406
 #, python-brace-format
 msgid "Copy operation failed: {error}"
 msgstr ""
 
-#: app/storage/local_storage.py:414
+#: app/storage/local_storage.py:416
 #, python-brace-format
 msgid "File or directory not found: {path}"
 msgstr ""
 
-#: app/ui/components/base.py:123 app/ui/pages/profile.py:154
+#: app/ui/components/base.py:123 app/ui/pages/profile.py:158
 msgid "Logout"
 msgstr ""
 
@@ -466,7 +467,8 @@ msgstr ""
 
 #: app/ui/components/dialog.py:199 app/ui/components/dialog.py:231
 #: app/ui/components/dialog.py:287 app/ui/components/dialog.py:531
-#: app/ui/components/dialog.py:732
+#: app/ui/components/dialog.py:732 app/ui/pages/console.py:508
+#: app/ui/pages/console.py:810 app/ui/pages/console.py:937
 msgid "Cancel"
 msgstr ""
 
@@ -570,6 +572,8 @@ msgid "Open"
 msgstr ""
 
 #: app/ui/components/dialog.py:397 app/ui/components/dialog.py:819
+#: app/ui/pages/console.py:640 app/ui/pages/console.py:720
+#: app/ui/pages/console.py:1012
 msgid "Delete"
 msgstr ""
 
@@ -634,7 +638,8 @@ msgid "Expire date cannot be before now"
 msgstr ""
 
 #: app/ui/components/dialog.py:557 app/ui/components/dialog.py:768
-#: app/ui/components/table.py:145
+#: app/ui/components/table.py:145 app/ui/pages/console.py:361
+#: app/ui/pages/console.py:587
 msgid "Name"
 msgstr ""
 
@@ -861,7 +866,7 @@ msgid "After installation, restart StarDrive and reopen this file."
 msgstr ""
 
 #: app/ui/components/dialog.py:1724 app/ui/components/dialog.py:1740
-#: app/ui/pages/console.py:247
+#: app/ui/pages/console.py:848
 msgid "Close"
 msgstr ""
 
@@ -878,12 +883,13 @@ msgstr ""
 msgid "Preview is not available for this file type: {suffix}"
 msgstr ""
 
-#: app/ui/components/header.py:39 app/ui/pages/console.py:82
+#: app/ui/components/header.py:39 app/ui/pages/console.py:147
+#: app/ui/pages/console.py:155
 msgid "Console"
 msgstr ""
 
 #: app/ui/components/header.py:45 app/ui/pages/profile.py:31
-#: app/ui/pages/profile.py:146
+#: app/ui/pages/profile.py:148
 msgid "Account"
 msgstr ""
 
@@ -891,7 +897,8 @@ msgstr ""
 msgid "Login"
 msgstr ""
 
-#: app/ui/components/table.py:97
+#: app/ui/components/table.py:97 app/ui/pages/console.py:369
+#: app/ui/pages/console.py:743
 msgid "Action"
 msgstr ""
 
@@ -899,7 +906,8 @@ msgstr ""
 msgid "Path does not exist. Navigating to home directory."
 msgstr ""
 
-#: app/ui/components/table.py:177 app/ui/pages/console.py:151
+#: app/ui/components/table.py:177 app/ui/pages/console.py:740
+#: app/ui/pages/console.py:867
 msgid "Created At"
 msgstr ""
 
@@ -920,7 +928,7 @@ msgid "Navigate to home directory"
 msgstr ""
 
 #: app/ui/components/table.py:231 app/ui/pages/browser.py:40
-#: app/ui/pages/error_page.py:69
+#: app/ui/pages/error_page.py:70
 msgid "Home"
 msgstr ""
 
@@ -964,7 +972,7 @@ msgstr ""
 msgid "Path copied to clipboard."
 msgstr ""
 
-#: app/ui/components/table.py:474
+#: app/ui/components/table.py:474 app/ui/pages/console.py:694
 msgid "Search"
 msgstr ""
 
@@ -1053,7 +1061,7 @@ msgstr ""
 msgid "Cancelled overwrite: {filename}"
 msgstr ""
 
-#: app/ui/components/table.py:677
+#: app/ui/components/table.py:677 app/ui/pages/console.py:1131
 msgid "Multiple selection enabled"
 msgstr ""
 
@@ -1124,8 +1132,8 @@ msgid "Register a new StarDrive account."
 msgstr ""
 
 #: app/ui/pages/account.py:111 app/ui/pages/account.py:176
-#: app/ui/pages/console.py:105 app/ui/pages/console.py:141
-#: app/ui/pages/login.py:109
+#: app/ui/pages/console.py:734 app/ui/pages/console.py:795
+#: app/ui/pages/console.py:862 app/ui/pages/login.py:109
 msgid "Email"
 msgstr ""
 
@@ -1134,7 +1142,7 @@ msgstr ""
 msgid "Invalid email address"
 msgstr ""
 
-#: app/ui/pages/account.py:123 app/ui/pages/console.py:107
+#: app/ui/pages/account.py:123 app/ui/pages/console.py:797
 #: app/ui/pages/login.py:124
 msgid "Password"
 msgstr ""
@@ -1157,7 +1165,7 @@ msgid "If the account exists, a reset email has been sent."
 msgstr ""
 
 #: app/ui/pages/account.py:171 app/ui/pages/account.py:243
-#: app/ui/pages/console.py:225 app/ui/pages/console.py:275
+#: app/ui/pages/console.py:904 app/ui/pages/console.py:1001
 msgid "Reset password"
 msgstr ""
 
@@ -1181,269 +1189,605 @@ msgstr ""
 msgid "Choose a new password for your account."
 msgstr ""
 
-#: app/ui/pages/account.py:227 app/ui/pages/console.py:244
-#: app/ui/pages/profile.py:104
+#: app/ui/pages/account.py:227 app/ui/pages/console.py:845
+#: app/ui/pages/profile.py:106
 msgid "New password"
 msgstr ""
 
-#: app/ui/pages/console.py:87
-msgid "User management"
-msgstr ""
-
-#: app/ui/pages/console.py:90
-msgid "Allow registration"
-msgstr ""
-
-#: app/ui/pages/console.py:98
-msgid "Registration setting saved."
-msgstr ""
-
-#: app/ui/pages/console.py:103 app/ui/pages/console.py:132
-msgid "Create user"
-msgstr ""
-
-#: app/ui/pages/console.py:110 app/ui/pages/console.py:278
-msgid "Quota GiB"
-msgstr ""
-
-#: app/ui/pages/console.py:112 app/ui/pages/console.py:145
-msgid "Active"
-msgstr ""
-
-#: app/ui/pages/console.py:113 app/ui/pages/console.py:146
-msgid "Admin"
-msgstr ""
-
-#: app/ui/pages/console.py:129
-msgid "User created successfully."
-msgstr ""
-
-#: app/ui/pages/console.py:135
-msgid "Search users"
-msgstr ""
-
-#: app/ui/pages/console.py:147
-msgid "Quota"
-msgstr ""
-
-#: app/ui/pages/console.py:148
-msgid "Used"
-msgstr ""
-
-#: app/ui/pages/console.py:163
-msgid "Please select a user."
-msgstr ""
-
-#: app/ui/pages/console.py:180 app/ui/pages/console.py:182
+#: app/ui/pages/console.py:90 app/ui/pages/console.py:93
+#: app/ui/pages/console.py:119 app/ui/pages/console.py:121
 msgid "Yes"
 msgstr ""
 
-#: app/ui/pages/console.py:180 app/ui/pages/console.py:182
+#: app/ui/pages/console.py:90 app/ui/pages/console.py:93
+#: app/ui/pages/console.py:119 app/ui/pages/console.py:121
 msgid "No"
 msgstr ""
 
-#: app/ui/pages/console.py:186
+#: app/ui/pages/console.py:98
+msgid "Passed"
+msgstr ""
+
+#: app/ui/pages/console.py:98
+msgid "Failed"
+msgstr ""
+
+#: app/ui/pages/console.py:125
 msgid "Unlimited"
 msgstr ""
 
-#: app/ui/pages/console.py:206
+#: app/ui/pages/console.py:158 app/ui/pages/console.py:225
+msgid "Overview"
+msgstr ""
+
+#: app/ui/pages/console.py:159 app/ui/pages/console.py:244
+msgid "Appearance"
+msgstr ""
+
+#: app/ui/pages/console.py:160 app/ui/pages/console.py:348
+msgid "Storage backend"
+msgstr ""
+
+#: app/ui/pages/console.py:161 app/ui/pages/console.py:662
+msgid "User management"
+msgstr ""
+
+#: app/ui/pages/console.py:162 app/ui/pages/console.py:1141
+msgid "System status"
+msgstr ""
+
+#: app/ui/pages/console.py:163 app/ui/pages/console.py:1171
+msgid "Developer tools"
+msgstr ""
+
+#: app/ui/pages/console.py:228
+msgid "Active storage"
+msgstr ""
+
+#: app/ui/pages/console.py:229 app/ui/pages/console.py:418
+msgid "Backend type"
+msgstr ""
+
+#: app/ui/pages/console.py:230
+msgid "Local root"
+msgstr ""
+
+#: app/ui/pages/console.py:232
+msgid "Service settings"
+msgstr ""
+
+#: app/ui/pages/console.py:233
+msgid "Service URL"
+msgstr ""
+
+#: app/ui/pages/console.py:238
+msgid ""
+"Storage switching changes which backend is displayed and used. It does "
+"not migrate or merge files."
+msgstr ""
+
+#: app/ui/pages/console.py:245
+msgid "Choose the global color theme used by the application UI."
+msgstr ""
+
+#: app/ui/pages/console.py:252
+msgid "Custom"
+msgstr ""
+
+#: app/ui/pages/console.py:258
+msgid "Theme"
+msgstr ""
+
+#: app/ui/pages/console.py:300
+msgid "Primary color"
+msgstr ""
+
+#: app/ui/pages/console.py:301
+msgid "Secondary color"
+msgstr ""
+
+#: app/ui/pages/console.py:302
+msgid "Accent color"
+msgstr ""
+
+#: app/ui/pages/console.py:304
+msgid "Current palette"
+msgstr ""
+
+#: app/ui/pages/console.py:307
+msgid "Primary"
+msgstr ""
+
+#: app/ui/pages/console.py:308
+msgid "Secondary"
+msgstr ""
+
+#: app/ui/pages/console.py:309
+msgid "Accent"
+msgstr ""
+
+#: app/ui/pages/console.py:310
+msgid "Success"
+msgstr ""
+
+#: app/ui/pages/console.py:311
+msgid "Warning"
+msgstr ""
+
+#: app/ui/pages/console.py:312
+msgid "Error"
+msgstr ""
+
+#: app/ui/pages/console.py:313
+msgid "Info"
+msgstr ""
+
+#: app/ui/pages/console.py:339
+msgid "Theme saved. Refresh the page to update all UI elements."
+msgstr ""
+
+#: app/ui/pages/console.py:342
+msgid "Save theme"
+msgstr ""
+
+#: app/ui/pages/console.py:351
+msgid ""
+"Manage backend profiles. Activating a profile switches the whole file "
+"browser view to that backend."
+msgstr ""
+
+#: app/ui/pages/console.py:356
+msgid "New profile"
+msgstr ""
+
+#: app/ui/pages/console.py:357
+msgid "Refresh"
+msgstr ""
+
+#: app/ui/pages/console.py:362 app/ui/pages/console.py:588
+msgid "Backend"
+msgstr ""
+
+#: app/ui/pages/console.py:363 app/ui/pages/console.py:589
+#: app/ui/pages/console.py:735 app/ui/pages/console.py:807
+#: app/ui/pages/console.py:863
+msgid "Active"
+msgstr ""
+
+#: app/ui/pages/console.py:364 app/ui/pages/console.py:590
+msgid "Secret"
+msgstr ""
+
+#: app/ui/pages/console.py:365 app/ui/pages/console.py:591
+msgid "Last Tested"
+msgstr ""
+
+#: app/ui/pages/console.py:366 app/ui/pages/console.py:592
+msgid "Test Result"
+msgstr ""
+
+#: app/ui/pages/console.py:387
+msgid "Show storage profile information"
+msgstr ""
+
+#: app/ui/pages/console.py:406
+msgid "Edit storage profile"
+msgstr ""
+
+#: app/ui/pages/console.py:406
+msgid "New storage profile"
+msgstr ""
+
+#: app/ui/pages/console.py:410
+msgid "Profile name"
+msgstr ""
+
+#: app/ui/pages/console.py:416
+msgid "Local storage"
+msgstr ""
+
+#: app/ui/pages/console.py:416
+msgid "Aliyun OSS"
+msgstr ""
+
+#: app/ui/pages/console.py:428
+msgid "Local storage is server-managed and read-only here."
+msgstr ""
+
+#: app/ui/pages/console.py:430
+msgid "Local root path"
+msgstr ""
+
+#: app/ui/pages/console.py:437
+msgid "OSS region"
+msgstr ""
+
+#: app/ui/pages/console.py:440
+msgid "OSS endpoint"
+msgstr ""
+
+#: app/ui/pages/console.py:443
+msgid "OSS bucket"
+msgstr ""
+
+#: app/ui/pages/console.py:446
+msgid "AccessKey ID"
+msgstr ""
+
+#: app/ui/pages/console.py:450
+msgid "AccessKey Secret"
+msgstr ""
+
+#: app/ui/pages/console.py:453
+msgid "Leave empty to keep the saved secret"
+msgstr ""
+
+#: app/ui/pages/console.py:455
+msgid "Object prefix"
+msgstr ""
+
+#: app/ui/pages/console.py:501
+msgid "Storage profile saved."
+msgstr ""
+
+#: app/ui/pages/console.py:509
+msgid "Test draft"
+msgstr ""
+
+#: app/ui/pages/console.py:510
+msgid "Save profile"
+msgstr ""
+
+#: app/ui/pages/console.py:526
+msgid "This profile is already active."
+msgstr ""
+
+#: app/ui/pages/console.py:529
+msgid "Activate storage profile"
+msgstr ""
+
+#: app/ui/pages/console.py:531
+msgid ""
+"Switching storage changes the whole file browser view. Existing files are"
+" not migrated or merged. Continue?"
+msgstr ""
+
+#: app/ui/pages/console.py:542
+msgid "Storage profile activated."
+msgstr ""
+
+#: app/ui/pages/console.py:550
+#, python-brace-format
+msgid ""
+"Delete active storage profile **`{name}`**? Files are preserved, but the "
+"active backend will switch before deletion."
+msgstr ""
+
+#: app/ui/pages/console.py:555
+#, python-brace-format
+msgid "Replacement profile: {name}"
+msgstr ""
+
+#: app/ui/pages/console.py:559
+#, python-brace-format
+msgid "Delete storage profile **`{name}`**? Files are preserved."
+msgstr ""
+
+#: app/ui/pages/console.py:562
+msgid "Delete storage profile"
+msgstr ""
+
+#: app/ui/pages/console.py:573
+msgid "Storage profile deleted."
+msgstr ""
+
+#: app/ui/pages/console.py:579
+msgid "Storage profile information"
+msgstr ""
+
+#: app/ui/pages/console.py:593
+msgid "Test Message"
+msgstr ""
+
+#: app/ui/pages/console.py:603
+msgid "Public configuration"
+msgstr ""
+
+#: app/ui/pages/console.py:632
+msgid "Edit"
+msgstr ""
+
+#: app/ui/pages/console.py:633
+msgid "Test"
+msgstr ""
+
+#: app/ui/pages/console.py:635
+msgid "Activate"
+msgstr ""
+
+#: app/ui/pages/console.py:665
+msgid "Allow registration"
+msgstr ""
+
+#: app/ui/pages/console.py:671
+msgid "Registration setting saved."
+msgstr ""
+
+#: app/ui/pages/console.py:677
+msgid "Search users"
+msgstr ""
+
+#: app/ui/pages/console.py:681
+msgid "Show deleted users"
+msgstr ""
+
+#: app/ui/pages/console.py:690 app/ui/pages/console.py:793
+#: app/ui/pages/console.py:812
+msgid "Create user"
+msgstr ""
+
+#: app/ui/pages/console.py:695
+msgid "Previous"
+msgstr ""
+
+#: app/ui/pages/console.py:696
+msgid "Next"
+msgstr ""
+
+#: app/ui/pages/console.py:698
+msgid "Batch select"
+msgstr ""
+
+#: app/ui/pages/console.py:705
+msgid "Enable selected"
+msgstr ""
+
+#: app/ui/pages/console.py:710
+msgid "Disable selected"
+msgstr ""
+
+#: app/ui/pages/console.py:715 app/ui/pages/console.py:1007
+#: app/ui/pages/console.py:1071
+msgid "Revoke sessions"
+msgstr ""
+
+#: app/ui/pages/console.py:726
+msgid "Done"
+msgstr ""
+
+#: app/ui/pages/console.py:736 app/ui/pages/console.py:808
+#: app/ui/pages/console.py:864
+msgid "Admin"
+msgstr ""
+
+#: app/ui/pages/console.py:737 app/ui/pages/console.py:865
+msgid "Quota"
+msgstr ""
+
+#: app/ui/pages/console.py:738 app/ui/pages/console.py:866
+msgid "Used"
+msgstr ""
+
+#: app/ui/pages/console.py:739 app/ui/pages/console.py:868
+msgid "Deleted"
+msgstr ""
+
+#: app/ui/pages/console.py:761
+msgid "Show user information"
+msgstr ""
+
+#: app/ui/pages/console.py:784
+#, python-brace-format
+msgid "Users {start}-{end} of {total}"
+msgstr ""
+
+#: app/ui/pages/console.py:802 app/ui/pages/console.py:927
+msgid "Quota GiB"
+msgstr ""
+
+#: app/ui/pages/console.py:840
+msgid "User created successfully."
+msgstr ""
+
+#: app/ui/pages/console.py:854
+msgid "User information"
+msgstr ""
+
+#: app/ui/pages/console.py:885
 msgid "User status updated."
 msgstr ""
 
-#: app/ui/pages/console.py:217
+#: app/ui/pages/console.py:898
 msgid "User role updated."
 msgstr ""
 
-#: app/ui/pages/console.py:226
+#: app/ui/pages/console.py:905
 #, python-brace-format
 msgid "Generate a new random password for {email}?"
 msgstr ""
 
-#: app/ui/pages/console.py:263
-msgid "Quota updated."
-msgstr ""
-
-#: app/ui/pages/console.py:267
-msgid "Refresh"
-msgstr ""
-
-#: app/ui/pages/console.py:268
-msgid "Enable/Disable"
-msgstr ""
-
-#: app/ui/pages/console.py:270
-msgid "Toggle admin"
-msgstr ""
-
-#: app/ui/pages/console.py:281
+#: app/ui/pages/console.py:923 app/ui/pages/console.py:1005
 msgid "Set quota"
 msgstr ""
 
-#: app/ui/pages/console.py:290
-msgid "Service URL"
+#: app/ui/pages/console.py:940
+msgid "Save"
 msgstr ""
 
-#: app/ui/pages/console.py:299
-msgid "Storage backend"
+#: app/ui/pages/console.py:955
+msgid "Quota updated."
 msgstr ""
 
-#: app/ui/pages/console.py:301
-msgid "Local storage"
+#: app/ui/pages/console.py:965
+msgid "User sessions revoked."
 msgstr ""
 
-#: app/ui/pages/console.py:301
-msgid "Aliyun OSS"
+#: app/ui/pages/console.py:971
+msgid "Delete user"
 msgstr ""
 
-#: app/ui/pages/console.py:303
-msgid "Active backend"
-msgstr ""
-
-#: app/ui/pages/console.py:307
-msgid "OSS region"
-msgstr ""
-
-#: app/ui/pages/console.py:308
-msgid "OSS endpoint"
-msgstr ""
-
-#: app/ui/pages/console.py:309
-msgid "OSS bucket"
-msgstr ""
-
-#: app/ui/pages/console.py:310
-msgid "AccessKey ID"
-msgstr ""
-
-#: app/ui/pages/console.py:312
-msgid "AccessKey Secret"
-msgstr ""
-
-#: app/ui/pages/console.py:313
-msgid "Leave empty to keep the saved secret"
-msgstr ""
-
-#: app/ui/pages/console.py:314
-msgid "Object prefix"
-msgstr ""
-
-#: app/ui/pages/console.py:339
+#: app/ui/pages/console.py:972
 #, python-brace-format
-msgid "OSS connection failed: {error}"
+msgid "Soft delete {email}? Files are preserved."
 msgstr ""
 
-#: app/ui/pages/console.py:341
-msgid "OSS connection verified."
+#: app/ui/pages/console.py:984
+msgid "User deleted."
 msgstr ""
 
-#: app/ui/pages/console.py:356
-msgid "Storage backend saved."
+#: app/ui/pages/console.py:991
+msgid "Enable/Disable"
 msgstr ""
 
-#: app/ui/pages/console.py:359
-msgid "Test OSS connection"
+#: app/ui/pages/console.py:996
+msgid "Toggle admin"
 msgstr ""
 
-#: app/ui/pages/console.py:360
-msgid "Save storage backend"
+#: app/ui/pages/console.py:1042 app/ui/pages/console.py:1068
+#: app/ui/pages/console.py:1096
+msgid "Please select at least one active user."
 msgstr ""
 
-#: app/ui/pages/console.py:371
+#: app/ui/pages/console.py:1045
+msgid "Update user status"
+msgstr ""
+
+#: app/ui/pages/console.py:1047
+#, python-brace-format
+msgid "Update {count} selected users?"
+msgstr ""
+
+#: app/ui/pages/console.py:1062
+#, python-brace-format
+msgid "Updated {count} users."
+msgstr ""
+
+#: app/ui/pages/console.py:1073
+#, python-brace-format
+msgid "Revoke sessions for {count} selected users?"
+msgstr ""
+
+#: app/ui/pages/console.py:1090
+#, python-brace-format
+msgid "Revoked sessions for {count} users."
+msgstr ""
+
+#: app/ui/pages/console.py:1099
+msgid "Delete users"
+msgstr ""
+
+#: app/ui/pages/console.py:1101
+#, python-brace-format
+msgid "Soft delete {count} selected users? Files are preserved."
+msgstr ""
+
+#: app/ui/pages/console.py:1118
+#, python-brace-format
+msgid "Deleted {count} users."
+msgstr ""
+
+#: app/ui/pages/console.py:1143
 msgid "CPU usage"
 msgstr ""
 
-#: app/ui/pages/console.py:374
+#: app/ui/pages/console.py:1144
 msgid "Memory usage"
 msgstr ""
 
-#: app/ui/pages/console.py:377
-msgid "Disk usage (root)"
+#: app/ui/pages/console.py:1145
+msgid "Disk usage"
 msgstr ""
 
-#: app/ui/pages/console.py:384
+#: app/ui/pages/console.py:1146
+msgid "Application memory"
+msgstr ""
+
+#: app/ui/pages/console.py:1147
+msgid "Load average"
+msgstr ""
+
+#: app/ui/pages/console.py:1172
+msgid "These tools are intended for maintenance and debugging."
+msgstr ""
+
+#: app/ui/pages/console.py:1177
 msgid "Run garbage collection"
 msgstr ""
 
-#: app/ui/pages/console.py:387
+#: app/ui/pages/console.py:1179
 msgid "Show object count"
 msgstr ""
 
-#: app/ui/pages/console.py:389
+#: app/ui/pages/console.py:1181
 #, python-brace-format
 msgid "Object count: {count}"
 msgstr ""
 
-#: app/ui/pages/console.py:393 app/ui/pages/console.py:399
+#: app/ui/pages/console.py:1184 app/ui/pages/console.py:1189
 msgid "Reload app"
 msgstr ""
 
-#: app/ui/pages/console.py:400
+#: app/ui/pages/console.py:1190
 msgid "This will restart the application. Continue?"
 msgstr ""
 
-#: app/ui/pages/console.py:406
+#: app/ui/pages/console.py:1195
 #, python-brace-format
 msgid "Restarting {app_name}…"
 msgstr ""
 
-#: app/ui/pages/console.py:440
+#: app/ui/pages/console.py:1225
+msgid "NiceGUI storage editors"
+msgstr ""
+
+#: app/ui/pages/console.py:1228
 msgid "Global storage"
 msgstr ""
 
-#: app/ui/pages/console.py:446
+#: app/ui/pages/console.py:1234
 msgid "User storage"
 msgstr ""
 
-#: app/ui/pages/console.py:452
+#: app/ui/pages/console.py:1240
 msgid "Client storage"
 msgstr ""
 
-#: app/ui/pages/console.py:458
+#: app/ui/pages/console.py:1246
 msgid "Browser storage"
-msgstr ""
-
-#: app/ui/pages/console.py:472
-#, python-brace-format
-msgid "{app_name} memory usage: {value} MB"
-msgstr ""
-
-#: app/ui/pages/console.py:477
-#, python-brace-format
-msgid "Host load average: {a} {b} {c}"
 msgstr ""
 
 #: app/ui/pages/error_page.py:18
 msgid "Page not found"
 msgstr ""
 
-#: app/ui/pages/error_page.py:55
+#: app/ui/pages/error_page.py:56
 #, python-brace-format
 msgid "Nothing to see here, but you are still in {app_name}."
 msgstr ""
 
-#: app/ui/pages/error_page.py:62 app/ui/pages/error_page.py:121
+#: app/ui/pages/error_page.py:63 app/ui/pages/error_page.py:123
 #, python-brace-format
 msgid "Request ID: `{request_id}`"
 msgstr ""
 
-#: app/ui/pages/error_page.py:67 app/ui/pages/error_page.py:134
+#: app/ui/pages/error_page.py:68 app/ui/pages/error_page.py:136
 msgid "Back"
 msgstr ""
 
-#: app/ui/pages/error_page.py:106
+#: app/ui/pages/error_page.py:108
 msgid "# 500 · Internal server error"
 msgstr ""
 
-#: app/ui/pages/error_page.py:110
+#: app/ui/pages/error_page.py:112
 #, python-brace-format
 msgid "Something went wrong while {app_name} was processing your request."
 msgstr ""
 
-#: app/ui/pages/error_page.py:125
+#: app/ui/pages/error_page.py:127
 msgid "Please help us improve by reporting this issue on GitHub."
 msgstr ""
 
-#: app/ui/pages/error_page.py:136
+#: app/ui/pages/error_page.py:138
 msgid "Report issue"
 msgstr ""
 
@@ -1507,27 +1851,27 @@ msgstr ""
 msgid "Security"
 msgstr ""
 
-#: app/ui/pages/profile.py:99
+#: app/ui/pages/profile.py:101
 msgid "Current password"
 msgstr ""
 
-#: app/ui/pages/profile.py:109
+#: app/ui/pages/profile.py:111
 msgid "Confirm new password"
 msgstr ""
 
-#: app/ui/pages/profile.py:116
+#: app/ui/pages/profile.py:118
 msgid "Passwords do not match"
 msgstr ""
 
-#: app/ui/pages/profile.py:127
+#: app/ui/pages/profile.py:129
 msgid "Password changed successfully"
 msgstr ""
 
-#: app/ui/pages/profile.py:140
+#: app/ui/pages/profile.py:142
 msgid "Change password"
 msgstr ""
 
-#: app/ui/pages/profile.py:152
+#: app/ui/pages/profile.py:156
 msgid "Log out from this account"
 msgstr ""
 
@@ -2150,5 +2494,35 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Items"
+#~ msgstr ""
+
+#~ msgid "Please select a user."
+#~ msgstr ""
+
+#~ msgid "Active backend"
+#~ msgstr ""
+
+#~ msgid "OSS connection failed: {error}"
+#~ msgstr ""
+
+#~ msgid "OSS connection verified."
+#~ msgstr ""
+
+#~ msgid "Storage backend saved."
+#~ msgstr ""
+
+#~ msgid "Test OSS connection"
+#~ msgstr ""
+
+#~ msgid "Save storage backend"
+#~ msgstr ""
+
+#~ msgid "Disk usage (root)"
+#~ msgstr ""
+
+#~ msgid "{app_name} memory usage: {value} MB"
+#~ msgstr ""
+
+#~ msgid "Host load average: {a} {b} {c}"
 #~ msgstr ""
 

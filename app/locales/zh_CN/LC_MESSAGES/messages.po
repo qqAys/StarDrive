@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.0\n"
 "Report-Msgid-Bugs-To: me@qqays.xyz\n"
-"POT-Creation-Date: 2026-06-23 15:36+0800\n"
+"POT-Creation-Date: 2026-07-12 22:13+0800\n"
 "PO-Revision-Date: 2025-12-31 09:28+0000\n"
 "Last-Translator: Jinx <me@qqays.xyz>\n"
 "Language: zh_CN\n"
@@ -63,7 +63,7 @@ msgstr "上次元数据更改的时间戳（Unix 纪元时间）"
 msgid "Custom update timestamp (Unix epoch)"
 msgstr "自定义更新时间戳（Unix纪元时间）"
 
-#: app/schemas/file_schema.py:74
+#: app/schemas/file_schema.py:72
 msgid "Number of immediate children in the directory"
 msgstr "目录中直接子项的数量"
 
@@ -134,121 +134,121 @@ msgid ""
 "set_current_backend() first."
 msgstr "当前存储后端未设置或找不到。请先调用 set_current_backend()。"
 
-#: app/services/file_service.py:463
+#: app/services/file_service.py:469
 msgid ""
 "Service URL is not configured. Please set it in the console before "
 "sharing files."
 msgstr "服务 URL 尚未设置。在分享文件前请先在控制台中配置。"
 
-#: app/services/file_service.py:625
+#: app/services/file_service.py:631
 msgid "Name cannot be empty or consist only of spaces."
 msgstr "名称不能为空或全空格。"
 
-#: app/services/file_service.py:630
+#: app/services/file_service.py:636
 #, python-brace-format
 msgid "Name is too long (maximum {max_length} characters)."
 msgstr "名称过长（最多 {max_length} 个字符）。"
 
-#: app/services/file_service.py:638
+#: app/services/file_service.py:644
 msgid "Name must be a relative path and cannot start with a path separator."
 msgstr "名称必须是相对路径，且不能以路径分隔符开头。"
 
-#: app/services/file_service.py:643
+#: app/services/file_service.py:649
 msgid "Invalid path format."
 msgstr "路径格式无效。"
 
-#: app/services/file_service.py:648
+#: app/services/file_service.py:654
 msgid "Name cannot contain '..' to navigate outside the base directory."
 msgstr "名称不能包含“..”以避免导航到基础目录之外。"
 
-#: app/services/file_service.py:654
+#: app/services/file_service.py:660
 msgid ""
 "Name must be a relative path and cannot start with a path separator or "
 "drive letter."
 msgstr "名称必须是相对路径，且不能以路径分隔符或驱动器盘符开头。"
 
-#: app/services/file_service.py:672
+#: app/services/file_service.py:678
 msgid "Name cannot contain '/' on Linux/Unix systems."
 msgstr "在 Linux/Unix 系统上，名称不能包含“/”字符。"
 
-#: app/services/file_service.py:678
+#: app/services/file_service.py:684
 #, python-brace-format
 msgid "Name cannot contain any of the following characters: {forbidden_chars}"
 msgstr "名称不能包含以下字符：{forbidden_chars}"
 
-#: app/services/file_service.py:684
+#: app/services/file_service.py:690
 #, python-brace-format
 msgid "The name segment '{segment}' is a reserved system name on Windows."
 msgstr "名称片段 '{segment}' 是系统保留名称。"
 
-#: app/services/file_service.py:690
+#: app/services/file_service.py:696
 msgid "Name segments cannot end with a space or a dot on Windows."
 msgstr "在 Windows 系统上文件名段不能以空格或句点结尾。"
 
-#: app/services/file_service.py:693
+#: app/services/file_service.py:699
 msgid "Name is valid."
 msgstr "名称有效。"
 
-#: app/services/file_service.py:795
+#: app/services/file_service.py:801
 msgid "File name"
 msgstr "文件名"
 
-#: app/services/file_service.py:796 app/ui/components/dialog.py:769
+#: app/services/file_service.py:802 app/ui/components/dialog.py:769
 msgid "Path"
 msgstr "路径"
 
-#: app/services/file_service.py:797
+#: app/services/file_service.py:803
 msgid "File size"
 msgstr "文件大小"
 
-#: app/services/file_service.py:801 app/services/file_service.py:810
+#: app/services/file_service.py:807 app/services/file_service.py:816
 msgid "Format"
 msgstr "格式"
 
-#: app/services/file_service.py:802 app/ui/components/dialog.py:770
+#: app/services/file_service.py:808 app/ui/components/dialog.py:770
 #: app/ui/components/table.py:152 app/ui/pages/share.py:194
 msgid "Type"
 msgstr "类型"
 
-#: app/services/file_service.py:811 app/ui/components/dialog.py:560
+#: app/services/file_service.py:817 app/ui/components/dialog.py:560
 #: app/ui/components/dialog.py:771 app/ui/components/dialog.py:795
 #: app/ui/components/table.py:168 app/ui/pages/share.py:195
 msgid "Size"
 msgstr "大小"
 
-#: app/services/file_service.py:812
+#: app/services/file_service.py:818
 msgid "Color mode"
 msgstr "颜色模式"
 
-#: app/services/file_service.py:817
+#: app/services/file_service.py:823
 msgid "DPI"
 msgstr "DPI"
 
-#: app/services/file_service.py:831
+#: app/services/file_service.py:837
 msgid "Camera make"
 msgstr "相机制造商"
 
-#: app/services/file_service.py:832
+#: app/services/file_service.py:838
 msgid "Camera model"
 msgstr "相机型号"
 
-#: app/services/file_service.py:833
+#: app/services/file_service.py:839
 msgid "Lens model"
 msgstr "镜头型号"
 
-#: app/services/file_service.py:834
+#: app/services/file_service.py:840
 msgid "Software"
 msgstr "软件"
 
-#: app/services/file_service.py:835
+#: app/services/file_service.py:841
 msgid "Date taken"
 msgstr "拍摄日期"
 
-#: app/services/file_service.py:836
+#: app/services/file_service.py:842
 msgid "Date modified"
 msgstr "修改日期"
 
-#: app/services/file_service.py:845 app/ui/components/dialog.py:1453
+#: app/services/file_service.py:851 app/ui/components/dialog.py:1453
 #: app/ui/components/dialog.py:1460 app/ui/components/dialog.py:1461
 msgid "GPS"
 msgstr "GPS"
@@ -258,32 +258,33 @@ msgstr "GPS"
 msgid "Administrator account created. Email: {email}, Password: {password}"
 msgstr "管理员账户已创建。邮箱：{email}，密码：{password}"
 
-#: app/services/user_service.py:136
+#: app/services/user_service.py:137
 msgid "Invalid email or password"
 msgstr "邮箱或密码错误"
 
-#: app/services/user_service.py:201
+#: app/services/user_service.py:204
 msgid "User already exists"
 msgstr "用户已存在"
 
-#: app/services/user_service.py:216 app/ui/pages/account.py:67
+#: app/services/user_service.py:219 app/ui/pages/account.py:67
 msgid "Registration is currently disabled."
 msgstr "当前已禁止注册。"
 
-#: app/services/user_service.py:266
+#: app/services/user_service.py:280
 msgid "Invalid current password"
 msgstr "当前密码无效"
 
-#: app/services/user_service.py:289 app/services/user_service.py:309
-#: app/services/user_service.py:321 app/services/user_service.py:340
+#: app/services/user_service.py:303 app/services/user_service.py:323
+#: app/services/user_service.py:335 app/services/user_service.py:347
+#: app/services/user_service.py:355 app/services/user_service.py:374
 msgid "User does not exist"
 msgstr "用户不存在"
 
-#: app/services/user_service.py:394
+#: app/services/user_service.py:428
 msgid "Reset your StarDrive password"
 msgstr "重置您的 StarDrive 密码"
 
-#: app/services/user_service.py:399
+#: app/services/user_service.py:433
 #, python-brace-format
 msgid ""
 "Use this link to reset your StarDrive password. The link expires soon:\n"
@@ -294,12 +295,12 @@ msgstr ""
 "\n"
 "{link}"
 
-#: app/services/user_service.py:434 app/services/user_service.py:438
+#: app/services/user_service.py:468 app/services/user_service.py:472
 #: app/ui/pages/account.py:202
 msgid "Invalid or expired reset token."
 msgstr "重置令牌无效或已过期。"
 
-#: app/services/user_service.py:462
+#: app/services/user_service.py:496
 #, python-brace-format
 msgid "Error getting user timezone: {error}"
 msgstr "获取用户时区失败：{error}"
@@ -320,7 +321,7 @@ msgid "Access denied: path is outside the allowed root directory: {remote_path}"
 msgstr "访问被拒绝：路径位于允许的根目录之外：{remote_path}"
 
 #: app/storage/local_storage.py:148 app/storage/local_storage.py:194
-#: app/storage/local_storage.py:226
+#: app/storage/local_storage.py:228
 #, python-brace-format
 msgid "File not found: {remote_path}"
 msgstr "文件不存在：{remote_path}"
@@ -340,91 +341,91 @@ msgstr "写入文件失败：{path}"
 msgid "Cannot download a directory: {remote_path}"
 msgstr "无法下载目录：{remote_path}"
 
-#: app/storage/local_storage.py:231
+#: app/storage/local_storage.py:233
 #, python-brace-format
 msgid ""
 "Cannot delete a directory using this method. Use delete_directory "
 "instead: {remote_path}"
 msgstr "无法使用此方法删除目录。请改用 delete_directory 方法：{remote_path}"
 
-#: app/storage/local_storage.py:238
+#: app/storage/local_storage.py:240
 #, python-brace-format
 msgid "Permission denied when deleting file: {remote_path}"
 msgstr "删除文件时权限被拒绝：{remote_path}"
 
-#: app/storage/local_storage.py:253 app/storage/local_storage.py:336
-#: app/storage/local_storage.py:454
+#: app/storage/local_storage.py:255 app/storage/local_storage.py:338
+#: app/storage/local_storage.py:456
 #, python-brace-format
 msgid "Directory not found: {path}"
 msgstr "目录不存在：{path}"
 
-#: app/storage/local_storage.py:257 app/storage/local_storage.py:340
-#: app/storage/local_storage.py:458
+#: app/storage/local_storage.py:259 app/storage/local_storage.py:342
+#: app/storage/local_storage.py:460
 #, python-brace-format
 msgid "Path is not a directory: {path}"
 msgstr "路径不是目录：{path}"
 
-#: app/storage/local_storage.py:296
+#: app/storage/local_storage.py:298
 #, python-brace-format
 msgid "Permission denied when reading directory: {path}"
 msgstr "读取目录时权限被拒绝：{path}"
 
-#: app/storage/local_storage.py:302
+#: app/storage/local_storage.py:304
 #, python-brace-format
 msgid "Failed to read directory: {error}"
 msgstr "读取目录失败：{error}"
 
-#: app/storage/local_storage.py:316
+#: app/storage/local_storage.py:318
 #, python-brace-format
 msgid "A file already exists at this path: {path}"
 msgstr "该路径下已存在文件：{path}"
 
-#: app/storage/local_storage.py:322
+#: app/storage/local_storage.py:324
 #, python-brace-format
 msgid "Permission denied when creating directory: {path}"
 msgstr "创建目录时权限被拒绝：{path}"
 
-#: app/storage/local_storage.py:346
+#: app/storage/local_storage.py:348
 #, python-brace-format
 msgid "Failed to delete directory: {error}"
 msgstr "删除目录失败：{error}"
 
-#: app/storage/local_storage.py:360
+#: app/storage/local_storage.py:362
 #, python-brace-format
 msgid "Source not found: {path}"
 msgstr "找不到源文件：{path}"
 
-#: app/storage/local_storage.py:369
+#: app/storage/local_storage.py:371
 #, python-brace-format
 msgid "Insufficient permissions to move from {src} to {dest}"
 msgstr "没有足够的权限将文件从 {src} 移动到 {dest}"
 
-#: app/storage/local_storage.py:375
+#: app/storage/local_storage.py:377
 #, python-brace-format
 msgid "Move operation failed: {error}"
 msgstr "移动操作失败：{error}"
 
-#: app/storage/local_storage.py:389
+#: app/storage/local_storage.py:391
 #, python-brace-format
 msgid "Source is not a valid file: {path}"
 msgstr "源文件不是有效文件：{path}"
 
-#: app/storage/local_storage.py:398
+#: app/storage/local_storage.py:400
 #, python-brace-format
 msgid "Insufficient permissions to copy from {src} to {dest}"
 msgstr "没有足够的权限将文件从 {src} 复制到 {dest}"
 
-#: app/storage/local_storage.py:404
+#: app/storage/local_storage.py:406
 #, python-brace-format
 msgid "Copy operation failed: {error}"
 msgstr "复制操作失败：{error}"
 
-#: app/storage/local_storage.py:414
+#: app/storage/local_storage.py:416
 #, python-brace-format
 msgid "File or directory not found: {path}"
 msgstr "文件或目录不存在：{path}"
 
-#: app/ui/components/base.py:123 app/ui/pages/profile.py:154
+#: app/ui/components/base.py:123 app/ui/pages/profile.py:158
 msgid "Logout"
 msgstr "退出登录"
 
@@ -470,7 +471,8 @@ msgstr "确定"
 
 #: app/ui/components/dialog.py:199 app/ui/components/dialog.py:231
 #: app/ui/components/dialog.py:287 app/ui/components/dialog.py:531
-#: app/ui/components/dialog.py:732
+#: app/ui/components/dialog.py:732 app/ui/pages/console.py:508
+#: app/ui/pages/console.py:810 app/ui/pages/console.py:937
 msgid "Cancel"
 msgstr "取消"
 
@@ -574,6 +576,8 @@ msgid "Open"
 msgstr "打开"
 
 #: app/ui/components/dialog.py:397 app/ui/components/dialog.py:819
+#: app/ui/pages/console.py:640 app/ui/pages/console.py:720
+#: app/ui/pages/console.py:1012
 msgid "Delete"
 msgstr "删除"
 
@@ -638,7 +642,8 @@ msgid "Expire date cannot be before now"
 msgstr "过期日期不能早于当前时间"
 
 #: app/ui/components/dialog.py:557 app/ui/components/dialog.py:768
-#: app/ui/components/table.py:145
+#: app/ui/components/table.py:145 app/ui/pages/console.py:361
+#: app/ui/pages/console.py:587
 msgid "Name"
 msgstr "名称"
 
@@ -865,7 +870,7 @@ msgid "After installation, restart StarDrive and reopen this file."
 msgstr "安装后，请重启 StarDrive 并重新打开此文件。"
 
 #: app/ui/components/dialog.py:1724 app/ui/components/dialog.py:1740
-#: app/ui/pages/console.py:247
+#: app/ui/pages/console.py:848
 msgid "Close"
 msgstr "关闭"
 
@@ -882,12 +887,13 @@ msgstr "无法预览"
 msgid "Preview is not available for this file type: {suffix}"
 msgstr "此文件类型无法预览：{suffix}"
 
-#: app/ui/components/header.py:39 app/ui/pages/console.py:82
+#: app/ui/components/header.py:39 app/ui/pages/console.py:147
+#: app/ui/pages/console.py:155
 msgid "Console"
 msgstr "控制台"
 
 #: app/ui/components/header.py:45 app/ui/pages/profile.py:31
-#: app/ui/pages/profile.py:146
+#: app/ui/pages/profile.py:148
 msgid "Account"
 msgstr "账户"
 
@@ -895,7 +901,8 @@ msgstr "账户"
 msgid "Login"
 msgstr "登录"
 
-#: app/ui/components/table.py:97
+#: app/ui/components/table.py:97 app/ui/pages/console.py:369
+#: app/ui/pages/console.py:743
 msgid "Action"
 msgstr "操作"
 
@@ -903,7 +910,8 @@ msgstr "操作"
 msgid "Path does not exist. Navigating to home directory."
 msgstr "路径不存在。正在跳转到主目录。"
 
-#: app/ui/components/table.py:177 app/ui/pages/console.py:151
+#: app/ui/components/table.py:177 app/ui/pages/console.py:740
+#: app/ui/pages/console.py:867
 msgid "Created At"
 msgstr "创建时间"
 
@@ -924,7 +932,7 @@ msgid "Navigate to home directory"
 msgstr "导航到主目录"
 
 #: app/ui/components/table.py:231 app/ui/pages/browser.py:40
-#: app/ui/pages/error_page.py:69
+#: app/ui/pages/error_page.py:70
 msgid "Home"
 msgstr "首页"
 
@@ -968,7 +976,7 @@ msgstr "已位于根目录，无法继续返回。"
 msgid "Path copied to clipboard."
 msgstr "路径已复制到剪贴板。"
 
-#: app/ui/components/table.py:474
+#: app/ui/components/table.py:474 app/ui/pages/console.py:694
 msgid "Search"
 msgstr "搜索"
 
@@ -1062,7 +1070,7 @@ msgstr "该文件已存在，是否覆盖？"
 msgid "Cancelled overwrite: {filename}"
 msgstr "已取消覆盖：{filename}"
 
-#: app/ui/components/table.py:677
+#: app/ui/components/table.py:677 app/ui/pages/console.py:1131
 msgid "Multiple selection enabled"
 msgstr "已启用多选模式"
 
@@ -1133,8 +1141,8 @@ msgid "Register a new StarDrive account."
 msgstr "注册新的 StarDrive 账户。"
 
 #: app/ui/pages/account.py:111 app/ui/pages/account.py:176
-#: app/ui/pages/console.py:105 app/ui/pages/console.py:141
-#: app/ui/pages/login.py:109
+#: app/ui/pages/console.py:734 app/ui/pages/console.py:795
+#: app/ui/pages/console.py:862 app/ui/pages/login.py:109
 msgid "Email"
 msgstr "电子邮箱"
 
@@ -1143,7 +1151,7 @@ msgstr "电子邮箱"
 msgid "Invalid email address"
 msgstr "无效的邮箱地址"
 
-#: app/ui/pages/account.py:123 app/ui/pages/console.py:107
+#: app/ui/pages/account.py:123 app/ui/pages/console.py:797
 #: app/ui/pages/login.py:124
 msgid "Password"
 msgstr "密码"
@@ -1166,7 +1174,7 @@ msgid "If the account exists, a reset email has been sent."
 msgstr "如果该账户存在，重置邮件已发送。"
 
 #: app/ui/pages/account.py:171 app/ui/pages/account.py:243
-#: app/ui/pages/console.py:225 app/ui/pages/console.py:275
+#: app/ui/pages/console.py:904 app/ui/pages/console.py:1001
 msgid "Reset password"
 msgstr "重置密码"
 
@@ -1190,269 +1198,605 @@ msgstr "设置新密码"
 msgid "Choose a new password for your account."
 msgstr "为您的账户设置新密码。"
 
-#: app/ui/pages/account.py:227 app/ui/pages/console.py:244
-#: app/ui/pages/profile.py:104
+#: app/ui/pages/account.py:227 app/ui/pages/console.py:845
+#: app/ui/pages/profile.py:106
 msgid "New password"
 msgstr "新密码"
 
-#: app/ui/pages/console.py:87
-msgid "User management"
-msgstr "用户管理"
-
-#: app/ui/pages/console.py:90
-msgid "Allow registration"
-msgstr "允许注册"
-
-#: app/ui/pages/console.py:98
-msgid "Registration setting saved."
-msgstr "注册设置已保存。"
-
-#: app/ui/pages/console.py:103 app/ui/pages/console.py:132
-msgid "Create user"
-msgstr "创建用户"
-
-#: app/ui/pages/console.py:110 app/ui/pages/console.py:278
-msgid "Quota GiB"
-msgstr "配额（GiB）"
-
-#: app/ui/pages/console.py:112 app/ui/pages/console.py:145
-msgid "Active"
-msgstr "启用"
-
-#: app/ui/pages/console.py:113 app/ui/pages/console.py:146
-msgid "Admin"
-msgstr "管理员"
-
-#: app/ui/pages/console.py:129
-msgid "User created successfully."
-msgstr "用户创建成功。"
-
-#: app/ui/pages/console.py:135
-msgid "Search users"
-msgstr "搜索用户"
-
-#: app/ui/pages/console.py:147
-msgid "Quota"
-msgstr "配额"
-
-#: app/ui/pages/console.py:148
-msgid "Used"
-msgstr "已使用"
-
-#: app/ui/pages/console.py:163
-msgid "Please select a user."
-msgstr "请选择一个用户。"
-
-#: app/ui/pages/console.py:180 app/ui/pages/console.py:182
+#: app/ui/pages/console.py:90 app/ui/pages/console.py:93
+#: app/ui/pages/console.py:119 app/ui/pages/console.py:121
 msgid "Yes"
 msgstr "是"
 
-#: app/ui/pages/console.py:180 app/ui/pages/console.py:182
+#: app/ui/pages/console.py:90 app/ui/pages/console.py:93
+#: app/ui/pages/console.py:119 app/ui/pages/console.py:121
 msgid "No"
 msgstr "否"
 
-#: app/ui/pages/console.py:186
+#: app/ui/pages/console.py:98
+msgid "Passed"
+msgstr "通过"
+
+#: app/ui/pages/console.py:98
+msgid "Failed"
+msgstr "失败"
+
+#: app/ui/pages/console.py:125
 msgid "Unlimited"
 msgstr "无限制"
 
-#: app/ui/pages/console.py:206
+#: app/ui/pages/console.py:158 app/ui/pages/console.py:225
+msgid "Overview"
+msgstr "概览"
+
+#: app/ui/pages/console.py:159 app/ui/pages/console.py:244
+msgid "Appearance"
+msgstr "外观"
+
+#: app/ui/pages/console.py:160 app/ui/pages/console.py:348
+msgid "Storage backend"
+msgstr "存储后端"
+
+#: app/ui/pages/console.py:161 app/ui/pages/console.py:662
+msgid "User management"
+msgstr "用户管理"
+
+#: app/ui/pages/console.py:162 app/ui/pages/console.py:1141
+msgid "System status"
+msgstr "系统状态"
+
+#: app/ui/pages/console.py:163 app/ui/pages/console.py:1171
+msgid "Developer tools"
+msgstr "开发工具"
+
+#: app/ui/pages/console.py:228
+msgid "Active storage"
+msgstr "当前存储"
+
+#: app/ui/pages/console.py:229 app/ui/pages/console.py:418
+msgid "Backend type"
+msgstr "后端类型"
+
+#: app/ui/pages/console.py:230
+msgid "Local root"
+msgstr "本地根目录"
+
+#: app/ui/pages/console.py:232
+msgid "Service settings"
+msgstr "服务设置"
+
+#: app/ui/pages/console.py:233
+msgid "Service URL"
+msgstr "服务 URL"
+
+#: app/ui/pages/console.py:238
+msgid ""
+"Storage switching changes which backend is displayed and used. It does "
+"not migrate or merge files."
+msgstr "切换存储会改变文件浏览器显示和使用的后端，不会迁移或合并文件。"
+
+#: app/ui/pages/console.py:245
+msgid "Choose the global color theme used by the application UI."
+msgstr "选择应用界面使用的全局颜色主题。"
+
+#: app/ui/pages/console.py:252
+msgid "Custom"
+msgstr "自定义"
+
+#: app/ui/pages/console.py:258
+msgid "Theme"
+msgstr "主题"
+
+#: app/ui/pages/console.py:300
+msgid "Primary color"
+msgstr "主色"
+
+#: app/ui/pages/console.py:301
+msgid "Secondary color"
+msgstr "辅助色"
+
+#: app/ui/pages/console.py:302
+msgid "Accent color"
+msgstr "强调色"
+
+#: app/ui/pages/console.py:304
+msgid "Current palette"
+msgstr "当前调色板"
+
+#: app/ui/pages/console.py:307
+msgid "Primary"
+msgstr "主色"
+
+#: app/ui/pages/console.py:308
+msgid "Secondary"
+msgstr "辅助色"
+
+#: app/ui/pages/console.py:309
+msgid "Accent"
+msgstr "强调"
+
+#: app/ui/pages/console.py:310
+msgid "Success"
+msgstr "成功"
+
+#: app/ui/pages/console.py:311
+msgid "Warning"
+msgstr "警告"
+
+#: app/ui/pages/console.py:312
+msgid "Error"
+msgstr "错误"
+
+#: app/ui/pages/console.py:313
+msgid "Info"
+msgstr "信息"
+
+#: app/ui/pages/console.py:339
+msgid "Theme saved. Refresh the page to update all UI elements."
+msgstr "主题已保存。刷新页面后所有界面元素都会更新。"
+
+#: app/ui/pages/console.py:342
+msgid "Save theme"
+msgstr "保存主题"
+
+#: app/ui/pages/console.py:351
+msgid ""
+"Manage backend profiles. Activating a profile switches the whole file "
+"browser view to that backend."
+msgstr "管理后端配置。启用某个配置后，整个文件浏览器视图都会切换到该后端。"
+
+#: app/ui/pages/console.py:356
+msgid "New profile"
+msgstr "新建配置"
+
+#: app/ui/pages/console.py:357
+msgid "Refresh"
+msgstr "刷新"
+
+#: app/ui/pages/console.py:362 app/ui/pages/console.py:588
+msgid "Backend"
+msgstr "后端"
+
+#: app/ui/pages/console.py:363 app/ui/pages/console.py:589
+#: app/ui/pages/console.py:735 app/ui/pages/console.py:807
+#: app/ui/pages/console.py:863
+msgid "Active"
+msgstr "启用"
+
+#: app/ui/pages/console.py:364 app/ui/pages/console.py:590
+msgid "Secret"
+msgstr "密钥"
+
+#: app/ui/pages/console.py:365 app/ui/pages/console.py:591
+msgid "Last Tested"
+msgstr "上次测试"
+
+#: app/ui/pages/console.py:366 app/ui/pages/console.py:592
+msgid "Test Result"
+msgstr "测试结果"
+
+#: app/ui/pages/console.py:387
+msgid "Show storage profile information"
+msgstr "显示存储配置信息"
+
+#: app/ui/pages/console.py:406
+msgid "Edit storage profile"
+msgstr "编辑存储配置"
+
+#: app/ui/pages/console.py:406
+msgid "New storage profile"
+msgstr "新建存储配置"
+
+#: app/ui/pages/console.py:410
+msgid "Profile name"
+msgstr "配置名称"
+
+#: app/ui/pages/console.py:416
+msgid "Local storage"
+msgstr "本地存储"
+
+#: app/ui/pages/console.py:416
+msgid "Aliyun OSS"
+msgstr "阿里云 OSS"
+
+#: app/ui/pages/console.py:428
+msgid "Local storage is server-managed and read-only here."
+msgstr "本地存储由服务器管理，此处只读。"
+
+#: app/ui/pages/console.py:430
+msgid "Local root path"
+msgstr "本地根路径"
+
+#: app/ui/pages/console.py:437
+msgid "OSS region"
+msgstr "OSS 区域"
+
+#: app/ui/pages/console.py:440
+msgid "OSS endpoint"
+msgstr "OSS 终端节点"
+
+#: app/ui/pages/console.py:443
+msgid "OSS bucket"
+msgstr "OSS 存储桶"
+
+#: app/ui/pages/console.py:446
+msgid "AccessKey ID"
+msgstr "AccessKey ID"
+
+#: app/ui/pages/console.py:450
+msgid "AccessKey Secret"
+msgstr "AccessKey Secret"
+
+#: app/ui/pages/console.py:453
+msgid "Leave empty to keep the saved secret"
+msgstr "留空以保留已保存的密钥"
+
+#: app/ui/pages/console.py:455
+msgid "Object prefix"
+msgstr "对象前缀"
+
+#: app/ui/pages/console.py:501
+msgid "Storage profile saved."
+msgstr "存储配置已保存。"
+
+#: app/ui/pages/console.py:509
+msgid "Test draft"
+msgstr "测试草稿"
+
+#: app/ui/pages/console.py:510
+msgid "Save profile"
+msgstr "保存配置"
+
+#: app/ui/pages/console.py:526
+msgid "This profile is already active."
+msgstr "该配置已启用。"
+
+#: app/ui/pages/console.py:529
+msgid "Activate storage profile"
+msgstr "启用存储配置"
+
+#: app/ui/pages/console.py:531
+msgid ""
+"Switching storage changes the whole file browser view. Existing files are"
+" not migrated or merged. Continue?"
+msgstr "切换存储会改变整个文件浏览器视图。现有文件不会被迁移或合并。是否继续？"
+
+#: app/ui/pages/console.py:542
+msgid "Storage profile activated."
+msgstr "存储配置已启用。"
+
+#: app/ui/pages/console.py:550
+#, python-brace-format
+msgid ""
+"Delete active storage profile **`{name}`**? Files are preserved, but the "
+"active backend will switch before deletion."
+msgstr "删除当前启用的存储配置 **`{name}`**？文件会保留，但删除前会先切换当前后端。"
+
+#: app/ui/pages/console.py:555
+#, python-brace-format
+msgid "Replacement profile: {name}"
+msgstr "替代配置：{name}"
+
+#: app/ui/pages/console.py:559
+#, python-brace-format
+msgid "Delete storage profile **`{name}`**? Files are preserved."
+msgstr "删除存储配置 **`{name}`**？文件会保留。"
+
+#: app/ui/pages/console.py:562
+msgid "Delete storage profile"
+msgstr "删除存储配置"
+
+#: app/ui/pages/console.py:573
+msgid "Storage profile deleted."
+msgstr "存储配置已删除。"
+
+#: app/ui/pages/console.py:579
+msgid "Storage profile information"
+msgstr "存储配置信息"
+
+#: app/ui/pages/console.py:593
+msgid "Test Message"
+msgstr "测试消息"
+
+#: app/ui/pages/console.py:603
+msgid "Public configuration"
+msgstr "公开配置"
+
+#: app/ui/pages/console.py:632
+msgid "Edit"
+msgstr "编辑"
+
+#: app/ui/pages/console.py:633
+msgid "Test"
+msgstr "测试"
+
+#: app/ui/pages/console.py:635
+msgid "Activate"
+msgstr "启用"
+
+#: app/ui/pages/console.py:665
+msgid "Allow registration"
+msgstr "允许注册"
+
+#: app/ui/pages/console.py:671
+msgid "Registration setting saved."
+msgstr "注册设置已保存。"
+
+#: app/ui/pages/console.py:677
+msgid "Search users"
+msgstr "搜索用户"
+
+#: app/ui/pages/console.py:681
+msgid "Show deleted users"
+msgstr "显示已删除用户"
+
+#: app/ui/pages/console.py:690 app/ui/pages/console.py:793
+#: app/ui/pages/console.py:812
+msgid "Create user"
+msgstr "创建用户"
+
+#: app/ui/pages/console.py:695
+msgid "Previous"
+msgstr "上一页"
+
+#: app/ui/pages/console.py:696
+msgid "Next"
+msgstr "下一页"
+
+#: app/ui/pages/console.py:698
+msgid "Batch select"
+msgstr "批量选择"
+
+#: app/ui/pages/console.py:705
+msgid "Enable selected"
+msgstr "启用所选"
+
+#: app/ui/pages/console.py:710
+msgid "Disable selected"
+msgstr "禁用所选"
+
+#: app/ui/pages/console.py:715 app/ui/pages/console.py:1007
+#: app/ui/pages/console.py:1071
+msgid "Revoke sessions"
+msgstr "撤销会话"
+
+#: app/ui/pages/console.py:726
+msgid "Done"
+msgstr "完成"
+
+#: app/ui/pages/console.py:736 app/ui/pages/console.py:808
+#: app/ui/pages/console.py:864
+msgid "Admin"
+msgstr "管理员"
+
+#: app/ui/pages/console.py:737 app/ui/pages/console.py:865
+msgid "Quota"
+msgstr "配额"
+
+#: app/ui/pages/console.py:738 app/ui/pages/console.py:866
+msgid "Used"
+msgstr "已使用"
+
+#: app/ui/pages/console.py:739 app/ui/pages/console.py:868
+msgid "Deleted"
+msgstr "已删除"
+
+#: app/ui/pages/console.py:761
+msgid "Show user information"
+msgstr "显示用户信息"
+
+#: app/ui/pages/console.py:784
+#, python-brace-format
+msgid "Users {start}-{end} of {total}"
+msgstr "用户 {start}-{end} / 共 {total}"
+
+#: app/ui/pages/console.py:802 app/ui/pages/console.py:927
+msgid "Quota GiB"
+msgstr "配额（GiB）"
+
+#: app/ui/pages/console.py:840
+msgid "User created successfully."
+msgstr "用户创建成功。"
+
+#: app/ui/pages/console.py:854
+msgid "User information"
+msgstr "用户信息"
+
+#: app/ui/pages/console.py:885
 msgid "User status updated."
 msgstr "用户状态已更新。"
 
-#: app/ui/pages/console.py:217
+#: app/ui/pages/console.py:898
 msgid "User role updated."
 msgstr "用户角色已更新。"
 
-#: app/ui/pages/console.py:226
+#: app/ui/pages/console.py:905
 #, python-brace-format
 msgid "Generate a new random password for {email}?"
 msgstr "要为 {email} 生成新的随机密码吗？"
 
-#: app/ui/pages/console.py:263
-msgid "Quota updated."
-msgstr "配额已更新。"
-
-#: app/ui/pages/console.py:267
-msgid "Refresh"
-msgstr "刷新"
-
-#: app/ui/pages/console.py:268
-msgid "Enable/Disable"
-msgstr "启用/禁用"
-
-#: app/ui/pages/console.py:270
-msgid "Toggle admin"
-msgstr "切换管理员权限"
-
-#: app/ui/pages/console.py:281
+#: app/ui/pages/console.py:923 app/ui/pages/console.py:1005
 msgid "Set quota"
 msgstr "设置配额"
 
-#: app/ui/pages/console.py:290
-msgid "Service URL"
-msgstr "服务 URL"
+#: app/ui/pages/console.py:940
+msgid "Save"
+msgstr "保存"
 
-#: app/ui/pages/console.py:299
-msgid "Storage backend"
-msgstr "存储后端"
+#: app/ui/pages/console.py:955
+msgid "Quota updated."
+msgstr "配额已更新。"
 
-#: app/ui/pages/console.py:301
-msgid "Local storage"
-msgstr "本地存储"
+#: app/ui/pages/console.py:965
+msgid "User sessions revoked."
+msgstr "用户会话已撤销。"
 
-#: app/ui/pages/console.py:301
-msgid "Aliyun OSS"
-msgstr "阿里云 OSS"
+#: app/ui/pages/console.py:971
+msgid "Delete user"
+msgstr "删除用户"
 
-#: app/ui/pages/console.py:303
-msgid "Active backend"
-msgstr "启用的后端"
-
-#: app/ui/pages/console.py:307
-msgid "OSS region"
-msgstr "OSS 区域"
-
-#: app/ui/pages/console.py:308
-msgid "OSS endpoint"
-msgstr "OSS 终端节点"
-
-#: app/ui/pages/console.py:309
-msgid "OSS bucket"
-msgstr "OSS 存储桶"
-
-#: app/ui/pages/console.py:310
-msgid "AccessKey ID"
-msgstr "AccessKey ID"
-
-#: app/ui/pages/console.py:312
-msgid "AccessKey Secret"
-msgstr "AccessKey Secret"
-
-#: app/ui/pages/console.py:313
-msgid "Leave empty to keep the saved secret"
-msgstr "留空以保留已保存的密钥"
-
-#: app/ui/pages/console.py:314
-msgid "Object prefix"
-msgstr "对象前缀"
-
-#: app/ui/pages/console.py:339
+#: app/ui/pages/console.py:972
 #, python-brace-format
-msgid "OSS connection failed: {error}"
-msgstr "OSS 连接失败：{error}"
+msgid "Soft delete {email}? Files are preserved."
+msgstr "要软删除 {email} 吗？文件会保留。"
 
-#: app/ui/pages/console.py:341
-msgid "OSS connection verified."
-msgstr "OSS 连接验证成功。"
+#: app/ui/pages/console.py:984
+msgid "User deleted."
+msgstr "用户已删除。"
 
-#: app/ui/pages/console.py:356
-msgid "Storage backend saved."
-msgstr "存储后端已保存。"
+#: app/ui/pages/console.py:991
+msgid "Enable/Disable"
+msgstr "启用/禁用"
 
-#: app/ui/pages/console.py:359
-msgid "Test OSS connection"
-msgstr "测试 OSS 连接"
+#: app/ui/pages/console.py:996
+msgid "Toggle admin"
+msgstr "切换管理员权限"
 
-#: app/ui/pages/console.py:360
-msgid "Save storage backend"
-msgstr "保存存储后端"
+#: app/ui/pages/console.py:1042 app/ui/pages/console.py:1068
+#: app/ui/pages/console.py:1096
+msgid "Please select at least one active user."
+msgstr "请至少选择一个未删除用户。"
 
-#: app/ui/pages/console.py:371
+#: app/ui/pages/console.py:1045
+msgid "Update user status"
+msgstr "更新用户状态"
+
+#: app/ui/pages/console.py:1047
+#, python-brace-format
+msgid "Update {count} selected users?"
+msgstr "更新选中的 {count} 个用户？"
+
+#: app/ui/pages/console.py:1062
+#, python-brace-format
+msgid "Updated {count} users."
+msgstr "已更新 {count} 个用户。"
+
+#: app/ui/pages/console.py:1073
+#, python-brace-format
+msgid "Revoke sessions for {count} selected users?"
+msgstr "撤销选中的 {count} 个用户的会话？"
+
+#: app/ui/pages/console.py:1090
+#, python-brace-format
+msgid "Revoked sessions for {count} users."
+msgstr "已撤销 {count} 个用户的会话。"
+
+#: app/ui/pages/console.py:1099
+msgid "Delete users"
+msgstr "删除用户"
+
+#: app/ui/pages/console.py:1101
+#, python-brace-format
+msgid "Soft delete {count} selected users? Files are preserved."
+msgstr "软删除选中的 {count} 个用户？文件会保留。"
+
+#: app/ui/pages/console.py:1118
+#, python-brace-format
+msgid "Deleted {count} users."
+msgstr "已删除 {count} 个用户。"
+
+#: app/ui/pages/console.py:1143
 msgid "CPU usage"
 msgstr "CPU 使用率"
 
-#: app/ui/pages/console.py:374
+#: app/ui/pages/console.py:1144
 msgid "Memory usage"
 msgstr "内存使用率"
 
-#: app/ui/pages/console.py:377
-msgid "Disk usage (root)"
-msgstr "磁盘使用率 (根文件系统)"
+#: app/ui/pages/console.py:1145
+msgid "Disk usage"
+msgstr "磁盘使用率"
 
-#: app/ui/pages/console.py:384
+#: app/ui/pages/console.py:1146
+msgid "Application memory"
+msgstr "应用内存"
+
+#: app/ui/pages/console.py:1147
+msgid "Load average"
+msgstr "负载平均值"
+
+#: app/ui/pages/console.py:1172
+msgid "These tools are intended for maintenance and debugging."
+msgstr "这些工具用于维护和调试。"
+
+#: app/ui/pages/console.py:1177
 msgid "Run garbage collection"
 msgstr "运行垃圾回收"
 
-#: app/ui/pages/console.py:387
+#: app/ui/pages/console.py:1179
 msgid "Show object count"
 msgstr "显示对象引用计数"
 
-#: app/ui/pages/console.py:389
+#: app/ui/pages/console.py:1181
 #, python-brace-format
 msgid "Object count: {count}"
 msgstr "对象引用计数：{count}"
 
-#: app/ui/pages/console.py:393 app/ui/pages/console.py:399
+#: app/ui/pages/console.py:1184 app/ui/pages/console.py:1189
 msgid "Reload app"
 msgstr "重启"
 
-#: app/ui/pages/console.py:400
+#: app/ui/pages/console.py:1190
 msgid "This will restart the application. Continue?"
 msgstr "这将重启应用程序。是否继续？"
 
-#: app/ui/pages/console.py:406
+#: app/ui/pages/console.py:1195
 #, python-brace-format
 msgid "Restarting {app_name}…"
 msgstr "正在重启 {app_name}…"
 
-#: app/ui/pages/console.py:440
+#: app/ui/pages/console.py:1225
+msgid "NiceGUI storage editors"
+msgstr "NiceGUI 存储编辑器"
+
+#: app/ui/pages/console.py:1228
 msgid "Global storage"
 msgstr "全局存储"
 
-#: app/ui/pages/console.py:446
+#: app/ui/pages/console.py:1234
 msgid "User storage"
 msgstr "用户存储"
 
-#: app/ui/pages/console.py:452
+#: app/ui/pages/console.py:1240
 msgid "Client storage"
 msgstr "客户端存储"
 
-#: app/ui/pages/console.py:458
+#: app/ui/pages/console.py:1246
 msgid "Browser storage"
 msgstr "浏览器存储"
-
-#: app/ui/pages/console.py:472
-#, python-brace-format
-msgid "{app_name} memory usage: {value} MB"
-msgstr "{app_name} 内存使用量：{value} MB"
-
-#: app/ui/pages/console.py:477
-#, python-brace-format
-msgid "Host load average: {a} {b} {c}"
-msgstr "主机平均负载：{a} {b} {c}"
 
 #: app/ui/pages/error_page.py:18
 msgid "Page not found"
 msgstr "页面未找到"
 
-#: app/ui/pages/error_page.py:55
+#: app/ui/pages/error_page.py:56
 #, python-brace-format
 msgid "Nothing to see here, but you are still in {app_name}."
 msgstr "这里没什么可看的，但您仍然在 {app_name}。"
 
-#: app/ui/pages/error_page.py:62 app/ui/pages/error_page.py:121
+#: app/ui/pages/error_page.py:63 app/ui/pages/error_page.py:123
 #, python-brace-format
 msgid "Request ID: `{request_id}`"
 msgstr "请求ID：`{request_id}`"
 
-#: app/ui/pages/error_page.py:67 app/ui/pages/error_page.py:134
+#: app/ui/pages/error_page.py:68 app/ui/pages/error_page.py:136
 msgid "Back"
 msgstr "返回"
 
-#: app/ui/pages/error_page.py:106
+#: app/ui/pages/error_page.py:108
 msgid "# 500 · Internal server error"
 msgstr "# 500 - 服务器内部错误"
 
-#: app/ui/pages/error_page.py:110
+#: app/ui/pages/error_page.py:112
 #, python-brace-format
 msgid "Something went wrong while {app_name} was processing your request."
 msgstr "{app_name} 在处理您的请求时出现了一些问题。"
 
-#: app/ui/pages/error_page.py:125
+#: app/ui/pages/error_page.py:127
 msgid "Please help us improve by reporting this issue on GitHub."
 msgstr "请在 GitHub 上报告此问题，帮助我们改进。"
 
-#: app/ui/pages/error_page.py:136
+#: app/ui/pages/error_page.py:138
 msgid "Report issue"
 msgstr "报告问题"
 
@@ -1516,27 +1860,27 @@ msgstr "保存语言"
 msgid "Security"
 msgstr "安全"
 
-#: app/ui/pages/profile.py:99
+#: app/ui/pages/profile.py:101
 msgid "Current password"
 msgstr "当前密码"
 
-#: app/ui/pages/profile.py:109
+#: app/ui/pages/profile.py:111
 msgid "Confirm new password"
 msgstr "重复新密码"
 
-#: app/ui/pages/profile.py:116
+#: app/ui/pages/profile.py:118
 msgid "Passwords do not match"
 msgstr "密码不匹配"
 
-#: app/ui/pages/profile.py:127
+#: app/ui/pages/profile.py:129
 msgid "Password changed successfully"
 msgstr "密码修改成功"
 
-#: app/ui/pages/profile.py:140
+#: app/ui/pages/profile.py:142
 msgid "Change password"
 msgstr "修改密码"
 
-#: app/ui/pages/profile.py:152
+#: app/ui/pages/profile.py:156
 msgid "Log out from this account"
 msgstr "退出此帐户"
 
@@ -1806,3 +2150,45 @@ msgstr "继续"
 
 #~ msgid "Items"
 #~ msgstr "项目"
+
+#~ msgid "Refresh"
+#~ msgstr "刷新"
+
+#~ msgid "OSS connection failed: {error}"
+#~ msgstr "OSS 连接失败：{error}"
+
+#~ msgid "OSS connection verified."
+#~ msgstr "OSS 连接验证成功。"
+
+#~ msgid "Test OSS connection"
+#~ msgstr "测试 OSS 连接"
+
+#~ msgid "Save storage backend"
+#~ msgstr "保存存储后端"
+
+#~ msgid "{app_name} memory usage: {value} MB"
+#~ msgstr "{app_name} 内存使用量：{value} MB"
+
+#~ msgid "Host load average: {a} {b} {c}"
+#~ msgstr "主机平均负载：{a} {b} {c}"
+
+#~ msgid "Advanced options"
+#~ msgstr "高级选项"
+
+#~ msgid "No advanced storage options are required for this version."
+#~ msgstr "当前版本不需要高级存储选项。"
+
+#~ msgid "Please select a storage profile."
+#~ msgstr "请选择一个存储配置。"
+
+#~ msgid "Load selected"
+#~ msgstr "加载所选配置"
+
+#~ msgid "Activate selected"
+#~ msgstr "启用所选配置"
+
+#~ msgid "Please select a user."
+#~ msgstr "请选择一个用户。"
+
+#~ msgid "Deleted users cannot be modified."
+#~ msgstr "已删除用户不能修改。"
