@@ -4,7 +4,7 @@ from nicegui import ui
 
 from app.config import settings
 from app.core.i18n import _
-from app.ui.theme import set_theme, DefaultTheme
+from app.ui.theme import apply_page_theme, set_theme, DefaultTheme
 
 
 @ui.page("/404")
@@ -29,6 +29,7 @@ def render_404(
         back_button: Whether to show a "Back" navigation button.
     """
     set_theme(DefaultTheme)
+    apply_page_theme()
     ui.add_head_html(
         """
     <style>
@@ -84,6 +85,7 @@ def render_50x(request_uuid: str, exception: str = ""):
         exception: Brief description of the error (used in bug report title).
     """
     set_theme(DefaultTheme)
+    apply_page_theme()
     ui.add_head_html(
         """
     <style>

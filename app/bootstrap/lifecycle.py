@@ -10,6 +10,7 @@ from app.services.local_db_service import (
 )
 from app.services.user_service import UserManager
 from app.services.storage_config_service import storage_config
+from app.services.theme_service import theme_config
 from app.storage.local_storage import LocalStorage
 
 
@@ -23,6 +24,7 @@ async def on_startup():
     - Registers shared service instances in the global context for access across the app.
     """
     await init_local_db()
+    await theme_config.load()
     await storage_config.load()
 
     # Initialize and register the storage manager
