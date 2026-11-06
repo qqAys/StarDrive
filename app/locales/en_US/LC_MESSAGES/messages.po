@@ -2526,3 +2526,6 @@ msgstr ""
 #~ msgid "Host load average: {a} {b} {c}"
 #~ msgstr ""
 
+
+msgid "Search by file and folder name, including subdirectories of the current directory. To search elsewhere, navigate there first."
+msgstr "Search by file and folder name, including subdirectories of the current directory. To search elsewhere, navigate there first."

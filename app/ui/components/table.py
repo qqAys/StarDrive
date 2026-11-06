@@ -357,6 +357,12 @@ class FileBrowserTable:
                         "multiple" if self.is_select_mode else None
                     )
 
+                ui.label(
+                    _(
+                        "Search by file and folder name, including subdirectories of the current directory. To search elsewhere, navigate there first."
+                    )
+                ).classes("text-sm text-gray-500 max-w-sm whitespace-normal")
+
             self.browser_table.add_slot(
                 "body-cell-action",
                 f"""

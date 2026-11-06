@@ -1991,3 +1991,6 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
+
+msgid "Search by file and folder name, including subdirectories of the current directory. To search elsewhere, navigate there first."
+msgstr ""
