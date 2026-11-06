@@ -2192,3 +2192,6 @@ msgstr "继续"
 
 #~ msgid "Deleted users cannot be modified."
 #~ msgstr "已删除用户不能修改。"
+
+msgid "Search by file and folder name, including subdirectories of the current directory. To search elsewhere, navigate there first."
+msgstr "按文件和文件夹名称搜索，包含当前目录下的子目录；查找其他目录请先切换位置。"
