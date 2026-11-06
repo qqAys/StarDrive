@@ -74,7 +74,7 @@ You can install `uv` using the following commands:
 
 ```shell
 # macOS/Linux:
-curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Windows:
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
@@ -83,7 +83,7 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 Once `uv` is installed, you can install StarDrive's dependencies with this command:
 
 ```shell
-uv sync
+uv sync --locked --all-groups
 ```
 
 To run the application locally, create a private `.env` from `.env.example` and replace
@@ -95,11 +95,21 @@ We use **Black** for formatting and **pytest** for testing.
 
 ```shell
 # Format code
-uv run black .
+uv run --locked black .
 
-# Run tests
-uv run pytest
+# Check formatting
+uv run --locked black --check .
+
+# Run tests without real external services
+uv run --locked pytest -m 'not external'
+
+# Compile translations
+uv run --locked pybabel compile -d app/locales
 ```
+
+Before submitting a PR, run the formatting check, tests, and translation compilation
+above. Tests marked `external` require explicitly configured external infrastructure
+and are excluded from this local gate.
 
 ### Updating Translation Strings
 
@@ -109,19 +119,19 @@ please follow these steps to ensure the translation templates are up to date:
 1. **Extract new strings** to update the `.pot` template:
 
     ```shell
-    uv run pybabel extract -F babel.cfg -o app/locales/messages.pot .
+    uv run --locked pybabel extract -F babel.cfg -o app/locales/messages.pot .
     ```
 
 2. **Sync the translation files** (`.po`) with the new template:
 
     ```shell
-    uv run pybabel update -i app/locales/messages.pot -d app/locales    
+    uv run --locked pybabel update -i app/locales/messages.pot -d app/locales
     ```
       
 3. **(Optional) Compile for local testing**: If you want to verify your changes locally, compile the files:
 
     ```
-    uv run pybabel compile -d app/locales
+    uv run --locked pybabel compile -d app/locales
     ```
 
 4. **Commit the changes**: Commit the updated `app/locales/messages.pot` and the modified `.po` files.
