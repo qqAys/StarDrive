@@ -68,10 +68,7 @@ StarDrive 采用了现代化的 Python 技术栈：
 
 ### 可选的外部集成验证
 
-常规 CI 不需要云端凭据。若要在主分支 push 或手动运行时验证真实服务，请在 GitHub Actions Secrets 中配置专用、
-可清理的 `STARDRIVE_TEST_OSS_*`（Region、Endpoint、Bucket、Access Key、Prefix）或
-`STARDRIVE_TEST_SMTP_*`（Host、Port、Sender、Recipient，以及可选 TLS/账号/密码）。测试步骤只在
-对应 Secrets 完整时执行，OSS 测试仅在指定 Prefix 下创建临时对象。
+本地质量门禁使用 `uv run --locked pytest -m 'not external'`，无需云端凭据。真实 OSS 和 SMTP 契约测试需显式运行并配置专用服务。GitHub Actions 的外部测试门禁修复由 SD-07 单独交付，状态见 [路线图](docs/ROADMAP.md)。
 
 ## 版本与 Docker 发布 (Versioning and Docker releases)
 
