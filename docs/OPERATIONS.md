@@ -1,0 +1,63 @@
+# 部署与排障
+
+StarDrive 当前适用于隔离试用。运行和发布门槛见 [生产就绪](PRODUCTION_READINESS.md)。
+
+## 隔离启动
+
+从仓库根目录运行。指定单独的数据目录、回环地址和端口。使用文件或本机环境保存稳定密钥，测试结束后保留测试记录并按需清理临时目录。
+
+```sh
+uv sync --locked
+uv run --locked pybabel compile -d app/locales
+STARDIVE_APP_DATA_DIR="$(mktemp -d)" \
+STARDRIVE_APP_SECRET="$(openssl rand -hex 32)" \
+STARDRIVE_APP_HOST=127.0.0.1 STARDRIVE_APP_PORT=8080 \
+uv run --locked -m app.main
+```
+
+浏览器打开 `http://127.0.0.1:8080/login/`。首登验收见 [生产就绪检查](PRODUCTION_READINESS.md)。已有可用测试账户时，先在 Console → Overview 设置完整的 `Service URL`，再上传一个小文本、双击文件名下载并比较内容。
+
+本地构建使用 `docker compose -f docker-compose.build.yml up --build`，默认只映射本机回环。预构建 Compose 使用 `qqays/stardrive:latest` 并对所有接口映射，开始前检查镜像标签和端口绑定。单实例代理需要 HTTPS 和 WebSocket，设置符合样本大小的上传请求限制。每个实例使用独立持久化卷。
+
+## 常用配置
+
+源码运行从进程环境及当前目录的 `.env` 读取配置。Compose 从项目 `.env` 插值，仅传递 `environment` 中声明的项目。修改额外变量需显式传给容器。
+
+| 配置 | 默认与说明 |
+| --- | --- |
+| `STARDRIVE_APP_SECRET` | 必填。生成稳定随机密钥，避免示例值。旧名 `APP_SECRET` 仍兼容。用于会话、链接签名及 OSS 凭据解密 |
+| `STARDIVE_APP_DATA_DIR` | 默认项目根下 `app_data`。当前运行时从进程环境读取，可指定绝对路径或项目根相对路径 |
+| `STARDRIVE_APP_HOST` / `STARDRIVE_APP_PORT` | 默认 `0.0.0.0` / `8080`。本机测试使用 `127.0.0.1` |
+| `STARDRIVE_APP_INIT_USER` | 首次创建管理员用的邮箱，默认 `admin@stardrive.abc` |
+| `STARDRIVE_APP_ALLOW_REGISTRATION` | 默认开启。只用于初始化注册策略，之后由 Console 管理 |
+| `STARDRIVE_APP_DEFAULT_USER_QUOTA_BYTES` | 新普通用户默认 10 GiB |
+| `STARDRIVE_APP_DEFAULT_LANGUAGE` / `STARDRIVE_LOG_LEVEL` | 默认 en-US / INFO |
+| `STARDRIVE_LOCAL_DB_DSN` | 默认数据目录中的文件型 SQLite。覆盖后备份必须包含实际库文件及其同目录关联文件 |
+| `STARDRIVE_SMTP_HOST/PORT/SENDER` | 重置邮件的服务器、端口与发件人。端口默认 587；用户名和密码可选。按需检查 `STARDRIVE_SMTP_USE_TLS` |
+| `STARDRIVE_PASSWORD_RESET_BASE_URL` | 设置用户可访问的 HTTPS 绝对地址。未设置时尝试使用 Console 的 Service URL |
+| `STARDRIVE_DEBUG` | 默认关闭。调试界面和错误输出只适用于隔离环境 |
+
+OSS 连接测试检查 Bucket 信息。对象读写、复制、删除和分段上传需要额外权限。使用范围受限的测试前缀验证。切换存储时先记录活跃档案和路径，完成备份并关闭旧页面。切换不会搬迁或合并文件。
+
+## 备份与恢复
+
+1. 停止应用并确认无写入。记录应用版本或镜像摘要、数据库实际位置、活跃档案和 OSS 前缀。
+2. 对 `app_data` 和单独配置的数据库目录做一致性备份，包含本地文件、SQLite、NiceGUI 状态。密钥在私有存储单独备份。OSS 对象用独立的桶版本或备份策略，核对可恢复性。
+3. 先在独立目录恢复副本，以旧版本和对应密钥启动。核对数据库版本、管理员登录、档案、文件数量和抽样摘要，再尝试升级。验证失败时保留日志及原始副本。
+4. 回滚使用旧版本和完整的升级前备份。避免对唯一数据副本执行降级。历史无版本库的识别仍有阻断，详见 [AUD-05](PROJECT_AUDIT.md#审计结果)。
+
+检查当前实际数据库时使用 `sqlite3 -readonly <数据库路径> 'SELECT version_num FROM alembic_version;'`。裸 `alembic` 命令读取 `alembic.ini` 的默认数据库地址，和自定义运行配置可能不同。
+
+## 常见故障
+
+| 现象 | 检查与处理 |
+| --- | --- |
+| `healthz` 200，登录页不可用 | 存活探针只检查 HTTP。查看进程日志，检查密钥、数据目录权限与 SQLite 结构 |
+| 无法完成首次管理员登录 | 通过安全渠道联系维护者，保留当前数据目录 |
+| 下载或分享链接无法创建 | 确认 Console 的 Service URL 为收件人可访问的站点地址 |
+| OSS 启用后列表变空 | 核对用户、档案、Bucket 和前缀，原后端数据需要切回查看 |
+| Office 预览提示缺依赖 | 安装 LibreOffice 与所需字体或使用包含它的容器构建，复测同一示例 |
+| 密码邮件失败或链接只有相对路径 | 检查 SMTP TLS、发件人权限与绝对回调地址，使用专用测试收件人复测 |
+| 上传后表格无刷新或 WebSocket 断开 | 检查代理升级头、请求大小和超时，使用回环测试隔离代理影响 |
+
+当前 HTTP 接口为应用内部契约。健康接口可无凭据探测，返回版本与状态。登录、注册、重置、签名下载和预览为应用功能入口。稳定第三方文件 API 尚未发布。

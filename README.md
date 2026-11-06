@@ -7,9 +7,9 @@
   </a>
 </p>
 
-StarDrive 是一个基于 [NiceGUI](https://github.com/zauberzeug/nicegui) 构建的云盘系统，支持多后端存储，并提供完善的文件管理功能。
+StarDrive 是面向个人和小团队的自托管文件管理应用。通过浏览器上传、整理、预览和分享文件，管理员可在本地磁盘与阿里云 OSS 档案间切换。
 
-StarDrive is a cloud drive system built on the [NiceGUI](https://github.com/zauberzeug/nicegui) library, featuring multi-backend storage support and comprehensive file management capabilities.
+StarDrive is a self-hosted web file manager for individuals and small teams, with local disk and Alibaba Cloud OSS backends.
 
 > [!WARNING]
 > **本项目仍在开发中，尚未发布正式版本。**
@@ -46,32 +46,32 @@ StarDrive 采用了现代化的 Python 技术栈：
     ```
 3.  **安装依赖并运行**:
     ```shell
-    uv sync
-    uv run -m app.main
+    uv sync --locked
+    uv run --locked pybabel compile -d app/locales
+    STARDRIVE_APP_HOST=127.0.0.1 uv run --locked -m app.main
     ```
 
-容器部署同样要求设置稳定的 `STARDRIVE_APP_SECRET`。可将其写入未提交的 `.env`，然后执行
-`docker compose up -d`。容器健康检查和编排系统可访问 `GET /api/healthz`；该接口不需要登录，
-只返回服务状态和版本。
+浏览器打开 `http://127.0.0.1:8080/login/`。已有可用测试账号时，先在 Console → Overview
+配置完整的 `Service URL`，再用小文件验证上传、下载和分享。首次安装的验收要求见
+[生产就绪检查](docs/PRODUCTION_READINESS.md)。
+
+容器同样要求设置稳定的 `STARDRIVE_APP_SECRET`。开发时可将其写入未提交的 `.env`，
+然后运行 `docker compose -f docker-compose.build.yml up --build`。该配置只映射本机回环地址。
+`GET /api/healthz` 检查 HTTP 存活。请另行验证登录和初始化。
+更多配置、反代要求与排障见 [运维指南](docs/OPERATIONS.md)。
 
 ### 数据库升级与备份
 
-启动时会自动执行 SQLite 数据库迁移。首次启动会创建数据库；升级旧版本时，StarDrive 会在
-`app_data/db/` 中创建带 UTC 时间戳的 `local.db.bak.*` 备份，再标记并升级已识别的完整旧结构。
-若发现不完整或未知的旧库，应用会拒绝启动以避免破坏数据：请先保留原库和备份，并使用以下命令
-检查或执行迁移：
-
-```shell
-uv run alembic current
-uv run alembic upgrade head
-```
+启动时会自动执行 SQLite 迁移。首次启动会创建数据库。迁移前请停止写入并备份数据库、
+文件、配置及密钥，再使用副本演练。当前无 Alembic 版本的部分真实旧库会被拒绝，详情见
+[备份与恢复](docs/OPERATIONS.md#备份与恢复)。
 
 ### 可选的外部集成验证
 
-常规 CI 不需要云端凭据。若要在 push 后验证真实服务，请在 GitHub Actions Secrets 中配置专用、
+常规 CI 不需要云端凭据。若要在主分支 push 或手动运行时验证真实服务，请在 GitHub Actions Secrets 中配置专用、
 可清理的 `STARDRIVE_TEST_OSS_*`（Region、Endpoint、Bucket、Access Key、Prefix）或
-`STARDRIVE_TEST_SMTP_*`（Host、Port、Sender、Recipient，以及可选 TLS/账号/密码）。工作流只在
-对应 Secrets 完整时运行，OSS 测试仅在指定 Prefix 下创建临时对象。
+`STARDRIVE_TEST_SMTP_*`（Host、Port、Sender、Recipient，以及可选 TLS/账号/密码）。测试步骤只在
+对应 Secrets 完整时执行，OSS 测试仅在指定 Prefix 下创建临时对象。
 
 ## 版本与 Docker 发布 (Versioning and Docker releases)
 
@@ -104,7 +104,7 @@ Docker 镜像会内置 LibreOffice 和 Noto CJK 字体，以支持中文等 CJK 
 
 超级管理员可在“Console”中录入 OSS Region、endpoint、Bucket、AccessKey ID/Secret 和可选对象前缀，先执行连接校验，再切换当前存储后端。后端使用官方 `alibabacloud-oss-v2` SDK；SDK V2 默认采用 V4 签名，因此 Region 必填。凭据以应用的 `APP_SECRET` 派生密钥加密保存于本地数据库，生产环境必须设置足够强且稳定的 `APP_SECRET`。
 
-启用 OSS 后，每位用户的数据位于 `可选前缀/users/{user_id}/`。文件上传、下载、预览与压缩下载均通过服务器流式代理；不会把 OSS 文件持久化到本地。Office 预览仅在单次请求中创建临时转换文件，并会在响应结束后删除。
+启用 OSS 后，每位用户的数据位于 `可选前缀/users/{user_id}/`。服务端代理文件操作。上传先使用临时文件暂存，较大文件通过 OSS 分段上传；Office 预览也需要临时磁盘空间。
 
 给 AccessKey/RAM 用户授予所选 Bucket 的对象读写、列举、复制和删除权限，以及 Bucket 信息读取权限用于连接校验。切换本地与 OSS 后端不会自动迁移任一后端的既有文件。
 
@@ -126,6 +126,8 @@ Whether it's fixing bugs, adding features, or improving docs, your help is appre
 
 * **指南 (Guide)**: 请阅读我们的 [CONTRIBUTING.md](./CONTRIBUTING.md) 以了解环境搭建、代码规范和 PR 流程。
 * **问题反馈 (Issues)**: 发现问题？请通过 [GitHub Issues](https://github.com/qqAys/StarDrive/issues) 告知我们。
+* **安全报告**：[SECURITY.md](SECURITY.md)。
+* **开发进度**：[功能清单](docs/FEATURE_INVENTORY.md)、[路线图](docs/ROADMAP.md)、[变更记录](CHANGELOG.md)。
 
 ## 致谢 (Acknowledgments)
 
