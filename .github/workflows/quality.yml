@@ -5,37 +5,44 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
       - run: uv sync --locked --all-groups
-      - run: uv run black --check .
-      - run: uv run pytest
-      - run: uv run pybabel compile -d app/locales
+      - run: uv run --locked black --check .
+      - run: uv run --locked pytest -m 'not external'
+      - run: uv run --locked pybabel compile -d app/locales
 
   docker-smoke:
     runs-on: ubuntu-latest
     needs: quality
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: Build image
         run: docker build --tag stardrive:ci .
       - name: Start and verify image
         run: |
-          docker run --detach --rm --name stardrive-smoke --publish 8080:8080 \
+          docker run --detach --rm --name stardrive-smoke --publish 127.0.0.1:8080:8080 \
             --volume "$PWD/.ci-data:/opt/stardrive/app_data" \
             --env STARDRIVE_APP_SECRET="$(openssl rand -hex 32)" stardrive:ci
           trap 'docker logs stardrive-smoke; docker stop stardrive-smoke || true' EXIT
           for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:8080/api/healthz > health.json; then
-              python -c "import json; data=json.load(open('health.json')); assert data['data']['status'] == 'ok'"
-              test -f .ci-data/db/local.db
-              curl --fail --silent --output /dev/null http://127.0.0.1:8080/login/
+            if curl --fail --silent http://127.0.0.1:8080/api/healthz > health.json &&
+               python -c "import json; data=json.load(open('health.json')); assert data['data']['status'] == 'ok'" &&
+               test -f .ci-data/db/local.db &&
+               curl --fail --silent --output /dev/null http://127.0.0.1:8080/login/; then
               exit 0
             fi
             sleep 2
@@ -43,18 +50,13 @@ jobs:
           exit 1
 
   external-oss-integration:
-    if: >-
-      github.event_name != 'pull_request' &&
-      secrets.STARDRIVE_TEST_OSS_REGION != '' &&
-      secrets.STARDRIVE_TEST_OSS_ENDPOINT != '' &&
-      secrets.STARDRIVE_TEST_OSS_BUCKET != '' &&
-      secrets.STARDRIVE_TEST_OSS_ACCESS_KEY_ID != '' &&
-      secrets.STARDRIVE_TEST_OSS_ACCESS_KEY_SECRET != '' &&
-      secrets.STARDRIVE_TEST_OSS_PREFIX != ''
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
       - run: uv sync --locked --all-groups
@@ -67,19 +69,23 @@ jobs:
           STARDRIVE_TEST_OSS_ACCESS_KEY_ID: ${{ secrets.STARDRIVE_TEST_OSS_ACCESS_KEY_ID }}
           STARDRIVE_TEST_OSS_ACCESS_KEY_SECRET: ${{ secrets.STARDRIVE_TEST_OSS_ACCESS_KEY_SECRET }}
           STARDRIVE_TEST_OSS_PREFIX: ${{ secrets.STARDRIVE_TEST_OSS_PREFIX }}
-        run: uv run pytest tests/integration/test_aliyun_oss_live.py
+        run: |
+          if [[ -z "$STARDRIVE_TEST_OSS_REGION" || -z "$STARDRIVE_TEST_OSS_ENDPOINT" ||
+                -z "$STARDRIVE_TEST_OSS_BUCKET" || -z "$STARDRIVE_TEST_OSS_ACCESS_KEY_ID" ||
+                -z "$STARDRIVE_TEST_OSS_ACCESS_KEY_SECRET" || -z "$STARDRIVE_TEST_OSS_PREFIX" ]]; then
+            echo "::notice::Skipping live OSS test because its configuration is incomplete"
+            exit 0
+          fi
+          uv run --locked pytest tests/integration/test_aliyun_oss_live.py
 
   external-smtp-integration:
-    if: >-
-      github.event_name != 'pull_request' &&
-      secrets.STARDRIVE_TEST_SMTP_HOST != '' &&
-      secrets.STARDRIVE_TEST_SMTP_PORT != '' &&
-      secrets.STARDRIVE_TEST_SMTP_SENDER != '' &&
-      secrets.STARDRIVE_TEST_SMTP_RECIPIENT != ''
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
       - run: uv sync --locked --all-groups
@@ -93,4 +99,10 @@ jobs:
           STARDRIVE_TEST_SMTP_USE_TLS: ${{ secrets.STARDRIVE_TEST_SMTP_USE_TLS }}
           STARDRIVE_TEST_SMTP_USERNAME: ${{ secrets.STARDRIVE_TEST_SMTP_USERNAME }}
           STARDRIVE_TEST_SMTP_PASSWORD: ${{ secrets.STARDRIVE_TEST_SMTP_PASSWORD }}
-        run: uv run pytest tests/integration/test_smtp_live.py
+        run: |
+          if [[ -z "$STARDRIVE_TEST_SMTP_HOST" || -z "$STARDRIVE_TEST_SMTP_PORT" ||
+                -z "$STARDRIVE_TEST_SMTP_SENDER" || -z "$STARDRIVE_TEST_SMTP_RECIPIENT" ]]; then
+            echo "::notice::Skipping live SMTP test because its configuration is incomplete"
+            exit 0
+          fi
+          uv run --locked pytest tests/integration/test_smtp_live.py
