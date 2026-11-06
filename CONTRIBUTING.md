@@ -43,6 +43,8 @@ StarDrive leverages the following technologies:
 
 ## Reporting Issues
 
+For security issues, use the private reporting process in [SECURITY.md](SECURITY.md).
+
 If you encounter a bug or other issues while using StarDrive, the best way to report it is by opening a new issue in our [GitHub repository](https://github.com/qqAys/StarDrive).
 
 1.  **Bug**: Please follow the [BUG Template](https://github.com/qqAys/StarDrive/blob/main/.github/ISSUE_TEMPLATE/bug_report.md)
@@ -145,6 +147,11 @@ please follow these steps to ensure the translation templates are up to date:
 2. Commit your changes, ensuring code is formatted and tests pass.
 
 3. Submit your PR using our [Pull Request Template](https://github.com/qqAys/StarDrive/blob/main/.github/PULL_REQUEST_TEMPLATE.md).
+
+   Include reproducible results and deployment or compatibility impact. Update
+   [CHANGELOG.md](CHANGELOG.md) for user-facing changes and follow
+   [AGENTS.md](AGENTS.md) for review and approval boundaries. Run `actionlint`
+   when changing GitHub Actions.
 
 ## Acknowledgments
 

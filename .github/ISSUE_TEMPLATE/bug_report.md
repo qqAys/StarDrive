@@ -7,6 +7,8 @@ assignees: qqAys
 
 ---
 
+安全漏洞请按 [SECURITY.md](https://github.com/qqAys/StarDrive/blob/main/SECURITY.md) 私下报告。日志和截图请先脱敏。
+
 ## 标题格式
 
 `[BUG] 简短描述问题发生的位置和现象`
@@ -25,7 +27,7 @@ assignees: qqAys
 | **浏览器 (Browser)**          | [e.g., Chrome 120, Firefox 118]                        |
 | **StarDrive 版本**           | [e.g., v0.1.1, 或 `main` 分支的最新提交哈希]                     |
 | **Python 版本**              | [e.g., 3.12.1]                                         |
-| **后端存储 (Storage Backend)** | [e.g., Local Storage (本地), AWS S3, Google Drive, etc.] |
+| **后端存储 (Storage Backend)** | [本地存储或阿里云 OSS] |
 
 ### 2. 重现步骤 (Steps to Reproduce)
 
