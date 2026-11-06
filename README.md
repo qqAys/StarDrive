@@ -68,7 +68,7 @@ StarDrive 采用了现代化的 Python 技术栈：
 
 ### 可选的外部集成验证
 
-本地质量门禁使用 `uv run --locked pytest -m 'not external'`，无需云端凭据。真实 OSS 和 SMTP 契约测试需显式运行并配置专用服务。GitHub Actions 的外部测试门禁修复由 SD-07 单独交付，状态见 [路线图](docs/ROADMAP.md)。
+本地质量门禁使用 `uv run --locked pytest -m 'not external'`，无需云端凭据。真实 OSS 和 SMTP 契约测试需要专用服务。GitHub Actions 只在主分支 push 或手动运行时检查测试凭据，配置完整才执行对应的外部测试。状态见 [路线图](docs/ROADMAP.md)。
 
 ## 版本与 Docker 发布 (Versioning and Docker releases)
 
