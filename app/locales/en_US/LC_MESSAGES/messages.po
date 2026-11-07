@@ -2529,3 +2529,9 @@ msgstr ""
 
 msgid "Search by file and folder name, including subdirectories of the current directory. To search elsewhere, navigate there first."
 msgstr "Search by file and folder name, including subdirectories of the current directory. To search elsewhere, navigate there first."
+
+msgid "Filter names in this directory"
+msgstr "Filter names in this directory"
+
+msgid "No matching names. Clear the filter to show all items."
+msgstr "No matching names. Clear the filter to show all items."

@@ -2195,3 +2195,9 @@ msgstr "继续"
 
 msgid "Search by file and folder name, including subdirectories of the current directory. To search elsewhere, navigate there first."
 msgstr "按文件和文件夹名称搜索，包含当前目录下的子目录；查找其他目录请先切换位置。"
+
+msgid "Filter names in this directory"
+msgstr "筛选当前目录名称"
+
+msgid "No matching names. Clear the filter to show all items."
+msgstr "没有匹配的名称。清空筛选可显示全部条目。"
