@@ -15,7 +15,13 @@ from app.core.logging import logger
 from app.crud.system_crud import AppSettingCRUD
 from app.crud.user_crud import PasswordResetTokenCRUD, UserCRUD
 from app.schemas.user_schema import UserLogin, UserModifyPassword
-from app.security.password import generate_random_password, validate_password
+from app.security.constants import INITIAL_PASSWORD_SESSION_KEY
+from app.security.password import (
+    generate_random_password,
+    open_password_terminal,
+    show_initial_password,
+    validate_password,
+)
 from app.security.tokens import create_access_token, create_refresh_token
 from app.utils.time import ensure_utc, utc_now
 
@@ -42,7 +48,7 @@ class UserManager:
     async def initialize(self):
         """
         Initialize the system by creating a default admin user if no users exist.
-        The password is auto-generated and logged securely for first-time setup.
+        The temporary password goes directly to the local terminal.
         """
         async with self.db_context() as session:
             if await AppSettingCRUD.get(session, ALLOW_REGISTRATION_KEY) is None:
@@ -52,12 +58,14 @@ class UserManager:
                     "1" if settings.APP_ALLOW_REGISTRATION else "0",
                 )
 
-            users = await self.user_crud.list(session=session, limit=1)
+            users = await self.user_crud.list(
+                session=session, limit=1, include_deleted=True
+            )
             if users:
                 return
 
             email = settings.APP_INIT_USER
-            password = generate_random_password()
+            password = generate_random_password(24)
 
             await self.user_crud.create(
                 session=session,
@@ -65,13 +73,18 @@ class UserManager:
                 password=password,
                 is_superuser=True,
                 quota_bytes=0,
+                must_change_password=True,
             )
 
-            logger.warning(
-                _(
-                    "Administrator account created. Email: {email}, Password: {password}"
-                ).format(email=email, password=password)
-            )
+            try:
+                with open_password_terminal() as terminal:
+                    show_initial_password(terminal, email, password)
+            except OSError:
+                logger.warning(
+                    _(
+                        "No startup terminal for the initial password. Use local administrator recovery."
+                    )
+                )
 
     # Session state
     async def is_login(self) -> bool:
@@ -99,7 +112,7 @@ class UserManager:
             app.storage.user.clear()
             return None
 
-        if not user.is_active:
+        if not user.is_active or user.must_change_password:
             app.storage.user.clear()
             return None
 
@@ -135,6 +148,14 @@ class UserManager:
 
             if not user:
                 raise ValueError(_("Invalid email or password"))
+
+            if user.must_change_password:
+                app.storage.user.clear()
+                app.storage.user[INITIAL_PASSWORD_SESSION_KEY] = {
+                    "email": user.email,
+                    "token_version": user.token_version,
+                }
+                return user
 
             tz = await get_user_timezone_from_browser()
 
@@ -288,6 +309,55 @@ class UserManager:
             )
             return True
 
+    async def initial_password_email(self) -> str | None:
+        pending = app.storage.user.get(INITIAL_PASSWORD_SESSION_KEY)
+        if pending is None:
+            return None
+        async with self.db_context() as session:
+            user = await self.user_crud.get_by_email(session, pending["email"])
+        if (
+            user
+            and user.is_active
+            and user.must_change_password
+            and user.token_version == pending["token_version"]
+        ):
+            return user.email
+        app.storage.user.pop(INITIAL_PASSWORD_SESSION_KEY, None)
+        return None
+
+    async def complete_initial_password_change(
+        self, credentials: UserModifyPassword
+    ) -> None:
+        pending = app.storage.user.get(INITIAL_PASSWORD_SESSION_KEY)
+        if pending is None:
+            raise ValueError(_("Invalid current password"))
+        valid, message = validate_password(credentials.new_password)
+        if not valid:
+            raise ValueError(message)
+        if credentials.new_password == credentials.current_password:
+            raise ValueError(
+                _("Choose a password different from the temporary password.")
+            )
+
+        async with self.db_context() as session:
+            user = await self.user_crud.authenticate(
+                session=session,
+                email=pending["email"],
+                password=credentials.current_password,
+            )
+            if (
+                not user
+                or not user.must_change_password
+                or user.token_version != pending["token_version"]
+            ):
+                raise ValueError(_("Invalid current password"))
+
+            if not await self.user_crud.complete_initial_password_change(
+                session=session, user=user, new_password=credentials.new_password
+            ):
+                raise ValueError(_("Invalid current password"))
+        app.storage.user.clear()
+
     async def set_active(
         self,
         *,
@@ -404,7 +474,7 @@ class UserManager:
 
         async with self.db_context() as session:
             user = await self.user_crud.get_by_email(session, email)
-            if not user or not user.is_active:
+            if not user or not user.is_active or user.must_change_password:
                 return "email_sent"
 
             token = secrets.token_urlsafe(32)
@@ -468,7 +538,7 @@ class UserManager:
                 raise ValueError(_("Invalid or expired reset token."))
 
             user = await self.user_crud.get_by_id(session, reset_token.user_id)
-            if not user or not user.is_active:
+            if not user or not user.is_active or user.must_change_password:
                 raise ValueError(_("Invalid or expired reset token."))
 
             await self.user_crud.update_password(

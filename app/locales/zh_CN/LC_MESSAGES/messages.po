@@ -253,11 +253,6 @@ msgstr "修改日期"
 msgid "GPS"
 msgstr "GPS"
 
-#: app/services/user_service.py:72
-#, python-brace-format
-msgid "Administrator account created. Email: {email}, Password: {password}"
-msgstr "管理员账户已创建。邮箱：{email}，密码：{password}"
-
 #: app/services/user_service.py:137
 msgid "Invalid email or password"
 msgstr "邮箱或密码错误"
@@ -2201,3 +2196,18 @@ msgstr "筛选当前目录名称"
 
 msgid "No matching names. Clear the filter to show all items."
 msgstr "没有匹配的名称。清空筛选可显示全部条目。"
+
+msgid "Initial administrator: {email}. Temporary password: {password}"
+msgstr "初始管理员：{email}。临时密码：{password}"
+
+msgid "Change your temporary password in the browser before signing in."
+msgstr "请先在浏览器中修改临时密码，再登录。"
+
+msgid "Choose a password different from the temporary password."
+msgstr "请选择与临时密码不同的新密码。"
+
+msgid "New password must not exceed 72 UTF-8 bytes."
+msgstr "新密码不得超过 72 个 UTF-8 字节。"
+
+msgid "No startup terminal for the initial password. Use local administrator recovery."
+msgstr "启动时没有可用的交互终端，无法交付初始密码。请使用本机管理员恢复命令。"

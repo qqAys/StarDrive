@@ -3,9 +3,11 @@ from uuid import uuid4
 from nicegui import app
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import RedirectResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
+from app.core.i18n import _
 from app.core.logging import logger, redact_sensitive_data, redact_url
+from app.security.constants import INITIAL_PASSWORD_SESSION_KEY
 from app.security.routes import is_route_unrestricted
 
 
@@ -51,6 +53,27 @@ class AuthLoggingMiddleware(BaseHTTPMiddleware):
             "url": redact_url(str(request.url)),
             "client": f"{client_ip}:{request.client.port}",
         }
+
+        if (
+            path not in {"/login", "/login/", "/api/healthz", "/api/readyz"}
+            and not path.startswith("/static/")
+            and not (
+                path.count("/") == 1 and path.endswith((".ico", ".png", ".webmanifest"))
+            )
+            and INITIAL_PASSWORD_SESSION_KEY in app.storage.user
+        ):
+            if path.startswith("/api/"):
+                return JSONResponse(
+                    {
+                        "code": 2004,
+                        "message": _(
+                            "Change your temporary password in the browser before signing in."
+                        ),
+                        "data": None,
+                    },
+                    status_code=403,
+                )
+            return RedirectResponse("/login/", status_code=303)
 
         # Allow access without authentication for public routes
         if is_route_unrestricted(path):

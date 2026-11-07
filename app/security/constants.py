@@ -1,1 +1,3 @@
+INITIAL_PASSWORD_SESSION_KEY = "initial_password_change"
+
 JWT_ALGORITHM = "HS256"

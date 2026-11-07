@@ -4,7 +4,7 @@
 
 | 能力 | 入口和调用链 | 状态与证据 |
 | --- | --- | --- |
-| 初次安装与管理员 | `app.main → on_startup → init_local_db → UserManager.initialize` | 部分实现。空库创建和初始管理员交付分别验收，首次安装尚未通过 |
+| 初次安装与管理员 | `app.main → on_startup → init_local_db → UserManager.initialize` | 本地候选通过空库凭据交付、强制改密、重启和旧库登录验证。容器首装待验 |
 | 登录、注册、个人设置 | `ui/pages/{login,account,profile}.py → UserManager → UserCRUD` | 浏览器登录和文件页已验证，测试使用临时预置凭据。注册开关、停用、会话撤销有服务层覆盖，已打开页面撤销待验证 |
 | 管理台 | `ui/pages/console.py → 用户、主题、存储档案服务` | 管理员可打开。主题和档案配置有测试，批量账户操作及低权限绕过矩阵待浏览器验证 |
 | 找回密码 | 公开表单和 `/api/auth/*` → `UserManager → PasswordResetTokenCRUD / SMTP` | 本地 SMTP 送达和过期拒绝已测。真实 SMTP、并发消费和失败恢复待验证 |

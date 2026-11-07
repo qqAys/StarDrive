@@ -252,11 +252,6 @@ msgstr ""
 msgid "GPS"
 msgstr ""
 
-#: app/services/user_service.py:72
-#, python-brace-format
-msgid "Administrator account created. Email: {email}, Password: {password}"
-msgstr ""
-
 #: app/services/user_service.py:137
 msgid "Invalid email or password"
 msgstr ""
@@ -2535,3 +2530,18 @@ msgstr "Filter names in this directory"
 
 msgid "No matching names. Clear the filter to show all items."
 msgstr "No matching names. Clear the filter to show all items."
+
+msgid "Initial administrator: {email}. Temporary password: {password}"
+msgstr "Initial administrator: {email}. Temporary password: {password}"
+
+msgid "Change your temporary password in the browser before signing in."
+msgstr "Change your temporary password in the browser before signing in."
+
+msgid "Choose a password different from the temporary password."
+msgstr "Choose a password different from the temporary password."
+
+msgid "New password must not exceed 72 UTF-8 bytes."
+msgstr "New password must not exceed 72 UTF-8 bytes."
+
+msgid "No startup terminal for the initial password. Use local administrator recovery."
+msgstr "No startup terminal for the initial password. Use local administrator recovery."
