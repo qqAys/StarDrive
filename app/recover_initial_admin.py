@@ -3,7 +3,6 @@
 import asyncio
 import sys
 from pathlib import Path
-from typing import TextIO
 
 from sqlalchemy import delete
 from sqlalchemy.engine import make_url
@@ -19,7 +18,7 @@ from app.security.password import (
 from app.services.local_db_service import close_local_db, get_db_context, init_local_db
 
 
-async def recover_initial_admin(terminal: TextIO) -> None:
+async def recover_initial_admin(terminal: int) -> None:
     database = make_url(settings.LOCAL_DB_DSN).database
     if not database or not Path(database).expanduser().is_file():
         raise ValueError("The configured SQLite database does not exist.")
@@ -45,11 +44,9 @@ if __name__ == "__main__":
     if not sys.stdin.isatty():
         sys.exit("Run recovery in a private, interactive terminal.")
     try:
-        terminal = open_password_terminal()
-    except OSError:
-        sys.exit("Run recovery in a private, interactive terminal.")
-    try:
-        with terminal:
+        with open_password_terminal() as terminal:
             asyncio.run(recover_initial_admin(terminal))
+    except OSError as exc:
+        sys.exit(f"Administrator recovery could not complete: {exc}")
     except ValueError as exc:
         sys.exit(str(exc))

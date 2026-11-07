@@ -1,7 +1,8 @@
 import os
 import string
+from collections.abc import Iterator
+from contextlib import contextmanager
 from random import SystemRandom
-from typing import TextIO
 
 from app.core.i18n import _
 
@@ -40,19 +41,28 @@ def validate_password(password: str) -> tuple[bool, str]:
     return True, _("New password is valid.")
 
 
-def open_password_terminal() -> TextIO:
-    """Open the process console directly, independently of log streams."""
+@contextmanager
+def open_password_terminal() -> Iterator[int]:
+    """Open a console device without creating or truncating a file."""
     device = "CONOUT$" if os.name == "nt" else "/dev/tty"
-    terminal = open(device, "w", encoding="utf-8")
-    if terminal.isatty():
-        return terminal
-    terminal.close()
-    raise OSError("The credential output requires an interactive terminal.")
+    descriptor = os.open(device, os.O_WRONLY | getattr(os, "O_NOCTTY", 0))
+    try:
+        if not os.isatty(descriptor):
+            raise OSError("The credential output requires an interactive terminal.")
+        yield descriptor
+    finally:
+        os.close(descriptor)
 
 
-def show_initial_password(terminal: TextIO, email: str, password: str) -> None:
+def show_initial_password(terminal: int, email: str, password: str) -> None:
+    if not os.isatty(terminal):
+        raise OSError("The credential output requires an interactive terminal.")
     message = _(
         "Initial administrator: {email}. Temporary password: {password}"
     ).format(email=email, password=password)
-    terminal.write(message + "\n")
-    terminal.flush()
+    pending = memoryview((message + "\n").encode("utf-8"))
+    while pending:
+        written = os.write(terminal, pending)
+        if not written:
+            raise OSError("Unable to write to the credential terminal.")
+        pending = pending[written:]
