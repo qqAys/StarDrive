@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 
-from sqlalchemy import Column, DateTime, text
+from sqlalchemy import Column, DateTime, false, text
 from sqlmodel import SQLModel, Field, Relationship
 
 from app.security.ids import generate_ulid
@@ -62,6 +62,9 @@ class User(SQLModel, table=True):
     is_active: bool = Field(default=True)
     is_superuser: bool = Field(default=False)
     token_version: int = Field(default=0)
+    must_change_password: bool = Field(
+        default=False, sa_column_kwargs={"server_default": false()}
+    )
     quota_bytes: int = Field(default=0)
     password_hash: str = Field(max_length=128)
     created_at: datetime = Field(

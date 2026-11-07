@@ -1,10 +1,11 @@
-import random
+from random import SystemRandom
 import string
 
 from app.core.i18n import _
 
 
 def generate_random_password(length: int = 10) -> str:
+    random = SystemRandom()
     length = max(length, 8)
     required = [
         random.choice(string.ascii_lowercase),
@@ -24,6 +25,8 @@ def generate_random_password(length: int = 10) -> str:
 def validate_password(password: str) -> tuple[bool, str]:
     if len(password) < 8:
         return False, _("New password must be at least 8 characters long.")
+    if len(password.encode("utf-8")) > 72:
+        return False, _("New password must not exceed 72 UTF-8 bytes.")
     if not any(char.isdigit() for char in password):
         return False, _("New password must contain at least one digit.")
     if not any(char.isupper() for char in password):

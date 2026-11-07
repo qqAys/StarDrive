@@ -1,6 +1,6 @@
 from typing import Optional, Sequence
 
-from sqlalchemy import func
+from sqlalchemy import func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -26,6 +26,7 @@ class UserCRUD:
         is_superuser: bool = False,
         is_active: bool = True,
         quota_bytes: int = 0,
+        must_change_password: bool = False,
     ) -> User:
         """
         Create a new user with the provided email and password.
@@ -45,6 +46,7 @@ class UserCRUD:
             is_superuser=is_superuser,
             is_active=is_active,
             quota_bytes=quota_bytes,
+            must_change_password=must_change_password,
         )
         session.add(user)
         await session.commit()
@@ -172,6 +174,29 @@ class UserCRUD:
         return user
 
     @staticmethod
+    async def complete_initial_password_change(
+        session: AsyncSession, *, user: User, new_password: str
+    ) -> bool:
+        result = await session.execute(
+            update(User)
+            .where(
+                User.id == user.id,
+                User.must_change_password.is_(True),
+                User.is_active.is_(True),
+                User.deleted_at.is_(None),
+                User.password_hash == user.password_hash,
+                User.token_version == user.token_version,
+            )
+            .values(
+                password_hash=HashingManager.hash_password(new_password),
+                must_change_password=False,
+                token_version=User.token_version + 1,
+            )
+        )
+        await session.commit()
+        return result.rowcount == 1
+
+    @staticmethod
     async def update_status(
         session: AsyncSession,
         *,
@@ -279,7 +304,9 @@ class UserCRUD:
         user = await UserCRUD.get_by_email(session, email)
         if not user or not user.is_active:
             return None
-        if not HashingManager.verify_password(password, user.password_hash):
+        if len(password.encode("utf-8")) > 72 or not HashingManager.verify_password(
+            password, user.password_hash
+        ):
             return None
         return user
 

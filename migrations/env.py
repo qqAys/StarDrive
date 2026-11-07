@@ -7,7 +7,7 @@ from sqlmodel import SQLModel
 from app import models  # noqa: F401  Ensure model metadata is registered.
 
 config = context.config
-if config.config_file_name is not None:
+if config.config_file_name is not None and config.attributes.get("connection") is None:
     fileConfig(config.config_file_name)
 
 target_metadata = SQLModel.metadata

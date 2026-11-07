@@ -33,7 +33,9 @@ def test_login_api_rejects_invalid_credentials(mocker):
 def test_login_api_returns_tokens_for_valid_credentials(mocker):
     mocker.patch("app.api.auth.get_db_context", return_value=fake_db_context())
     authenticate = mocker.patch("app.api.auth.UserCRUD.authenticate")
-    authenticate.return_value = SimpleNamespace(id="user_123", token_version=3)
+    authenticate.return_value = SimpleNamespace(
+        id="user_123", token_version=3, must_change_password=False
+    )
     mocker.patch("app.api.auth.create_access_token", return_value="access-token")
     mocker.patch("app.api.auth.create_refresh_token", return_value="refresh-token")
 

@@ -4,7 +4,7 @@ from starlette.responses import RedirectResponse
 from app import globals
 from app.config import settings
 from app.core.i18n import _
-from app.schemas.user_schema import UserLogin
+from app.schemas.user_schema import UserLogin, UserModifyPassword
 from app.security.validators import is_valid_email
 from app.services.user_service import get_user_timezone_from_browser
 from app.ui.components.base import BaseLayout
@@ -47,6 +47,53 @@ async def login_page(redirect_to: str | None = None):
                 once=True,
             )
 
+        if await user_manager.initial_password_email():
+            with ui.card(align_items="center").classes("absolute-center w-[350px]"):
+                ui.label(
+                    _(
+                        "Change your temporary password in the browser before signing in."
+                    )
+                )
+                current = ui.input(
+                    _("Current password"), password=True, password_toggle_button=True
+                ).classes("w-full")
+                new = ui.input(
+                    _("New password"), password=True, password_toggle_button=True
+                ).classes("w-full")
+                confirm = ui.input(
+                    _("Confirm new password"),
+                    password=True,
+                    password_toggle_button=True,
+                ).classes("w-full")
+
+                async def change_initial_password():
+                    if new.value != confirm.value:
+                        notify.error(_("Passwords do not match"))
+                        return
+                    try:
+                        await user_manager.complete_initial_password_change(
+                            UserModifyPassword(
+                                current_password=current.value, new_password=new.value
+                            )
+                        )
+                    except ValueError as exc:
+                        notify.error(str(exc))
+                        return
+                    notify.success(_("Password changed successfully"))
+                    ui.navigate.to("/login/")
+
+                confirm.on("keyup.enter", change_initial_password)
+                ui.button(_("Change password"), on_click=change_initial_password)
+
+                async def cancel_initial_password_change():
+                    await user_manager.logout()
+                    ui.navigate.to("/login/")
+
+                ui.button(_("Logout"), on_click=cancel_initial_password_change).props(
+                    "flat"
+                )
+            return
+
         # Early redirect if already logged in
         if await user_manager.is_login():
             notify.success(_("You are already signed in"))
@@ -83,6 +130,10 @@ async def login_page(redirect_to: str | None = None):
 
                 if not login_user:
                     notify.warning(_("Account not found"))
+                    return
+
+                if login_user.must_change_password:
+                    ui.navigate.to("/login/")
                     return
 
                 notify.success(_("Signed in successfully"))

@@ -51,9 +51,10 @@ StarDrive 采用了现代化的 Python 技术栈：
     STARDRIVE_APP_HOST=127.0.0.1 uv run --locked -m app.main
     ```
 
-浏览器打开 `http://127.0.0.1:8080/login/`。已有可用测试账号时，先在 Console → Overview
-配置完整的 `Service URL`，再用小文件验证上传、下载和分享。首次安装的验收要求见
-[生产就绪检查](docs/PRODUCTION_READINESS.md)。
+空数据目录首次启动时，管理员邮箱和临时密码只在启动输出中显示一次。请从仅部署者可访问的终端查看。
+打开 `http://127.0.0.1:8080/login/`，按页面要求修改密码，再用新密码登录。
+在 Console → Overview 配置完整的 `Service URL`，再用小文件验证上传、下载和分享。
+启动输出权限与临时密码丢失的处理见 [运维指南](docs/OPERATIONS.md#首次管理员登录)。
 
 容器同样要求设置稳定的 `STARDRIVE_APP_SECRET`。开发时可将其写入未提交的 `.env`，
 然后运行 `docker compose -f docker-compose.build.yml up --build`。该配置只映射本机回环地址。

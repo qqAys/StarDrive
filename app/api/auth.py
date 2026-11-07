@@ -29,6 +29,15 @@ async def login_api(user_login: UserLogin):
             http_status=401,
         )
 
+    if user.must_change_password:
+        raise BusinessException(
+            code=2004,
+            message=_(
+                "Change your temporary password in the browser before signing in."
+            ),
+            http_status=403,
+        )
+
     access_payload = {"sub": user.id}
     refresh_payload = {
         **access_payload,
