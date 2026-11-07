@@ -1994,3 +1994,9 @@ msgstr ""
 
 msgid "Search by file and folder name, including subdirectories of the current directory. To search elsewhere, navigate there first."
 msgstr ""
+
+msgid "Filter names in this directory"
+msgstr ""
+
+msgid "No matching names. Clear the filter to show all items."
+msgstr ""

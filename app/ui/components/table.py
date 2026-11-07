@@ -125,6 +125,8 @@ class FileBrowserTable:
         self._refresh_lock = asyncio.Lock()
 
         self.file_list = []
+        self.name_filter = ""
+        self.directory_rows = []
 
         self._current_path: Path = Path(initial_path, target_path)
         if not get_user_last_path():
@@ -214,7 +216,15 @@ class FileBrowserTable:
             with self.browser_table.add_slot("no-data"):
                 with ui.row().classes("items-center"):
                     ui.icon("warning").classes("text-2xl")
-                    ui.label(_("No files found.")).classes("font-bold")
+                    ui.label().bind_text_from(
+                        self,
+                        "name_filter",
+                        lambda value: (
+                            _("No matching names. Clear the filter to show all items.")
+                            if value
+                            else _("No files found.")
+                        ),
+                    ).classes("font-bold")
 
             with self.browser_table.add_slot("top-left"):
                 with ui.row().classes("items-center gap-x-0"):
@@ -285,6 +295,11 @@ class FileBrowserTable:
 
             with self.browser_table.add_slot("top-right"):
                 with ui.row().classes("items-center gap-4"):
+                    self.search_input = ui.input(
+                        _("Filter names in this directory"),
+                        value=self.name_filter,
+                        on_change=self.handle_name_filter_change,
+                    ).props("clearable dense")
                     self.upload_button = (
                         ui.button(
                             icon="cloud_upload",
@@ -376,7 +391,7 @@ class FileBrowserTable:
                 "body-cell-name", '<q-td v-html="props.row.name"></q-td>'
             )
 
-            self.browser_table.rows = [
+            self.directory_rows = [
                 {
                     "name": f"{get_file_icon(p.type, p.extension)} <b>{p.name}</b>",
                     "raw_name": p.name,
@@ -396,6 +411,8 @@ class FileBrowserTable:
                 }
                 for p in self.file_list
             ]
+
+            self.browser_table.rows = self.filtered_rows()
 
             if self.browser_table.rows:
                 click_event = GenericEventArguments(
@@ -434,7 +451,30 @@ class FileBrowserTable:
 
         if old_path != new_path:
             self._current_path = new_path
+            self.name_filter = ""
             set_user_last_path(new_path)
+
+    def filtered_rows(self) -> list[dict]:
+        query = self.name_filter.casefold()
+        return [
+            row for row in self.directory_rows if query in row["raw_name"].casefold()
+        ]
+
+    async def handle_name_filter_change(self, e):
+        self.name_filter = e.value or ""
+        self.browser_table.rows = self.filtered_rows()
+        visible_names = {row["raw_name"] for row in self.browser_table.rows}
+        self.browser_table.selected = [
+            row
+            for row in self.browser_table.selected
+            if row["raw_name"] in visible_names
+        ]
+        self.browser_table.pagination = {
+            **self.browser_table.pagination,
+            "page": 1,
+        }
+        self.footer_container.clear()
+        self.browser_table.update()
 
     async def refresh(self):
         async with self._refresh_lock:
@@ -463,6 +503,9 @@ class FileBrowserTable:
 
     async def handle_row_click(self, e: events.GenericEventArguments):
         click_event_params, click_row, click_index = e.args
+
+        if click_row not in self.browser_table.rows:
+            return
 
         self.footer_container.clear()
 
@@ -527,9 +570,13 @@ class FileBrowserTable:
             return
 
         if from_keyboard:
+            if not self.browser_table.selected:
+                return
             click_row = self.browser_table.selected[0]
         else:
             click_event_params, click_row, click_index = e.args
+        if click_row not in self.browser_table.rows:
+            return
         target_path = click_row["path"]
         file_name = click_row["raw_name"]
 
@@ -944,6 +991,10 @@ class FileBrowserTable:
         """
         )
 
+        visible_names = {row["raw_name"] for row in self.browser_table.rows}
+        names_in_order = [
+            name for name in (names_in_order or []) if name in visible_names
+        ]
         if not names_in_order:
             return
 
