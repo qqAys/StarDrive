@@ -36,8 +36,14 @@ jobs:
         run: |
           docker run --detach --rm --name stardrive-smoke --publish 127.0.0.1:8080:8080 \
             --volume "$PWD/.ci-data:/opt/stardrive/app_data" \
+            --env STARDRIVE_APP_DEFAULT_LANGUAGE=en-US \
             --env STARDRIVE_APP_SECRET="$(openssl rand -hex 32)" stardrive:ci
-          trap 'docker logs stardrive-smoke; docker stop stardrive-smoke || true' EXIT
+          cleanup_smoke() {
+            docker logs stardrive-smoke 2>&1 |
+              sed -E 's/^(Initial administrator: ).*/\1[redacted]/' || true
+            docker stop stardrive-smoke || true
+          }
+          trap cleanup_smoke EXIT
           for attempt in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:8080/api/healthz > health.json &&
                python -c "import json; data=json.load(open('health.json')); assert data['data']['status'] == 'ok'" &&
