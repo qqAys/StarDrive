@@ -2,7 +2,6 @@ import asyncio
 import hashlib
 import secrets
 import smtplib
-import sys
 from datetime import timedelta
 from email.message import EmailMessage
 from zoneinfo import ZoneInfo
@@ -17,7 +16,12 @@ from app.crud.system_crud import AppSettingCRUD
 from app.crud.user_crud import PasswordResetTokenCRUD, UserCRUD
 from app.schemas.user_schema import UserLogin, UserModifyPassword
 from app.security.constants import INITIAL_PASSWORD_SESSION_KEY
-from app.security.password import generate_random_password, validate_password
+from app.security.password import (
+    generate_random_password,
+    open_password_terminal,
+    show_initial_password,
+    validate_password,
+)
 from app.security.tokens import create_access_token, create_refresh_token
 from app.utils.time import ensure_utc, utc_now
 
@@ -44,7 +48,7 @@ class UserManager:
     async def initialize(self):
         """
         Initialize the system by creating a default admin user if no users exist.
-        The temporary password goes only to the deployment startup stream.
+        The temporary password goes directly to the local terminal.
         """
         async with self.db_context() as session:
             if await AppSettingCRUD.get(session, ALLOW_REGISTRATION_KEY) is None:
@@ -72,7 +76,15 @@ class UserManager:
                 must_change_password=True,
             )
 
-            show_initial_password(email, password)
+            try:
+                with open_password_terminal() as terminal:
+                    show_initial_password(terminal, email, password)
+            except OSError:
+                logger.warning(
+                    _(
+                        "No startup terminal for the initial password. Use local administrator recovery."
+                    )
+                )
 
     # Session state
     async def is_login(self) -> bool:
@@ -537,16 +549,6 @@ class UserManager:
             )
             await PasswordResetTokenCRUD.mark_used(session, reset_token, utc_now())
             return True
-
-
-def show_initial_password(email: str, password: str) -> None:
-    print(
-        _("Initial administrator: {email}. Temporary password: {password}").format(
-            email=email, password=password
-        ),
-        file=sys.stderr,
-        flush=True,
-    )
 
 
 async def get_user_timezone_from_browser():

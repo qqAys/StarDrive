@@ -1,5 +1,7 @@
-from random import SystemRandom
+import os
 import string
+from random import SystemRandom
+from typing import TextIO
 
 from app.core.i18n import _
 
@@ -36,3 +38,21 @@ def validate_password(password: str) -> tuple[bool, str]:
     if not any(char in string.punctuation for char in password):
         return False, _("New password must contain at least one special character.")
     return True, _("New password is valid.")
+
+
+def open_password_terminal() -> TextIO:
+    """Open the process console directly, independently of log streams."""
+    device = "CONOUT$" if os.name == "nt" else "/dev/tty"
+    terminal = open(device, "w", encoding="utf-8")
+    if terminal.isatty():
+        return terminal
+    terminal.close()
+    raise OSError("The credential output requires an interactive terminal.")
+
+
+def show_initial_password(terminal: TextIO, email: str, password: str) -> None:
+    message = _(
+        "Initial administrator: {email}. Temporary password: {password}"
+    ).format(email=email, password=password)
+    terminal.write(message + "\n")
+    terminal.flush()

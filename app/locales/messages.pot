@@ -2007,3 +2007,6 @@ msgstr ""
 
 msgid "New password must not exceed 72 UTF-8 bytes."
 msgstr ""
+
+msgid "No startup terminal for the initial password. Use local administrator recovery."
+msgstr ""

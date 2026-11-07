@@ -1,5 +1,6 @@
 import asyncio
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, nullcontext
+from io import StringIO
 from types import SimpleNamespace
 
 import pytest
@@ -48,24 +49,43 @@ def isolated_users(tmp_path, mocker):
     asyncio.run(engine.dispose())
 
 
-def consume_temporary_password(capsys):
-    captured = capsys.readouterr()
-    line = captured.err.strip().splitlines()[-1]
+@pytest.fixture
+def credential_terminal(mocker):
+    terminal = StringIO()
+    mocker.patch(
+        "app.services.user_service.open_password_terminal",
+        return_value=nullcontext(terminal),
+    )
+    return terminal
+
+
+def consume_temporary_password(terminal):
+    lines = terminal.getvalue().splitlines()
+    terminal.seek(0)
+    terminal.truncate()
     prefix = f"Initial administrator: {ADMIN_EMAIL}. Temporary password: "
-    if not line.startswith(prefix):
-        pytest.fail("Expected one-time initial credential on stderr.", pytrace=False)
-    return line.removeprefix(prefix)
+    if len(lines) != 1 or not lines[0].startswith(prefix):
+        pytest.fail(
+            "Expected one-time credential on the private terminal.", pytrace=False
+        )
+    return lines[0].removeprefix(prefix)
 
 
-def test_first_login_requires_password_change(isolated_users, capsys, caplog):
+def test_first_login_requires_password_change(
+    isolated_users, credential_terminal, capsys, caplog
+):
     manager, path, storage = isolated_users
     dsn = f"sqlite+aiosqlite:///{path}"
     migrate_database(dsn)
 
     async def run():
         await manager.initialize()
-        temporary = consume_temporary_password(capsys)
-        if len(temporary) != 24 or temporary in caplog.text:
+        temporary = consume_temporary_password(credential_terminal)
+        captured = capsys.readouterr()
+        if (
+            len(temporary) != 24
+            or temporary in caplog.text + captured.out + captured.err
+        ):
             pytest.fail(
                 "Invalid initial credential or leaked application log.", pytrace=False
             )
@@ -73,7 +93,7 @@ def test_first_login_requires_password_change(isolated_users, capsys, caplog):
 
         migrate_database(dsn)
         await manager.initialize()
-        assert not capsys.readouterr().err
+        assert not credential_terminal.getvalue()
         with pytest.raises(BusinessException) as rejected:
             await login_api(login)
         assert rejected.value.http_status == 403
@@ -120,7 +140,33 @@ def test_first_login_requires_password_change(isolated_users, capsys, caplog):
     asyncio.run(run())
 
 
-def test_old_database_login_and_offline_recovery(isolated_users, capsys, mocker):
+def test_headless_startup_only_logs_recovery_hint(
+    isolated_users, mocker, capsys, caplog
+):
+    manager, path, _ = isolated_users
+    migrate_database(f"sqlite+aiosqlite:///{path}")
+    temporary = "Sample-only-boot123!"
+    mocker.patch(
+        "app.services.user_service.generate_random_password", return_value=temporary
+    )
+    mocker.patch(
+        "app.services.user_service.open_password_terminal", side_effect=OSError
+    )
+
+    asyncio.run(manager.initialize())
+    captured = capsys.readouterr()
+    if temporary in captured.out + captured.err + caplog.text:
+        pytest.fail("Headless startup leaked a credential.", pytrace=False)
+    assert "Use local administrator recovery." in caplog.text
+
+    with pytest.raises(BusinessException) as rejected:
+        asyncio.run(login_api(UserLogin(email=ADMIN_EMAIL, password=temporary)))
+    assert rejected.value.http_status == 403
+
+
+def test_old_database_login_and_offline_recovery(
+    isolated_users, credential_terminal, mocker
+):
     manager, path, storage = isolated_users
     dsn = f"sqlite+aiosqlite:///{path}"
     sync_engine = create_engine(f"sqlite:///{path}")
@@ -159,7 +205,7 @@ def test_old_database_login_and_offline_recovery(isolated_users, capsys, mocker)
 
     async def run():
         await manager.initialize()
-        assert not capsys.readouterr().err
+        assert not credential_terminal.getvalue()
         login = UserLogin(email=ADMIN_EMAIL, password=REPLACEMENT_PASSWORD)
         user = await manager.login(login)
         assert not user.must_change_password
@@ -173,8 +219,8 @@ def test_old_database_login_and_offline_recovery(isolated_users, capsys, mocker)
             )
             reset_id = reset.id
 
-        await recover_initial_admin()
-        temporary = consume_temporary_password(capsys)
+        await recover_initial_admin(credential_terminal)
+        temporary = consume_temporary_password(credential_terminal)
         assert await manager.current_user() is None
         assert not storage
         with pytest.raises(BusinessException) as old_login:
