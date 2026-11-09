@@ -23,6 +23,7 @@ from app.services.file_service import (
     get_user_last_path,
 )
 from app.services.user_service import get_user_timezone
+from app.ui.components.browser_filters import matches_entry
 from app.ui.components.button import custom_button
 from app.ui.components.clipboard import copy_to_clipboard
 from app.ui.components.dialog import (
@@ -74,6 +75,8 @@ def key_event_debounce(wait_time: float):
 
 
 class FileBrowserTable:
+    type_filter = "all"
+
     def __init__(
         self,
         file_manager: StorageManager,
@@ -221,9 +224,11 @@ class FileBrowserTable:
                     ui.icon("warning").classes("text-2xl")
                     ui.label().bind_text_from(
                         self,
-                        "name_filter",
+                        "directory_rows",
                         lambda value: (
-                            _("No matching names. Clear the filter to show all items.")
+                            _(
+                                "No items match the filters. Reset filters to show all items."
+                            )
                             if value
                             else _("No files found.")
                         ),
@@ -303,6 +308,30 @@ class FileBrowserTable:
                         value=self.name_filter,
                         on_change=self.handle_name_filter_change,
                     ).props("clearable dense")
+                    self.type_filter_input = (
+                        ui.select(
+                            {
+                                "all": _("All items"),
+                                "file": _("Files only"),
+                                "dir": _("Folders only"),
+                            },
+                            value=self.type_filter,
+                            label=_("Entry type"),
+                            on_change=self.handle_type_filter_change,
+                        )
+                        .props("dense")
+                        .classes("min-w-32")
+                    )
+                    ui.button(_("Reset filters"), on_click=self.reset_filters).props(
+                        "flat dense"
+                    )
+                    ui.label().bind_text_from(
+                        self.browser_table,
+                        "rows",
+                        lambda rows: (
+                            f"{_('Matching items')}: {len(rows)} / {len(self.directory_rows)}"
+                        ),
+                    )
                     self.upload_button = (
                         ui.button(
                             icon="cloud_upload",
@@ -457,16 +486,26 @@ class FileBrowserTable:
         if old_path != new_path:
             self._current_path = new_path
             self.name_filter = ""
+            self.type_filter = "all"
             set_user_last_path(new_path)
 
     def filtered_rows(self) -> list[dict]:
-        query = self.name_filter.casefold()
         return [
-            row for row in self.directory_rows if query in row["raw_name"].casefold()
+            row
+            for row in self.directory_rows
+            if matches_entry(
+                row["raw_name"],
+                row["type"],
+                self.name_filter,
+                self.type_filter,
+            )
         ]
 
     async def handle_name_filter_change(self, e):
         self.name_filter = e.value or ""
+        self.apply_filters()
+
+    def apply_filters(self):
         self.browser_table.rows = self.filtered_rows()
         visible_names = {row["raw_name"] for row in self.browser_table.rows}
         self.browser_table.selected = [
@@ -480,6 +519,19 @@ class FileBrowserTable:
         }
         self.footer_container.clear()
         self.browser_table.update()
+
+    async def handle_type_filter_change(self, e):
+        self.type_filter = e.value if e.value in ("all", "file", "dir") else "all"
+        self.browser_table.selected = []
+        self.apply_filters()
+
+    async def reset_filters(self):
+        self.name_filter = ""
+        self.type_filter = "all"
+        self.browser_table.selected = []
+        self.search_input.set_value("")
+        self.type_filter_input.set_value("all")
+        self.apply_filters()
 
     async def refresh(self):
         async with self._refresh_lock:

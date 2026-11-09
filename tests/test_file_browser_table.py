@@ -353,3 +353,77 @@ def test_double_click_still_opens_download_confirmation(preview_table, monkeypat
     )
     confirm.return_value.open.assert_awaited_once()
     preview.assert_not_called()
+
+
+@pytest.mark.parametrize("kind, count", [("all", 61), ("file", 60), ("dir", 1)])
+def test_type_filter_full_directory_resets_page_and_selection(
+    filter_table, kind, count
+):
+    filter_table.directory_rows = [
+        {"raw_name": f"report-{index}", "path": f"report-{index}", "type": "file"}
+        for index in range(60)
+    ] + [{"raw_name": "reports", "path": "reports", "type": "dir"}]
+    filter_table.file_manager = Mock()
+    asyncio.run(filter_table.handle_type_filter_change(SimpleNamespace(value=kind)))
+    assert len(filter_table.browser_table.rows) == count
+    assert filter_table.browser_table.selected == []
+    assert filter_table.browser_table.pagination["page"] == 1
+    filter_table.file_manager.assert_not_called()
+    assert filter_table.file_manager.mock_calls == []
+
+
+def test_type_filter_combines_name_and_resets_controls(filter_table):
+    filter_table.search_input = SimpleNamespace(set_value=Mock())
+    filter_table.type_filter_input = SimpleNamespace(set_value=Mock())
+
+    async def run_test():
+        await filter_table.handle_type_filter_change(SimpleNamespace(value="file"))
+        await filter_table.handle_name_filter_change(SimpleNamespace(value="资料"))
+        assert filter_table.browser_table.rows == []
+        await filter_table.reset_filters()
+
+    asyncio.run(run_test())
+    assert filter_table.browser_table.rows == filter_table.directory_rows
+    assert filter_table.browser_table.selected == []
+    assert filter_table.name_filter == ""
+    assert filter_table.type_filter == "all"
+    filter_table.search_input.set_value.assert_called_once_with("")
+    filter_table.type_filter_input.set_value.assert_called_once_with("all")
+
+
+def test_empty_type_results_ignore_keyboard(filter_table, monkeypatch):
+    monkeypatch.setattr(
+        "app.ui.components.table.ui.run_javascript", AsyncMock(return_value=[])
+    )
+    preview = Mock()
+    monkeypatch.setattr("app.ui.components.table.MediaDialog", preview)
+    filter_table.has_dialog_open = False
+    filter_table.is_select_mode = False
+
+    async def run_test():
+        await filter_table.handle_type_filter_change(SimpleNamespace(value="dir"))
+        await filter_table.handle_name_filter_change(SimpleNamespace(value="missing"))
+        await filter_table.handle_row_double_click(None, from_keyboard=True)
+        await filter_table.handle_keyboard_space_event()
+        await filter_table.handle_keyboard_arrow_event("up")
+        await filter_table.handle_keyboard_arrow_event("down")
+
+    asyncio.run(run_test())
+    preview.assert_not_called()
+    assert filter_table.browser_table.selected == []
+
+
+def test_type_filter_resets_on_navigation(filter_table, monkeypatch):
+    monkeypatch.setattr("app.ui.components.table.set_user_last_path", Mock())
+    filter_table._current_path = Path("docs")
+    filter_table.type_filter = "dir"
+    filter_table.current_path = Path("docs")
+    assert filter_table.type_filter == "dir"
+    filter_table.current_path = Path("other")
+    assert filter_table.type_filter == "all"
+
+
+def test_invalid_type_selection_restores_all(filter_table):
+    asyncio.run(filter_table.handle_type_filter_change(SimpleNamespace(value=None)))
+    assert filter_table.type_filter == "all"
+    assert filter_table.browser_table.rows == filter_table.directory_rows
