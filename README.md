@@ -90,6 +90,8 @@ python scripts/build_image.py
 
 ## 文件预览 (File Preview)
 
+在非批量模式下，点击或轻触文件行的眼睛按钮（“预览文件”）打开预览，也可用 Tab 聚焦按钮后按 Enter 或空格激活。目录不显示预览按钮。选中文件后按空格仍可快速预览，双击文件仍进入下载确认。
+
 StarDrive 支持图片、视频、音频、PDF、文本/代码、Markdown、CSV/TSV 的在线预览。
 Office 文档（如 doc/docx/xls/xlsx/ppt/pptx）会通过 LibreOffice 转换为 PDF 后预览。
 

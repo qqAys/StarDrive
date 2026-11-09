@@ -191,6 +191,9 @@ class FileBrowserTable:
                 self.action_column,
             ]
 
+            if self.is_select_mode:
+                columns.remove(self.action_column)
+
             if self.browser_table:
                 self.browser_table.clear()
 
@@ -382,6 +385,7 @@ class FileBrowserTable:
                 "body-cell-action",
                 f"""
                 <q-td :props="props">
+                    <q-btn v-if="props.row.type === 'file'" icon="visibility" aria-label="{_("Preview file")}" @click.stop="$parent.$emit('preview', {{path: props.row.path}})" @dblclick.stop @keydown.stop @keyup.stop class="text-primary" flat dense><q-tooltip>{_("Preview file")}</q-tooltip></q-btn>
                     <q-btn icon="info" @click.stop="$parent.$emit('info', props.row)" class="text-primary" flat dense><q-tooltip>{_("Show file information")}</q-tooltip></q-btn>
                 </q-td>
             """,
@@ -426,6 +430,7 @@ class FileBrowserTable:
             self.browser_table.on("row-dblclick", self.handle_row_double_click)
 
             self.browser_table.on("info", self.handle_info_button_click)
+            self.browser_table.on("preview", self.handle_preview_button_click)
 
             if not self.keyboard_event_registered:
                 ui.on("keydown.prevent", self.handle_keyboard_event)
@@ -918,23 +923,44 @@ class FileBrowserTable:
             case _:
                 pass
 
+    async def handle_preview_button_click(self, e: events.GenericEventArguments):
+        if self.is_select_mode:
+            return
+        path = e.args.get("path") if isinstance(e.args, dict) else None
+        await self._open_preview_by_path(path)
+
     async def handle_keyboard_space_event(self):
-        if not self.has_dialog_open:
-            try:
-                self.has_dialog_open = True
-                table_selected = self.browser_table.selected
-                if table_selected:
-                    table_selected = table_selected[0]
-                    try:
-                        await MediaDialog(
-                            self.file_manager, Path(table_selected["path"])
-                        ).open()
-                    except Exception as e:
-                        notify.error(
-                            _("Failed to open preview: {error}").format(error=str(e))
-                        )
-            finally:
-                self.has_dialog_open = False
+        selected = self.browser_table.selected
+        if selected:
+            await self._open_preview_by_path(selected[0].get("path"))
+
+    @require_user
+    async def _open_preview_by_path(self, path):
+        if (
+            self.has_dialog_open
+            or app.storage.user.get("user_id") != self.file_manager.user_id
+            or not isinstance(path, str)
+            or not path
+        ):
+            return
+        row = next(
+            (
+                row
+                for row in self.browser_table.rows
+                if row.get("path") == path and row.get("type") == "file"
+            ),
+            None,
+        )
+        if row is None:
+            return
+
+        self.has_dialog_open = True
+        try:
+            await MediaDialog(self.file_manager, Path(row["path"])).open()
+        except Exception as e:
+            notify.error(_("Failed to open preview: {error}").format(error=str(e)))
+        finally:
+            self.has_dialog_open = False
 
     def _row_by_name(self, name: str) -> dict | None:
         for row in self.browser_table.rows:

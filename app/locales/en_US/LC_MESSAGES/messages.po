@@ -2545,3 +2545,6 @@ msgstr "New password must not exceed 72 UTF-8 bytes."
 
 msgid "No startup terminal for the initial password. Use local administrator recovery."
 msgstr "No startup terminal for the initial password. Use local administrator recovery."
+
+msgid "Preview file"
+msgstr "Preview file"
