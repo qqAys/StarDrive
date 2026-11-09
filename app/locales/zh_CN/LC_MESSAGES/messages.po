@@ -2212,6 +2212,9 @@ msgstr "新密码不得超过 72 个 UTF-8 字节。"
 msgid "No startup terminal for the initial password. Use local administrator recovery."
 msgstr "启动时没有可用的交互终端，无法交付初始密码。请使用本机管理员恢复命令。"
 
+msgid "Preview file"
+msgstr "预览文件"
+
 msgid "All items"
 msgstr "全部条目"
 

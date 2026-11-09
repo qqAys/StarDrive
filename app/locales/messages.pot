@@ -2011,6 +2011,9 @@ msgstr ""
 msgid "No startup terminal for the initial password. Use local administrator recovery."
 msgstr ""
 
+msgid "Preview file"
+msgstr ""
+
 msgid "All items"
 msgstr ""
 
