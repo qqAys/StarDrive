@@ -161,3 +161,195 @@ def test_metadata_rows_share_name_matching(filter_table, prefix):
     ]
     asyncio.run(filter_table.handle_name_filter_change(SimpleNamespace(value="REPORT")))
     assert filter_table.browser_table.rows == [filter_table.directory_rows[0]]
+
+
+@pytest.fixture
+def preview_table(filter_table, monkeypatch):
+    filter_table.is_select_mode = False
+    filter_table.has_dialog_open = False
+    filter_table.file_manager = Mock(
+        backend_name="LocalStorage", user_id="isolated-user"
+    )
+    storage = SimpleNamespace(user={"user_id": "isolated-user"})
+    app = SimpleNamespace(storage=storage)
+    user_manager = SimpleNamespace(
+        current_user=AsyncMock(return_value=SimpleNamespace(is_active=True))
+    )
+    monkeypatch.setattr("app.security.guards.app", app)
+    monkeypatch.setattr(
+        "app.security.guards.globals.get_user_manager", lambda: user_manager
+    )
+    monkeypatch.setattr("app.security.guards.navigate_to", Mock())
+    monkeypatch.setattr("app.ui.components.table.app", app)
+    dialog = Mock()
+    dialog.return_value.open = AsyncMock()
+    monkeypatch.setattr("app.ui.components.table.MediaDialog", dialog)
+    monkeypatch.setattr("app.ui.components.table.notify.error", Mock())
+    return filter_table, dialog
+
+
+async def click_preview(table, args):
+    await table.handle_preview_button_click(SimpleNamespace(args=args))
+
+
+@pytest.mark.parametrize("session", [{}, {"user_id": "other-user"}])
+def test_preview_rejects_stale_page_after_session_change(preview_table, session):
+    from app.ui.components.table import app
+
+    table, dialog = preview_table
+    table.browser_table.selected = [table.directory_rows[0]]
+    app.storage.user = session
+
+    async def run_test():
+        await click_preview(table, {"path": "Report.TXT"})
+        await table.handle_keyboard_space_event()
+
+    asyncio.run(run_test())
+    dialog.assert_not_called()
+
+
+@pytest.mark.parametrize("backend", ["LocalStorage", "AliyunOSSStorage"])
+def test_preview_button_uses_visible_path_and_existing_user_manager(
+    preview_table, backend
+):
+    table, dialog = preview_table
+    table.file_manager.backend_name = backend
+    table.file_manager.user_id = "isolated-user"
+    table.browser_table.selected = [table.directory_rows[1]]
+    selected = list(table.browser_table.selected)
+    asyncio.run(click_preview(table, {"path": "Report.TXT", "type": "dir"}))
+    dialog.assert_called_once_with(table.file_manager, Path("Report.TXT"))
+    dialog.return_value.open.assert_awaited_once()
+    assert table.browser_table.selected == selected
+    assert table.has_dialog_open is False
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        {},
+        None,
+        [],
+        {"path": None},
+        {"path": []},
+        {"path": ""},
+        {"path": "missing.txt"},
+        {"path": "../other-user/private.txt"},
+        {"path": "中文资料", "type": "file"},
+    ],
+)
+def test_preview_rejects_missing_forged_and_directory_targets(preview_table, args):
+    table, dialog = preview_table
+    asyncio.run(click_preview(table, args))
+    dialog.assert_not_called()
+    assert table.has_dialog_open is False
+
+
+def test_preview_rejects_hidden_target_and_select_mode(preview_table):
+    table, dialog = preview_table
+
+    async def run_test():
+        await table.handle_name_filter_change(SimpleNamespace(value="资料"))
+        await click_preview(table, {"path": "Report.TXT"})
+        await table.handle_name_filter_change(SimpleNamespace(value=""))
+        table.is_select_mode = True
+        await click_preview(table, {"path": "Report.TXT"})
+
+    asyncio.run(run_test())
+    dialog.assert_not_called()
+
+
+def test_preview_click_and_space_share_guard_and_allow_reopening(preview_table):
+    table, dialog = preview_table
+
+    async def run_test():
+        entered = asyncio.Event()
+        closed = asyncio.Event()
+
+        async def open_dialog():
+            entered.set()
+            await closed.wait()
+
+        dialog.return_value.open.side_effect = open_dialog
+        table.browser_table.selected = [table.directory_rows[0]]
+        opening = asyncio.create_task(click_preview(table, {"path": "Report.TXT"}))
+        await entered.wait()
+        assert table.has_dialog_open is True
+        await click_preview(table, {"path": "Report.TXT"})
+        await table.handle_keyboard_space_event()
+        dialog.assert_called_once()
+        closed.set()
+        await opening
+        await table.handle_keyboard_space_event()
+
+    asyncio.run(run_test())
+    assert dialog.call_count == 2
+    assert table.has_dialog_open is False
+
+
+@pytest.mark.parametrize("failure", ["construct", "open"])
+def test_preview_failure_restores_guard_and_reports_existing_error(
+    preview_table, failure, monkeypatch
+):
+    table, dialog = preview_table
+    error = Mock()
+    monkeypatch.setattr("app.ui.components.table.notify.error", error)
+    if failure == "construct":
+        dialog.side_effect = RuntimeError("preview unavailable")
+    else:
+        dialog.return_value.open.side_effect = RuntimeError("preview unavailable")
+    asyncio.run(click_preview(table, {"path": "Report.TXT"}))
+    assert table.has_dialog_open is False
+    error.assert_called_once()
+    assert "preview unavailable" in error.call_args.args[0]
+    dialog.side_effect = None
+    dialog.return_value.open.side_effect = None
+    asyncio.run(click_preview(table, {"path": "Report.TXT"}))
+    assert dialog.call_count == 2
+    assert table.has_dialog_open is False
+
+
+def test_preview_slot_wires_accessible_button_and_stops_row_events():
+    import inspect
+
+    source = inspect.getsource(FileBrowserTable.__init__)
+    button = next(line for line in source.splitlines() if 'icon="visibility"' in line)
+    assert "v-if=\"props.row.type === 'file'\"" in button
+    assert "aria-label=" in button
+    assert "@click.stop=\"$parent.$emit('preview'," in button
+    assert "@dblclick.stop" in button
+    assert "@keydown.stop" in button
+    assert "@keyup.stop" in button
+    assert (
+        "if self.is_select_mode:\n                columns.remove(self.action_column)"
+        in source
+    )
+    assert (
+        'self.browser_table.on("preview", self.handle_preview_button_click)' in source
+    )
+
+
+def test_space_preview_rejects_stale_selection_and_directory(preview_table):
+    table, dialog = preview_table
+
+    async def run_test():
+        for selected in ([], [table.directory_rows[1]], [{"path": "hidden.txt"}]):
+            table.browser_table.selected = selected
+            await table.handle_keyboard_space_event()
+
+    asyncio.run(run_test())
+    dialog.assert_not_called()
+
+
+def test_double_click_still_opens_download_confirmation(preview_table, monkeypatch):
+    table, preview = preview_table
+    confirm = Mock()
+    confirm.return_value.open = AsyncMock(return_value=False)
+    monkeypatch.setattr("app.ui.components.table.ConfirmDialog", confirm)
+    asyncio.run(
+        table.handle_row_double_click(
+            SimpleNamespace(args=[None, table.directory_rows[0], 0])
+        )
+    )
+    confirm.return_value.open.assert_awaited_once()
+    preview.assert_not_called()
