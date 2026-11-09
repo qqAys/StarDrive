@@ -138,3 +138,7 @@ Whether it's fixing bugs, adding features, or improving docs, your help is appre
 ## 许可 (License)
 
 本项目遵循 [MIT](./LICENSE) 许可证。
+
+### 当前目录类型筛选
+
+文件列表可选择全部条目、仅文件或仅文件夹，并与名称过滤组合。计数显示当前目录完整列表的匹配数和总数，涵盖所有分页。类型变化清空选择并回到首页，重置筛选恢复全部条目，切换目录重置条件。递归搜索仍由原搜索按钮进入。

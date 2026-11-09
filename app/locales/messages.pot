@@ -2010,3 +2010,24 @@ msgstr ""
 
 msgid "No startup terminal for the initial password. Use local administrator recovery."
 msgstr ""
+
+msgid "All items"
+msgstr ""
+
+msgid "Files only"
+msgstr ""
+
+msgid "Folders only"
+msgstr ""
+
+msgid "Entry type"
+msgstr ""
+
+msgid "Reset filters"
+msgstr ""
+
+msgid "Matching items"
+msgstr ""
+
+msgid "No items match the filters. Reset filters to show all items."
+msgstr ""

@@ -2545,3 +2545,24 @@ msgstr "New password must not exceed 72 UTF-8 bytes."
 
 msgid "No startup terminal for the initial password. Use local administrator recovery."
 msgstr "No startup terminal for the initial password. Use local administrator recovery."
+
+msgid "All items"
+msgstr "All items"
+
+msgid "Files only"
+msgstr "Files only"
+
+msgid "Folders only"
+msgstr "Folders only"
+
+msgid "Entry type"
+msgstr "Entry type"
+
+msgid "Reset filters"
+msgstr "Reset filters"
+
+msgid "Matching items"
+msgstr "Matching items"
+
+msgid "No items match the filters. Reset filters to show all items."
+msgstr "No items match the filters. Reset filters to show all items."
