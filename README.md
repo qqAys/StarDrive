@@ -61,6 +61,8 @@ StarDrive 采用了现代化的 Python 技术栈：
 `GET /api/healthz` 检查 HTTP 存活。请另行验证登录和初始化。
 更多配置、反代要求与排障见 [运维指南](docs/OPERATIONS.md)。
 
+本地上传在完整接收并关闭暂存文件后替换目标，失败或取消保留原文件。覆盖需要额外磁盘空间，故障恢复及限制见 [本地上传](docs/OPERATIONS.md#本地上传与故障恢复)。
+
 ### 数据库升级与备份
 
 启动时会自动执行 SQLite 迁移。首次启动会创建数据库。迁移前请停止写入并备份数据库、
@@ -73,7 +75,7 @@ StarDrive 采用了现代化的 Python 技术栈：
 
 ## 版本与 Docker 发布 (Versioning and Docker releases)
 
-StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.6.23`**，格式为
+StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.11.10`**，格式为
 `YYYY.M.D`；同一天的补发版本在末尾增加序号，例如 `2026.6.23.1`。版本仅在
 `pyproject.toml` 中维护；已安装的发行包会从包元数据读取，源码运行时则读取同一份
 `pyproject.toml` 元数据。

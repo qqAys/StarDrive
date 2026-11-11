@@ -12,7 +12,7 @@ from app.core.version import app_version
 def test_app_version_comes_from_package_metadata(monkeypatch):
     monkeypatch.setenv("STARDRIVE_APP_VERSION", "not-a-real-release")
 
-    assert Config().APP_VERSION == app_version() == "2026.6.23"
+    assert Config().APP_VERSION == app_version() == "2026.11.10"
 
 
 def test_app_secret_accepts_legacy_unprefixed_environment_variable(monkeypatch):
