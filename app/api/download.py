@@ -3,14 +3,28 @@ import time
 from typing import Annotated
 from urllib.parse import quote
 
+import anyio
 from fastapi import Depends, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
 from app.api import download_form_browser_url_prefix, router
 from app.schemas.file_schema import FileType
+from app.storage.base import StorageFileNotFoundError, StoragePermissionError
 from app.services.download_service import verify_download_token
 from app.services.file_service import FileDownloadInfo, create_user_storage_manager
+from app import globals
+
+
+class DownloadStreamingResponse(StreamingResponse):
+    """Close the source even when sending fails or the client disconnects."""
+
+    async def __call__(self, scope, receive, send):
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            with anyio.CancelScope(shield=True):
+                await self.body_iterator.aclose()
 
 
 @router.get("/" + download_form_browser_url_prefix + "/{jwt_token}")
@@ -26,18 +40,27 @@ async def download_form_browser_api(
     if not validated_data.user_id:
         raise HTTPException(status_code=400, detail="Download owner is missing.")
 
+    if not validated_data.share_id:
+        user = await globals.get_user_manager().current_user()
+        if not user or user.id != validated_data.user_id:
+            raise HTTPException(status_code=403, detail="Download access denied.")
+
     file_manager = create_user_storage_manager(validated_data.user_id)
 
-    is_multi_file = isinstance(validated_data.name, list)
+    is_multi_file = validated_data.type == FileType.MIXED
 
     def multi_download(source_is_single_dir: bool = False):
-        if source_is_single_dir:
-            relative_paths = [validated_data.path]
-        else:
-            relative_paths = validated_data.path
-
-        if not relative_paths:
-            raise HTTPException(status_code=400, detail="No files or folders provided.")
+        try:
+            relative_paths = validated_data.archive_paths
+            file_manager.validate_archive_paths(
+                relative_paths, validated_data.base_path
+            )
+        except (FileNotFoundError, StorageFileNotFoundError):
+            raise HTTPException(status_code=404, detail="File not found")
+        except StoragePermissionError:
+            raise HTTPException(status_code=403, detail="Download access denied.")
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="Invalid archive selection")
 
         timestamp = int(time.time())
 
@@ -53,7 +76,7 @@ async def download_form_browser_api(
             "Cache-Control": "no-store",
         }
 
-        return StreamingResponse(
+        return DownloadStreamingResponse(
             content=file_manager.download_file_with_compressed_stream(
                 relative_paths, validated_data.base_path
             ),
@@ -92,7 +115,7 @@ async def download_form_browser_api(
                 headers["Content-Length"] = str(length)
             except ValueError:
                 raise HTTPException(status_code=416, detail="Invalid range")
-        return StreamingResponse(
+        return DownloadStreamingResponse(
             file_manager.download_file_with_stream(
                 str(validated_data.path), start, length
             ),

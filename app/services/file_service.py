@@ -1,5 +1,9 @@
 import asyncio
+import anyio
 import io
+import json
+import queue
+import threading
 import sys
 import tarfile
 import time
@@ -134,39 +138,70 @@ def get_file_icon(type_: str, extension: str):
 
 
 class AsyncStreamWriter:
+    """Bounded thread-to-async channel with explicit completion and cancellation."""
+
     def __init__(self):
-        self.queue = asyncio.Queue()
-        self.closed = False
+        self.queue = queue.Queue(maxsize=8)
+        self.stopped = threading.Event()
+        self.done = threading.Event()
+        self.error = None
 
     def write(self, data: bytes):
-        if data:
-            self.queue.put_nowait(data)
+        for offset in range(0, len(data), 65536):
+            while not self.stopped.is_set():
+                try:
+                    self.queue.put(data[offset : offset + 65536], timeout=0.05)
+                    break
+                except queue.Full:
+                    continue
+            else:
+                raise InterruptedError("Archive consumer disconnected")
+        return len(data)
 
     def flush(self):
         pass
 
     def close(self):
-        self.closed = True
+        self.done.set()
 
     async def __aiter__(self):
-        while not self.closed or not self.queue.empty():
-            chunk = await self.queue.get()
-            yield chunk
+        while True:
+            if self.error is not None:
+                raise self.error
+            try:
+                chunk = self.queue.get_nowait()
+            except queue.Empty:
+                if self.done.is_set():
+                    return
+                await asyncio.sleep(0.01)
+            else:
+                yield chunk
 
 
 class _StreamReader(io.RawIOBase):
     """Adapt a byte iterator to the file interface expected by tarfile."""
 
-    def __init__(self, chunks: Iterator[bytes]):
+    def __init__(self, chunks: Iterator[bytes], stopped: threading.Event):
+        self._stopped = stopped
         self._chunks = iter(chunks)
         self._buffer = b""
 
     def readable(self) -> bool:
         return True
 
+    def close(self):
+        try:
+            close = getattr(self._chunks, "close", None)
+            if close:
+                close()
+        finally:
+            super().close()
+
     def readinto(self, buffer) -> int:
         wanted = len(buffer)
         while len(self._buffer) < wanted:
+            if self._stopped.is_set():
+                raise InterruptedError("Archive consumer disconnected")
             try:
                 self._buffer += next(self._chunks)
             except StopIteration:
@@ -296,8 +331,21 @@ class StorageManager:
             stream = backend.download_file_with_stream(remote_path)
         else:
             stream = backend.download_file_with_stream(remote_path, offset, length)
-        for chunk in stream:
-            yield chunk
+        try:
+            yield from stream
+        finally:
+            close = getattr(stream, "close", None)
+            if close:
+                close()
+
+    def validate_archive_paths(self, relative_paths: list[str], base_dir_path: str):
+        if not relative_paths or not isinstance(base_dir_path, str):
+            raise ValueError("Invalid archive selection")
+        for path in relative_paths:
+            if not isinstance(path, str) or not path or ".." in Path(path).parts:
+                raise ValueError("Invalid archive path")
+            Path(path).relative_to(base_dir_path)
+            self.get_file_metadata(path)
 
     async def download_file_with_compressed_stream(
         self,
@@ -307,10 +355,13 @@ class StorageManager:
         """
         Stream-compress and download multiple files as a tar.gz archive.
         """
+        self.validate_archive_paths(relative_paths, base_dir_path)
         writer = AsyncStreamWriter()
         loop = asyncio.get_running_loop()
 
         def add_entry(tar: tarfile.TarFile, path: str, arcname: str):
+            if writer.stopped.is_set():
+                raise InterruptedError("Archive consumer disconnected")
             metadata = self.get_file_metadata(path)
             if isinstance(metadata, DirMetadata):
                 info = tarfile.TarInfo(arcname.rstrip("/") + "/")
@@ -323,10 +374,10 @@ class StorageManager:
             info = tarfile.TarInfo(arcname)
             info.size = metadata.size
             info.mtime = int(metadata.modified_at or time.time())
-            tar.addfile(
-                info,
-                io.BufferedReader(_StreamReader(self.download_file_with_stream(path))),
-            )
+            with io.BufferedReader(
+                _StreamReader(self.download_file_with_stream(path), writer.stopped)
+            ) as stream:
+                tar.addfile(info, stream)
 
         def tar_worker():
             try:
@@ -338,18 +389,25 @@ class StorageManager:
                 ) as tar:
                     for rel in relative_paths:
                         if not self.exists(rel):
-                            continue
+                            raise FileNotFoundError(rel)
                         arcname = str(Path(rel).relative_to(base_dir_path))
                         add_entry(tar, rel, arcname)
+            except BaseException as exc:
+                writer.error = exc
             finally:
                 writer.close()
 
-        # Run compression in a background thread
-        loop.run_in_executor(None, tar_worker)
-
-        # Yield compressed chunks as they become available
-        async for chunk in writer:
-            yield chunk
+        task = loop.run_in_executor(None, tar_worker)
+        try:
+            async for chunk in writer:
+                yield chunk
+            await task
+            if writer.error is not None:
+                raise writer.error
+        finally:
+            writer.stopped.set()
+            with anyio.CancelScope(shield=True):
+                await asyncio.shield(task)
 
     def delete_file(self, remote_path: str) -> bool:
         """Delete a remote file."""
@@ -463,6 +521,26 @@ async def generate_download_url(
     """
     Generate a secure, time-limited download URL for a file or folder.
     """
+    if isinstance(target_path, list):
+        if (
+            not target_path
+            or any(not isinstance(path, str) or not path for path in target_path)
+            or not isinstance(name, list)
+            or len(name) != len(target_path)
+            or any(not isinstance(part, str) or not part for part in name)
+            or source != FileSource.DOWNLOAD
+        ):
+            raise ValueError("Invalid batch download selection")
+        type_ = FileType.MIXED
+        target_path = json.dumps({"version": 1, "paths": target_path})
+        name = "bulk_download"
+    elif (
+        not isinstance(target_path, str)
+        or not isinstance(name, str)
+        or type_ == FileType.MIXED
+    ):
+        raise ValueError("Invalid download selection")
+
     if not app.storage.general.get("service_url", None):
         notify.error(
             _(
