@@ -358,11 +358,16 @@ class StorageManager:
         self.validate_archive_paths(relative_paths, base_dir_path)
         writer = AsyncStreamWriter()
         loop = asyncio.get_running_loop()
+        archived_paths: set[Path] = set()
 
         def add_entry(tar: tarfile.TarFile, path: str, arcname: str):
             if writer.stopped.is_set():
                 raise InterruptedError("Archive consumer disconnected")
+            normalized_path = Path(path)
+            if normalized_path in archived_paths:
+                return
             metadata = self.get_file_metadata(path)
+            archived_paths.add(normalized_path)
             if isinstance(metadata, DirMetadata):
                 info = tarfile.TarInfo(arcname.rstrip("/") + "/")
                 info.type = tarfile.DIRTYPE
