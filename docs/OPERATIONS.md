@@ -15,7 +15,7 @@ STARDRIVE_APP_HOST=127.0.0.1 STARDRIVE_APP_PORT=8080 \
 uv run --locked -m app.main
 ```
 
-浏览器打开 `http://127.0.0.1:8080/login/`。首登验收见 [生产就绪检查](PRODUCTION_READINESS.md)。已有可用测试账户时，先在 Console → Overview 设置完整的 `Service URL`，再上传一个小文本、双击文件名下载并比较内容。
+浏览器打开 `http://127.0.0.1:8080/login/`。首登验收见 [生产就绪检查](PRODUCTION_READINESS.md)。已有可用测试账户时，上传一个小文本、双击文件名下载并比较内容。站内下载使用同源 `/api/` 地址，无需设置 `Service URL`；对外分享前需在 Console → Overview 设置完整地址。
 
 本地构建使用 `docker compose -f docker-compose.build.yml up --build`，默认只映射本机回环。预构建 Compose 使用 `qqays/stardrive:latest` 并对所有接口映射，开始前检查镜像标签和端口绑定。单实例代理需要 HTTPS 和 WebSocket，设置符合样本大小的上传请求限制。每个实例使用独立持久化卷。
 
@@ -84,7 +84,7 @@ OSS 连接测试检查 Bucket 信息。对象读写、复制、删除和分段�
 | --- | --- |
 | `healthz` 200，登录页不可用 | 存活探针只检查 HTTP。查看进程日志，检查密钥、数据目录权限与 SQLite 结构 |
 | 无法取得首次管理员临时密码 | 停止服务并备份，按上文在本机交互终端重置 |
-| 下载或分享链接无法创建 | 确认 Console 的 Service URL 为收件人可访问的站点地址 |
+| 分享链接无法创建 | 确认 Console 的 Service URL 为收件人可访问的站点地址 |
 | OSS 启用后列表变空 | 核对用户、档案、Bucket 和前缀，原后端数据需要切回查看 |
 | Office 预览提示缺依赖 | 安装 LibreOffice 与所需字体或使用包含它的容器构建，复测同一示例 |
 | 密码邮件失败或链接只有相对路径 | 检查 SMTP TLS、发件人权限与绝对回调地址，使用专用测试收件人复测 |

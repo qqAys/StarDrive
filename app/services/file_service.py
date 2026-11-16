@@ -546,7 +546,7 @@ async def generate_download_url(
     ):
         raise ValueError("Invalid download selection")
 
-    if not app.storage.general.get("service_url", None):
+    if source == FileSource.SHARE and not app.storage.general.get("service_url"):
         notify.error(
             _(
                 "Service URL is not configured. Please set it in the console before sharing files."
@@ -591,19 +591,18 @@ async def generate_download_url(
         if this_url_ttl:
             expires_delta = this_url_ttl - current_time_utc
 
-        server_url_prefix = app.storage.general["service_url"]
-
         if source == FileSource.DOWNLOAD:
             token = create_token(
                 payload,
                 expires_delta=expires_delta or settings.DEFAULT_DOWNLOAD_LINK_TTL,
             )
-            url = f"{server_url_prefix}/api/{download_form_browser_url_prefix}/{token}"
+            url = f"/api/{download_form_browser_url_prefix}/{token}"
         elif source == FileSource.SHARE:
             token = create_token(
                 payload,
                 expires_delta=expires_delta,
             )
+            server_url_prefix = app.storage.general["service_url"].rstrip("/")
             url = f"{server_url_prefix}/share/{token}"
         else:
             raise ValueError("Invalid source")
