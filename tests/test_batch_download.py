@@ -3,21 +3,31 @@
 import asyncio
 import io
 import json
+import re
+import tarfile
 import threading
+from contextlib import asynccontextmanager
 from datetime import timedelta
+from email.message import Message
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
+from urllib.parse import urlsplit
 
+import httpx
 import pytest
+from fastapi import FastAPI
 from sqlalchemy import create_engine
-from sqlmodel import Session, SQLModel
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlmodel import Session, SQLModel, select
 from starlette.requests import Request
 from fastapi import HTTPException
 from app.storage.base import StorageFileNotFoundError
 
+from app.api import download
 from app.api.download import download_form_browser_api
 from app.models.file_download_model import FileDownloadInfo
 from app.schemas.file_schema import FileSource, FileType
+from app.security.tokens import decode_token
 from app.services import file_service
 from app.services.file_service import AsyncStreamWriter, StorageManager
 from app.utils.time import utc_now
@@ -300,9 +310,8 @@ def test_share_directory_archive_keeps_existing_entry_path(tmp_path, monkeypatch
     assert asyncio.run(asyncio.wait_for(consume(), 2))
 
 
-def test_generate_persists_versioned_selection(monkeypatch):
-    from contextlib import asynccontextmanager
-
+@pytest.mark.parametrize("general", [{}, {"service_url": "https://example.test"}])
+def test_generate_persists_versioned_selection(monkeypatch, general):
     @asynccontextmanager
     async def database():
         yield object()
@@ -318,9 +327,7 @@ def test_generate_persists_versioned_selection(monkeypatch):
         file_service,
         "app",
         SimpleNamespace(
-            storage=SimpleNamespace(
-                general={"service_url": "http://testserver"}, user={"last_path": "."}
-            )
+            storage=SimpleNamespace(general=general, user={"last_path": "."})
         ),
     )
     url = asyncio.run(
@@ -339,7 +346,163 @@ def test_generate_persists_versioned_selection(monkeypatch):
         "version": 1,
         "paths": ["a", "b", "folder"],
     }
-    assert url.endswith("/api/download-form-browser/synthetic")
+    assert url == "/api/download-form-browser/synthetic"
+
+
+@pytest.fixture
+def download_http(tmp_path, monkeypatch):
+    general = {}
+    user = SimpleNamespace(id="synthetic-owner")
+    file_root = tmp_path / "files"
+    (file_root / "folder").mkdir(parents=True)
+    (file_root / "a.txt").write_bytes(b"alpha")
+    (file_root / "folder" / "b.txt").write_bytes(b"beta")
+    storage = manager(file_root)
+    current_user = AsyncMock(return_value=user)
+    monkeypatch.setattr(
+        download.globals,
+        "get_user_manager",
+        lambda: SimpleNamespace(current_user=current_user),
+    )
+    monkeypatch.setattr(download, "create_user_storage_manager", lambda owner: storage)
+    monkeypatch.setattr(
+        file_service,
+        "app",
+        SimpleNamespace(
+            storage=SimpleNamespace(general=general, user={"last_path": "."})
+        ),
+    )
+    application = FastAPI()
+    application.include_router(download.router)
+
+    @asynccontextmanager
+    async def open_client():
+        engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'downloads.db'}")
+
+        @asynccontextmanager
+        async def database():
+            async with AsyncSession(engine, expire_on_commit=False) as session:
+                yield session
+
+        monkeypatch.setattr(file_service, "get_db_context", database)
+        try:
+            async with engine.begin() as connection:
+                await connection.run_sync(FileDownloadInfo.__table__.create)
+            async with httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=application),
+                base_url="https://files.example.test",
+            ) as client:
+                yield client, database
+        finally:
+            await engine.dispose()
+
+    return open_client, general, user, current_user
+
+
+@pytest.mark.parametrize(
+    ("kind", "path", "name", "filename_pattern", "members"),
+    [
+        (FileType.FILE, "a.txt", "a.txt", r"a\.txt", None),
+        (
+            FileType.DIR,
+            "folder",
+            "folder",
+            r"folder_archive_\d+\.tar\.gz",
+            {"folder/b.txt": b"beta"},
+        ),
+        (
+            FileType.MIXED,
+            ["a.txt", "folder"],
+            ["a.txt", "folder"],
+            r"bulk_download_\d+\.tar\.gz",
+            {"a.txt": b"alpha", "folder/b.txt": b"beta"},
+        ),
+    ],
+)
+def test_private_generated_link_downloads_without_service_url(
+    download_http, kind, path, name, filename_pattern, members
+):
+    open_client, _, user, _ = download_http
+
+    async def check():
+        async with open_client() as (client, _):
+            url = await file_service.generate_download_url(
+                path, name, kind, FileSource.DOWNLOAD, current_user=user
+            )
+            assert url.startswith("/api/download-form-browser/")
+            response = await client.get(url)
+            assert response.status_code == 200
+            headers = Message()
+            headers["Content-Disposition"] = response.headers["content-disposition"]
+            assert headers.get_content_disposition() == "attachment"
+            assert re.fullmatch(filename_pattern, headers.get_filename())
+            if members is None:
+                assert response.content == b"alpha"
+                return
+            with tarfile.open(
+                fileobj=io.BytesIO(response.content), mode="r:gz"
+            ) as archive:
+                assert {
+                    entry.name for entry in archive if entry.isfile()
+                } == members.keys()
+                for member, content in members.items():
+                    assert archive.extractfile(member).read() == content
+
+    asyncio.run(check())
+
+
+def test_public_share_requires_service_url_and_derived_download_is_relative(
+    download_http, monkeypatch
+):
+    open_client, general, user, current_user = download_http
+    notifications = []
+    monkeypatch.setattr(
+        file_service, "notify", SimpleNamespace(error=notifications.append)
+    )
+    monkeypatch.setattr(file_service, "_", lambda message: message)
+
+    async def check():
+        async with open_client() as (client, database):
+            args = ("a.txt", "a.txt", FileType.FILE, FileSource.SHARE)
+            assert (
+                await file_service.generate_download_url(*args, current_user=user)
+                is None
+            )
+            assert (
+                len(notifications) == 1
+                and "Service URL is not configured" in notifications[0]
+            )
+            async with database() as session:
+                assert (await session.execute(select(FileDownloadInfo))).first() is None
+
+            general["service_url"] = "https://files.example.test/"
+            share_url = await file_service.generate_download_url(
+                *args, current_user=user
+            )
+            assert share_url.startswith("https://files.example.test/share/")
+            share_id = decode_token(urlsplit(share_url).path.rsplit("/", 1)[1])[
+                "download_id"
+            ]
+            share = await file_service.get_download_info(share_id)
+            assert share.source == FileSource.SHARE
+            assert share.url == share_url
+
+            general.clear()
+            current_user.return_value = None
+            url = await file_service.generate_download_url(
+                share.path,
+                share.name,
+                share.type,
+                FileSource.DOWNLOAD,
+                share_id=share.id,
+                base_path=share.path,
+            )
+            assert url.startswith("/api/download-form-browser/")
+            response = await client.get(url)
+            assert response.status_code == 200
+            assert response.content == b"alpha"
+
+    asyncio.run(check())
 
 
 @pytest.mark.parametrize(
