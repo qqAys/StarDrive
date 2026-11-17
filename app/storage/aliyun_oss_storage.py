@@ -12,6 +12,7 @@ try:
 except ImportError:  # LocalStorage remains usable before dependencies are synced.
     oss = None
 
+from app.core.i18n import _
 from app.schemas.file_schema import DirMetadata, FileMetadata
 from app.services.storage_config_service import OSSConfig
 from app.storage.base import (
@@ -344,17 +345,25 @@ class AliyunOSSStorage(StorageBackend):
 
     def _delete_keys(self, keys: list[str]) -> None:
         for index in range(0, len(keys), 1000):
+            batch = keys[index : index + 1000]
             delete = oss.Delete(
-                objects=[
-                    oss.ObjectIdentifier(key=key) for key in keys[index : index + 1000]
-                ],
-                quiet=True,
+                objects=[oss.ObjectIdentifier(key=key) for key in batch],
+                quiet=False,
             )
-            self.client.delete_multiple_objects(
+            result = self.client.delete_multiple_objects(
                 oss.DeleteMultipleObjectsRequest(
                     bucket=self.config.bucket, delete=delete
                 )
             )
+            # SDK 1.3.1 exposes successful Deleted entries, without per-key errors.
+            # Verbose mode lets us require confirmation of every requested key.
+            confirmed = {item.key for item in result.deleted_objects or []}
+            if not set(batch).issubset(confirmed):
+                raise StorageError(
+                    _(
+                        "OSS deletion could not be fully confirmed. Check the remaining files before retrying."
+                    )
+                )
 
     def delete_directory(self, remote_path: str) -> None:
         if not self._is_dir(remote_path):

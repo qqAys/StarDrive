@@ -2034,3 +2034,6 @@ msgstr ""
 
 msgid "No items match the filters. Reset filters to show all items."
 msgstr ""
+
+msgid "OSS deletion could not be fully confirmed. Check the remaining files before retrying."
+msgstr ""
