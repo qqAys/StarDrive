@@ -865,10 +865,18 @@ class MetadataDialog(Dialog):
         ).open()
         if confirm:
             try:
-                self.file_manager.delete_file(self.metadata.path)
+                if self.is_dir:
+                    self.file_manager.delete_directory(self.metadata.path)
+                else:
+                    self.file_manager.delete_file(self.metadata.path)
                 notify.success(_("Deleted successfully"))
             except Exception as e:
                 notify.error(str(e))
+                notify.warning(
+                    _(
+                        "Operation may be partially complete. Check remaining source items and destination copies before retrying."
+                    )
+                )
             await self.refresh_browser()
 
     async def on_rename_button_click(self):
@@ -885,6 +893,11 @@ class MetadataDialog(Dialog):
                 notify.success(_("Renamed successfully"))
             except Exception as e:
                 notify.error(str(e))
+                notify.warning(
+                    _(
+                        "Operation may be partially complete. Check remaining source items and destination copies before retrying."
+                    )
+                )
             await self.refresh_browser()
 
     async def on_move_button_click(self):
@@ -906,6 +919,11 @@ class MetadataDialog(Dialog):
                 )
             except Exception as e:
                 notify.error(str(e))
+                notify.warning(
+                    _(
+                        "Operation may be partially complete. Check remaining source items and destination copies before retrying."
+                    )
+                )
             await self.refresh_browser()
 
     async def on_share_button_click(self):

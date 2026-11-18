@@ -2037,3 +2037,6 @@ msgstr ""
 
 msgid "OSS deletion could not be fully confirmed. Check the remaining files before retrying."
 msgstr ""
+
+msgid "Operation may be partially complete. Check remaining source items and destination copies before retrying."
+msgstr ""

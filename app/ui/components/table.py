@@ -862,7 +862,14 @@ class FileBrowserTable:
                     result.append({"action": "delete", "raw": item, "result": True})
                 except Exception as e:
                     notify.error(str(e))
-            notify.success(_("Moved {count} items").format(count=len(result)))
+            if len(result) == len(self.browser_table.selected):
+                notify.success(_("Moved {count} items").format(count=len(result)))
+            else:
+                notify.warning(
+                    _(
+                        "Operation may be partially complete. Check remaining source items and destination copies before retrying."
+                    )
+                )
         else:
             return
 
@@ -897,6 +904,11 @@ class FileBrowserTable:
                 notify.success(_("Deleted {count} items").format(count=len(result)))
             except Exception as e:
                 notify.error(str(e))
+                notify.warning(
+                    _(
+                        "Operation may be partially complete. Check remaining source items and destination copies before retrying."
+                    )
+                )
         else:
             return
 
