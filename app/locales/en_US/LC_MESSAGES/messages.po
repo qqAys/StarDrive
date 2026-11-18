@@ -2572,3 +2572,6 @@ msgstr "No items match the filters. Reset filters to show all items."
 
 msgid "OSS deletion could not be fully confirmed. Check the remaining files before retrying."
 msgstr "OSS deletion could not be fully confirmed. Check the remaining files before retrying."
+
+msgid "Operation may be partially complete. Check remaining source items and destination copies before retrying."
+msgstr "Operation may be partially complete. Check remaining source items and destination copies before retrying."
