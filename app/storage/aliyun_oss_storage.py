@@ -14,7 +14,7 @@ except ImportError:  # LocalStorage remains usable before dependencies are synce
 
 from app.core.i18n import _
 from app.schemas.file_schema import DirMetadata, FileMetadata
-from app.services.storage_config_service import OSSConfig
+from app.storage.providers import OSSConfig
 from app.storage.base import (
     StorageBackend,
     StorageConfigurationError,
