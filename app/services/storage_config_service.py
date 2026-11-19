@@ -16,11 +16,6 @@ except ImportError:  # LocalStorage remains bootable before optional deps are sy
     Fernet = None
     InvalidToken = Exception
 
-try:
-    import alibabacloud_oss_v2 as oss
-except ImportError:  # LocalStorage remains usable before OSS dependencies are synced.
-    oss = None
-
 from app.config import settings
 from app.core.paths import STORAGE_DIR
 from app.crud.system_crud import AppSettingCRUD, StorageProfileCRUD
@@ -30,29 +25,13 @@ from app.utils.time import utc_now
 
 CURRENT_BACKEND_KEY = "storage.current_backend"
 OSS_CONFIG_KEY = "storage.oss.config"
-LOCAL_STORAGE = "LocalStorage"
-ALIYUN_OSS = "AliyunOSS"
-SUPPORTED_BACKENDS = {LOCAL_STORAGE, ALIYUN_OSS}
-
-
-@dataclass(slots=True)
-class OSSConfig:
-    region: str
-    endpoint: str
-    bucket: str
-    access_key_id: str
-    access_key_secret: str
-    prefix: str = ""
-
-    def public(self) -> dict[str, str | bool]:
-        return {
-            "region": self.region,
-            "endpoint": self.endpoint,
-            "bucket": self.bucket,
-            "access_key_id": self.access_key_id,
-            "prefix": self.prefix,
-            "has_access_key_secret": bool(self.access_key_secret),
-        }
+from app.storage.providers import (
+    OSSConfig,
+    LOCAL_STORAGE,
+    ALIYUN_OSS,
+    SUPPORTED_BACKENDS,
+    provider,
+)
 
 
 @dataclass(slots=True)
@@ -218,14 +197,7 @@ class StorageConfigService:
         try:
             config = dict(profile.public_config or {})
             secrets = self._decrypt_secrets(profile.encrypted_secrets)
-            return OSSConfig(
-                region=(config.get("region") or "").strip(),
-                endpoint=(config.get("endpoint") or "").strip(),
-                bucket=(config.get("bucket") or "").strip(),
-                access_key_id=(config.get("access_key_id") or "").strip(),
-                access_key_secret=(secrets.get("access_key_secret") or "").strip(),
-                prefix=(config.get("prefix") or "").strip(),
-            )
+            return provider.decode(config, secrets)
         except (InvalidToken, TypeError, ValueError):
             return None
 
@@ -285,33 +257,11 @@ class StorageConfigService:
                 self._set_active_profile(profile)
             return self._profile_view(profile)
 
-    def _validate_draft(self, draft: StorageProfileDraft) -> None:
-        if not draft.name.strip():
-            raise ValueError("Profile name is required")
-        if draft.backend_type not in SUPPORTED_BACKENDS:
-            raise ValueError("Unsupported storage backend")
-        if draft.backend_type == ALIYUN_OSS:
-            public_config = draft.public_config or {}
-            required = ("region", "endpoint", "bucket", "access_key_id")
-            if any(
-                not str(public_config.get(field) or "").strip() for field in required
-            ):
-                raise ValueError(
-                    "OSS region, endpoint, bucket and AccessKey ID are required"
-                )
+    def _validate_draft(self, draft):
+        provider.validate(draft)
 
-    def _normalized_public_config(self, draft: StorageProfileDraft) -> dict:
-        if draft.backend_type == LOCAL_STORAGE:
-            return self._local_public_config()
-        return {
-            "region": str(draft.public_config.get("region") or "").strip(),
-            "endpoint": str(draft.public_config.get("endpoint") or "").strip(),
-            "bucket": str(draft.public_config.get("bucket") or "").strip(),
-            "access_key_id": str(
-                draft.public_config.get("access_key_id") or ""
-            ).strip(),
-            "prefix": str(draft.public_config.get("prefix") or "").strip(),
-        }
+    def _normalized_public_config(self, draft):
+        return provider.public_config(draft)
 
     async def test_profile(
         self,
@@ -362,22 +312,7 @@ class StorageConfigService:
         config = self._oss_config_from_profile(profile)
         if config is None or not config.access_key_secret:
             return StorageProfileTestResult(False, "OSS secret is not configured")
-        if oss is None:
-            return StorageProfileTestResult(
-                False, "Aliyun OSS support requires the 'alibabacloud-oss-v2' package"
-            )
-        try:
-            sdk_config = oss.config.load_default()
-            sdk_config.credentials_provider = oss.credentials.StaticCredentialsProvider(
-                config.access_key_id, config.access_key_secret
-            )
-            sdk_config.region = config.region
-            sdk_config.endpoint = config.endpoint
-            client = oss.Client(sdk_config)
-            client.get_bucket_info(oss.GetBucketInfoRequest(bucket=config.bucket))
-        except Exception as exc:
-            return StorageProfileTestResult(False, str(exc))
-        return StorageProfileTestResult(True, "Storage profile connection verified")
+        return StorageProfileTestResult(*provider.connection_test(config))
 
     async def activate_profile(self, profile_id: str) -> StorageProfileView:
         async with get_db_context() as session:

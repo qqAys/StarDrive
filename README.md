@@ -75,7 +75,7 @@ StarDrive 采用了现代化的 Python 技术栈：
 
 ## 版本与 Docker 发布 (Versioning and Docker releases)
 
-StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.11.18`**，格式为
+StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.11.19`**，格式为
 `YYYY.M.D`；同一天的补发版本在末尾增加序号，例如 `2026.6.23.1`。版本仅在
 `pyproject.toml` 中维护；已安装的发行包会从包元数据读取，源码运行时则读取同一份
 `pyproject.toml` 元数据。
@@ -103,6 +103,8 @@ Docker 镜像会内置 LibreOffice 和 Noto CJK 字体，以支持中文等 CJK 
 请安装可用的中文字体。
 
 ## 阿里云 OSS 后端
+
+本地与 OSS 的配置契约集中在 `app/storage/providers.py`；档案持久化与秘密加密仍由配置服务负责。此调整不迁移文件或改变已有档案格式。
 
 超级管理员可在“Console”中录入 OSS Region、endpoint、Bucket、AccessKey ID/Secret 和可选对象前缀，先执行连接校验，再切换当前存储后端。后端使用官方 `alibabacloud-oss-v2` SDK；SDK V2 默认采用 V4 签名，因此 Region 必填。凭据以应用的 `APP_SECRET` 派生密钥加密保存于本地数据库，生产环境必须设置足够强且稳定的 `APP_SECRET`。
 

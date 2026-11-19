@@ -40,6 +40,7 @@ from app.services.local_db_service import get_db_context
 from app.storage.base import StorageBackend
 from app.storage.aliyun_oss_storage import AliyunOSSStorage
 from app.storage.local_storage import LocalStorage
+from app.storage.providers import provider
 from app.services.storage_config_service import storage_config
 from app.ui.components.notify import notify
 from app.utils.size import bytes_to_human_readable
@@ -489,7 +490,7 @@ def create_user_storage_manager(user_id: str) -> StorageManager:
         and storage_config.oss_config
     ):
         manager.register_backend(
-            AliyunOSSStorage.name, AliyunOSSStorage(storage_config.oss_config, user_id)
+            AliyunOSSStorage.name, provider.build(storage_config.oss_config, user_id)
         )
         manager.set_current_backend(AliyunOSSStorage.name)
     else:
