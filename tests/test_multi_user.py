@@ -112,9 +112,15 @@ class FakeUserCRUD:
         return user
 
 
+class FakeSession:
+    async def get(self, model, key):
+        # Legacy installations may have users before a setup marker is saved.
+        return None
+
+
 class FakeDBContext:
     async def __aenter__(self):
-        return SimpleNamespace()
+        return FakeSession()
 
     async def __aexit__(self, exc_type, exc, tb):
         return False
@@ -132,6 +138,9 @@ def test_create_user_defaults_to_active_regular_user_quota(mocker):
         )
         manager = UserManager(user_crud=FakeUserCRUD, db_context=fake_db_context)
 
+        await manager.create_user(
+            email="owner@example.com", password="Valid123!", is_superuser=True
+        )
         user = await manager.register_user(
             email="new@example.com",
             password="Valid123!",
@@ -152,6 +161,9 @@ def test_registration_can_be_disabled(mocker):
         )
         manager = UserManager(user_crud=FakeUserCRUD, db_context=fake_db_context)
 
+        await manager.create_user(
+            email="owner@example.com", password="Valid123!", is_superuser=True
+        )
         with pytest.raises(ValueError, match="Registration"):
             await manager.register_user(
                 email="new@example.com",

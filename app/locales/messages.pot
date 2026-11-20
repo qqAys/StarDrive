@@ -2040,3 +2040,39 @@ msgstr ""
 
 msgid "Operation may be partially complete. Check remaining source items and destination copies before retrying."
 msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Create the first administrator"
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup credential"
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Create administrator"
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Use at least 8 characters with uppercase, lowercase, a digit and a special character; at most 72 UTF-8 bytes."
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Set STARDRIVE_APP_SETUP_TOKEN to a random credential of at least 32 characters in the deployment environment, then restart. Setup remains closed until configured."
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup request rejected. Reload and try again."
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup could not be saved. Reload and try again."
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup is unavailable or the setup credential is invalid."
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Initial setup is already complete."
+msgstr ""
