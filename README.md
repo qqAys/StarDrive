@@ -78,7 +78,7 @@ StarDrive 采用了现代化的 Python 技术栈：
 
 ## 版本与 Docker 发布 (Versioning and Docker releases)
 
-StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.11.20`**，格式为
+StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.11.20.1`**，格式为
 `YYYY.M.D`；同一天的补发版本在末尾增加序号，例如 `2026.6.23.1`。版本仅在
 `pyproject.toml` 中维护；已安装的发行包会从包元数据读取，源码运行时则读取同一份
 `pyproject.toml` 元数据。
