@@ -20,7 +20,9 @@ COOKIE = "stardrive_setup_csrf"
 PATH = "/login/setup/"
 HEADERS = {
     "Cache-Control": "no-store",
-    "Referrer-Policy": "no-referrer",
+    # Chromium sends Origin: null for form POSTs under no-referrer. Keep the
+    # origin on same-origin submissions while suppressing cross-origin referrers.
+    "Referrer-Policy": "same-origin",
     "X-Frame-Options": "DENY",
     "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
 }

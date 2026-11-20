@@ -284,6 +284,22 @@ def form(client):
     return credentials() | {"csrf": csrf}
 
 
+def test_setup_referrer_policy_preserves_browser_origin_and_rejects_null(installation):
+    manager, _, _ = installation
+    app = FastAPI()
+    app.include_router(setup.router)
+    with TestClient(app) as client:
+        response = client.get(setup.PATH)
+        assert response.headers["referrer-policy"] == "same-origin"
+        for origin in ("null", "http://other.invalid"):
+            response = client.post(
+                setup.PATH, data=form(client), headers={"origin": origin}
+            )
+            assert response.status_code == 403
+            assert response.headers["referrer-policy"] == "same-origin"
+        assert asyncio.run(manager.setup_required())
+
+
 def test_browser_form_success_login_and_no_credential_echo(
     installation, monkeypatch, caplog
 ):
