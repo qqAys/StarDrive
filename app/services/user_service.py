@@ -7,19 +7,21 @@ from email.message import EmailMessage
 from zoneinfo import ZoneInfo
 
 from nicegui import app, ui
-from pydantic import EmailStr
+from pydantic import EmailStr, TypeAdapter, ValidationError
+from sqlalchemy import text
 
 from app.config import settings
 from app.core.i18n import _
 from app.core.logging import logger
 from app.crud.system_crud import AppSettingCRUD
 from app.crud.user_crud import PasswordResetTokenCRUD, UserCRUD
+from app.models.system_model import AppSetting
+from app.models.user_model import User
 from app.schemas.user_schema import UserLogin, UserModifyPassword
 from app.security.constants import INITIAL_PASSWORD_SESSION_KEY
+from app.security.hashing import HashingManager
 from app.security.password import (
     generate_random_password,
-    open_password_terminal,
-    show_initial_password,
     validate_password,
 )
 from app.security.tokens import create_access_token, create_refresh_token
@@ -27,6 +29,7 @@ from app.utils.time import ensure_utc, utc_now
 
 
 ALLOW_REGISTRATION_KEY = "allow_registration"
+INITIAL_SETUP_KEY = "initial_setup_completed"
 
 
 class UserManager:
@@ -44,47 +47,80 @@ class UserManager:
         self.user_crud = user_crud
         self.db_context = db_context
 
-    # Initialization: Create initial admin user
     async def initialize(self):
-        """
-        Initialize the system by creating a default admin user if no users exist.
-        The temporary password goes directly to the local terminal.
-        """
+        """Initialize policy and permanently close setup for any existing account."""
         async with self.db_context() as session:
-            if await AppSettingCRUD.get(session, ALLOW_REGISTRATION_KEY) is None:
-                await AppSettingCRUD.set_value(
-                    session,
-                    ALLOW_REGISTRATION_KEY,
-                    "1" if settings.APP_ALLOW_REGISTRATION else "0",
-                )
-
-            users = await self.user_crud.list(
-                session=session, limit=1, include_deleted=True
-            )
-            if users:
-                return
-
-            email = settings.APP_INIT_USER
-            password = generate_random_password(24)
-
-            await self.user_crud.create(
-                session=session,
-                email=email,
-                password=password,
-                is_superuser=True,
-                quota_bytes=0,
-                must_change_password=True,
-            )
-
-            try:
-                with open_password_terminal() as terminal:
-                    show_initial_password(terminal, email, password)
-            except OSError:
-                logger.warning(
-                    _(
-                        "No startup terminal for the initial password. Use local administrator recovery."
+            await session.execute(text("BEGIN IMMEDIATE"))
+            if await session.get(AppSetting, ALLOW_REGISTRATION_KEY) is None:
+                session.add(
+                    AppSetting(
+                        key=ALLOW_REGISTRATION_KEY,
+                        value="1" if settings.APP_ALLOW_REGISTRATION else "0",
                     )
                 )
+            if await self.user_crud.list(session, limit=1, include_deleted=True):
+                if await session.get(AppSetting, INITIAL_SETUP_KEY) is None:
+                    session.add(AppSetting(key=INITIAL_SETUP_KEY, value="1"))
+            await session.commit()
+
+    async def setup_required(self) -> bool:
+        async with self.db_context() as session:
+            return await self._setup_required(session)
+
+    async def _setup_required(self, session) -> bool:
+        # Presence alone closes setup, even if a marker's value is unexpected.
+        return await session.get(
+            AppSetting, INITIAL_SETUP_KEY
+        ) is None and not await self.user_crud.list(
+            session, limit=1, include_deleted=True
+        )
+
+    async def complete_setup(
+        self, *, setup_token: str, email: str, password: str, confirmation: str
+    ) -> None:
+        configured = settings.APP_SETUP_TOKEN
+        expected = configured.get_secret_value() if configured else ""
+        if len(expected) < 32 or not secrets.compare_digest(
+            hashlib.sha256(setup_token.encode()).digest(),
+            hashlib.sha256(expected.encode()).digest(),
+        ):
+            raise ValueError(
+                _("Setup is unavailable or the setup credential is invalid.")
+            )
+        try:
+            email = str(TypeAdapter(EmailStr).validate_python(email))
+        except ValidationError:
+            raise ValueError(_("Invalid email address")) from None
+        if len(email) > 128:
+            raise ValueError(_("Invalid email address"))
+        if password != confirmation:
+            raise ValueError(_("Passwords do not match"))
+        valid, message = validate_password(password)
+        if not valid:
+            raise ValueError(message)
+        password_hash = HashingManager.hash_password(password)
+        async with self.db_context() as session:
+            # Serialize across connections/processes before reading either guard.
+            # Do not use CRUD helpers that commit independently.
+            await session.execute(text("BEGIN IMMEDIATE"))
+            try:
+                if not await self._setup_required(session):
+                    raise ValueError(_("Initial setup is already complete."))
+                session.add(
+                    User(
+                        email=email,
+                        password_hash=password_hash,
+                        is_superuser=True,
+                        is_active=True,
+                        quota_bytes=0,
+                        must_change_password=False,
+                    )
+                )
+                session.add(AppSetting(key=INITIAL_SETUP_KEY, value="1"))
+                await session.commit()
+            except BaseException:
+                await session.rollback()
+                raise
 
     # Session state
     async def is_login(self) -> bool:
@@ -268,6 +304,8 @@ class UserManager:
             return list(users), total
 
     async def is_registration_allowed(self) -> bool:
+        if await self.setup_required():
+            return False
         async with self.db_context() as session:
             value = await AppSettingCRUD.get_value(
                 session,

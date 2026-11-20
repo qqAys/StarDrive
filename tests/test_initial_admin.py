@@ -1,5 +1,5 @@
 import asyncio
-from contextlib import asynccontextmanager, nullcontext
+from contextlib import asynccontextmanager
 from io import BytesIO
 from types import SimpleNamespace
 
@@ -15,7 +15,7 @@ from app.models.system_model import PasswordResetToken
 from app.recover_initial_admin import recover_initial_admin
 from app.schemas.user_schema import UserLogin, UserModifyPassword
 from app.security.hashing import HashingManager
-from app.security.password import show_initial_password
+from app.security.password import generate_random_password, show_initial_password
 from app.services.local_db_service import _alembic_config, migrate_database
 from app.services.user_service import UserManager
 from app.utils.time import utc_now
@@ -55,10 +55,6 @@ def credential_terminal(mocker):
     terminal = BytesIO()
     descriptor = 9876
     mocker.patch(
-        "app.services.user_service.open_password_terminal",
-        return_value=nullcontext(descriptor),
-    )
-    mocker.patch(
         "app.security.password.os",
         SimpleNamespace(
             isatty=lambda fd: fd == descriptor,
@@ -89,16 +85,17 @@ def test_first_login_requires_password_change(
     migrate_database(dsn)
 
     async def run():
-        await manager.initialize()
-        temporary = consume_temporary_password(terminal)
-        captured = capsys.readouterr()
-        if (
-            len(temporary) != 24
-            or temporary in caplog.text + captured.out + captured.err
-        ):
-            pytest.fail(
-                "Invalid initial credential or leaked application log.", pytrace=False
+        # A pre-upgrade installation retains the mandatory password change.
+        temporary = generate_random_password(24)
+        async with manager.db_context() as session:
+            await UserCRUD.create(
+                session,
+                email=ADMIN_EMAIL,
+                password=temporary,
+                is_superuser=True,
+                must_change_password=True,
             )
+        await manager.initialize()
         login = UserLogin(email=ADMIN_EMAIL, password=temporary)
 
         migrate_database(dsn)
@@ -158,28 +155,21 @@ def test_credential_output_rejects_regular_files(tmp_path):
     assert log.read_bytes() == b""
 
 
-def test_headless_startup_only_logs_recovery_hint(
-    isolated_users, mocker, capsys, caplog
-):
+def test_headless_startup_creates_no_account(isolated_users, capsys, caplog):
     manager, path, _ = isolated_users
     migrate_database(f"sqlite+aiosqlite:///{path}")
-    temporary = "Sample-only-boot123!"
-    mocker.patch(
-        "app.services.user_service.generate_random_password", return_value=temporary
-    )
-    mocker.patch(
-        "app.services.user_service.open_password_terminal", side_effect=OSError
-    )
 
-    asyncio.run(manager.initialize())
+    async def run():
+        await manager.initialize()
+        await manager.initialize()
+        assert await manager.setup_required()
+        assert not await manager.is_registration_allowed()
+        async with manager.db_context() as session:
+            assert await UserCRUD.count(session, include_deleted=True) == 0
+
+    asyncio.run(run())
     captured = capsys.readouterr()
-    if temporary in captured.out + captured.err + caplog.text:
-        pytest.fail("Headless startup leaked a credential.", pytrace=False)
-    assert "Use local administrator recovery." in caplog.text
-
-    with pytest.raises(BusinessException) as rejected:
-        asyncio.run(login_api(UserLogin(email=ADMIN_EMAIL, password=temporary)))
-    assert rejected.value.http_status == 403
+    assert "Temporary password:" not in captured.out + captured.err + caplog.text
 
 
 def test_old_database_login_and_offline_recovery(

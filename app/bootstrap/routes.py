@@ -2,12 +2,14 @@ from nicegui import app
 from starlette.responses import RedirectResponse
 
 from app.api import auth, download, health, preview
+from app.ui.pages import setup
 from app.ui.pages import account
 from app.ui.pages import console
 from app.ui.pages import login, browser, profile, share
 
 
 def setup_routes():
+    app.include_router(setup.router)
     app.include_router(login.router)
     app.include_router(account.register_router)
     app.include_router(account.forgot_router)

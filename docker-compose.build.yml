@@ -7,6 +7,7 @@ services:
       - ./app_data:/opt/stardrive/app_data
     environment:
       STARDRIVE_APP_SECRET: ${STARDRIVE_APP_SECRET:?Set STARDRIVE_APP_SECRET in .env or your shell}
+      STARDRIVE_APP_SETUP_TOKEN: ${STARDRIVE_APP_SETUP_TOKEN:-}
     restart: always
     healthcheck:
       test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8080/api/healthz').read()"]

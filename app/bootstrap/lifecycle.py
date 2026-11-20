@@ -20,7 +20,7 @@ async def on_startup():
 
     - Sets up the local database connection.
     - Configures the file storage backend (defaults to LocalStorage).
-    - Initializes the user management system, including loading or creating default users.
+    - Initializes the user management system, including policy and existing-account setup state.
     - Registers shared service instances in the global context for access across the app.
     """
     await init_local_db()

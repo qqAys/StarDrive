@@ -51,10 +51,13 @@ StarDrive 采用了现代化的 Python 技术栈：
     STARDRIVE_APP_HOST=127.0.0.1 uv run --locked -m app.main
     ```
 
-首次安装请在部署者专用的交互终端启动。空库创建管理员时，终端只显示一次邮箱和临时密码。
-打开 `http://127.0.0.1:8080/login/`，按页面要求修改密码，再用新密码登录。
+首次安装前另行生成随机安装凭据（例如 `openssl rand -hex 32`），以
+`STARDRIVE_APP_SETUP_TOKEN` 注入部署环境或 `.env`，不要复用应用密钥。打开
+`http://127.0.0.1:8080/login/`，在首装页输入安装凭据、自选邮箱、密码和确认密码，
+成功后使用新账号正常登录，无需再次改密。未配置或凭据不足 32 字符时保持首装关闭，页面提供配置指引。
+支持无 TTY 的服务和容器；完成后移除安装凭据并重启，首装不会重新开放。
 上传后即可验证站内单文件、目录和多选下载，无需配置 `Service URL`。创建对外分享前，在 Console → Overview 配置收件人可访问的完整 `Service URL`。
-无交互终端的部署和临时密码丢失时，按本机恢复流程获取临时密码，详见 [运维指南](docs/OPERATIONS.md#首次管理员登录)。
+已有实例继续正常登录，旧临时密码仍须改密。忘记管理员密码时使用 [本机恢复流程](docs/OPERATIONS.md#首次管理员登录)。
 
 容器同样要求设置稳定的 `STARDRIVE_APP_SECRET`。开发时可将其写入未提交的 `.env`，
 然后运行 `docker compose -f docker-compose.build.yml up --build`。该配置只映射本机回环地址。
@@ -75,7 +78,7 @@ StarDrive 采用了现代化的 Python 技术栈：
 
 ## 版本与 Docker 发布 (Versioning and Docker releases)
 
-StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.11.19`**，格式为
+StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.11.20`**，格式为
 `YYYY.M.D`；同一天的补发版本在末尾增加序号，例如 `2026.6.23.1`。版本仅在
 `pyproject.toml` 中维护；已安装的发行包会从包元数据读取，源码运行时则读取同一份
 `pyproject.toml` 元数据。
