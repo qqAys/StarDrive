@@ -2076,3 +2076,19 @@ msgstr ""
 #: app/ui/pages/setup.py app/services/user_service.py
 msgid "Initial setup is already complete."
 msgstr ""
+
+#: app/ui/components/dialog.py
+msgid "Retry search"
+msgstr ""
+
+#: app/ui/components/dialog.py
+msgid "Searching…"
+msgstr ""
+
+#: app/ui/components/dialog.py
+msgid "No matching results"
+msgstr ""
+
+#: app/ui/components/dialog.py
+msgid "Search failed. Retry to continue."
+msgstr ""

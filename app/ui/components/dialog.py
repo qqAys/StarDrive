@@ -64,7 +64,12 @@ class SearchDialog(Dialog):
     PAGE_SIZE = 30
 
     def __init__(self, file_service: StorageManager, current_path: Path):
-        super().__init__()
+        # NiceGUI places a dialog's lifetime sentinel in the originating slot.
+        # Own that slot so disposing this one-shot dialog releases the sentinel too.
+        self.lifecycle_container = ui.element().classes("contents")
+        with self.lifecycle_container:
+            super().__init__()
+        self.client = self.dialog.client
         self.search_input: Optional[ui.input] = None
         self.file_manager = file_service
         self.current_path = current_path
@@ -74,8 +79,93 @@ class SearchDialog(Dialog):
         self.loading = False
         self.has_more = True
         self.search_task: Optional[asyncio.Task] = None
+        self.generation = 0
+        self.active = False
+        self.suspended = False
+        self.disposed = False
+        self.reconnect_key = f"search-dialog-{self.dialog.id}"
+        self.dialog.on("hide", self.close_search)
+        self.dialog.client.on_disconnect(self.pause_search)
+        self.dialog.client.on_connect(self.resume_search)
+
+    def pause_search(self):
+        if self.disposed or not self.active:
+            return
+        # Keep the visible dialog usable after a transient connection loss.
+        self.suspended = True
+        self.invalidate()
+
+    async def resume_search(self):
+        if self.disposed:
+            return
+        self.suspended = False
+        if self.active:
+            await self.load_more()
+
+    def invalidate(self):
+        """Invalidate before cancellation: a backend may finish after cancellation."""
+        self.generation += 1
+        if self.search_task:
+            self.search_task.cancel()
+        self.search_task = None
+        self.loading = False
+
+    def close_search(self):
+        self.active = False
+        self.invalidate()
+
+    def dispose(self):
+        """Release the one-shot file-browser dialog, including client callbacks."""
+        if self.disposed:
+            return
+        self.close_search()
+        self.disposed = True
+        client = self.client
+        client.disconnect_handlers.remove(self.pause_search)
+        client.connect_handlers.remove(self.resume_search)
+        if not self.dialog.is_deleted:
+            self.dialog.delete()
+        if not self.lifecycle_container.is_deleted:
+            self.lifecycle_container.delete()
+        if client.has_socket_connection:
+            self._update_reconnect_handler(install=False)
+
+    def _update_reconnect_handler(self, *, install: bool):
+        # NiceGUI 3.11.1 reconnects with the initial message ID after acknowledgments
+        # have pruned it, forcing a page reload (upstream issue #6018 / fix #6019).
+        # Keep the workaround scoped to this open dialog and retain replay checks.
+        self.client.run_javascript(
+            """(() => {
+                const manager = window.socket?.io;
+                if (!manager) return;
+                const handlers = manager.stardriveSearchHandlers ||= {};
+                const key = """
+            + json.dumps(self.reconnect_key)
+            + """;
+                if (handlers[key]) {
+                    manager.off('reconnect_attempt', handlers[key]);
+                    delete handlers[key];
+                }
+                if ("""
+            + json.dumps(install)
+            + """) {
+                    handlers[key] = () => {
+                        manager.opts.query.next_message_id = window.nextMessageId;
+                    };
+                    manager.on('reconnect_attempt', handlers[key]);
+                }
+            })();"""
+        )
 
     async def open(self) -> Optional[FileMetadata | DirMetadata | None]:
+        if self.disposed:
+            raise RuntimeError("Search dialog has been disposed")
+        self.close_search()
+        self.dialog.clear()
+        self.last_query = None
+        self.offset = 0
+        self.has_more = True
+        self.active = True
         with self.dialog, ui.card().tight().classes("w-full h-[600px]"):
             with ui.row().classes("w-full items-center px-4"):
                 self.search_input = (
@@ -92,74 +182,94 @@ class SearchDialog(Dialog):
                     ui.icon("search")
             with ui.scroll_area(on_scroll=self.on_scroll).classes("w-full h-full"):
                 self.results_list = (
-                    ui.list()
-                    .classes("w-full h-full overflow-auto")
-                    .props("bordered separator")
+                    ui.list().classes("w-full").props("bordered separator")
                 )
-        return await self.dialog
+            self.status = ui.label().props('role="status" aria-live="polite"')
+            self.retry = ui.button(_("Retry search"), on_click=self.load_more)
+            self.retry.set_visibility(False)
+        self._update_reconnect_handler(install=True)
+        try:
+            return await self.dialog
+        finally:
+            self.close_search()
 
     async def on_input_change(self):
-        await asyncio.sleep(0.6)
         query = self.search_input.value.strip()
-        if query == self.last_query:
+        if not self.active or query == self.last_query:
             return
+        self.invalidate()
+        generation = self.generation
         self.last_query = query
         self.offset = 0
         self.has_more = True
         self.results_list.clear()
-        if self.search_task:
-            self.search_task.cancel()
-        if not query:
-            return
-        self.search_task = asyncio.create_task(self.load_more())
+        self.status.set_text("")
+        self.retry.set_visibility(False)
+        if query:
+            self.search_task = asyncio.create_task(self.debounced_search(generation))
 
-    async def load_more(self):
-        if self.loading or not self.has_more:
+    async def debounced_search(self, generation):
+        await asyncio.sleep(0.6)
+        await self.load_more(generation)
+
+    async def load_more(self, generation=None):
+        generation = self.generation if generation is None else generation
+        if (
+            not self.active
+            or self.suspended
+            or generation != self.generation
+            or not self.last_query
+            or self.loading
+            or not self.has_more
+        ):
             return
+        self.search_task = asyncio.current_task()
         self.loading = True
-        results = await self.file_manager.search(
-            query=self.last_query,
-            remote_path=str(self.current_path),
-            offset=self.offset,
-            limit=self.PAGE_SIZE,
-        )
-        if not results:
-            self.has_more = False
-            self.loading = False
-            self.render_no_more_results()
-            return
-        with self.results_list:
-            for item in results:
-                with ui.item(
-                    on_click=lambda item_=item: self.dialog.submit(item_)
-                ).props("clickable"):
-                    with ui.item_section().classes(
-                        "w-full break-all whitespace-normal"
-                    ):
-                        ui.html(
-                            f"{get_file_icon(item.type, item.extension)} <b>{item.name}</b>",
-                            sanitize=False,
-                        )
-                        ui.markdown(f"`{item.path}`").classes("text-xs")
-        self.offset += len(results)
-        if len(results) < self.PAGE_SIZE:
-            self.has_more = False
-            self.render_no_more_results()
-        self.loading = False
-
-    def render_no_more_results(self):
-        with self.results_list:
-            with ui.item().props("disabled"):
-                with ui.column().classes("w-full items-center gap-1"):
-                    custom_button(
-                        text=_("No more results"), icon="search_off", disabled=True
-                    )
-                    ui.markdown(_("Try searching in a different folder.")).classes(
-                        "text-xs my-0 py-0"
-                    )
-                    ui.markdown(
-                        _("Current folder: **{path}**").format(path=self.current_path)
-                    ).classes("text-xs my-0 py-0")
+        self.retry.set_visibility(False)
+        self.status.set_text(_("Searching…"))
+        try:
+            results = await self.file_manager.search(
+                query=self.last_query,
+                remote_path=str(self.current_path),
+                offset=self.offset,
+                limit=self.PAGE_SIZE,
+            )
+            if not self.active or generation != self.generation:
+                return
+            with self.results_list:
+                for item in results:
+                    with ui.item(
+                        on_click=lambda item_=item: self.dialog.submit(item_)
+                    ).props("clickable"):
+                        with ui.item_section().classes(
+                            "w-full break-all whitespace-normal"
+                        ):
+                            ui.html(
+                                f"{get_file_icon(item.type, item.extension)} <b>{html.escape(item.name)}</b>",
+                                sanitize=False,
+                            )
+                            ui.label(str(item.path)).classes("text-xs break-all")
+            self.offset += len(results)
+            self.has_more = len(results) == self.PAGE_SIZE
+            self.status.set_text(
+                ""
+                if self.has_more
+                else (
+                    _("No matching results")
+                    if not self.offset
+                    else _("No more results")
+                )
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            if self.active and generation == self.generation:
+                self.status.set_text(_("Search failed. Retry to continue."))
+                self.retry.set_visibility(True)
+        finally:
+            if self.active and generation == self.generation:
+                self.loading = False
+                self.search_task = None
 
     async def on_scroll(self, e: events.ScrollEventArguments):
         if e.vertical_percentage == 1:
