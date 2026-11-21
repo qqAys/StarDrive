@@ -2611,3 +2611,19 @@ msgstr "Setup is unavailable or the setup credential is invalid."
 #: app/ui/pages/setup.py app/services/user_service.py
 msgid "Initial setup is already complete."
 msgstr "Initial setup is already complete."
+
+#: app/ui/components/dialog.py
+msgid "Retry search"
+msgstr "Retry search"
+
+#: app/ui/components/dialog.py
+msgid "Searching…"
+msgstr "Searching…"
+
+#: app/ui/components/dialog.py
+msgid "No matching results"
+msgstr "No matching results"
+
+#: app/ui/components/dialog.py
+msgid "Search failed. Retry to continue."
+msgstr "Search failed. Retry to continue."

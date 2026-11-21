@@ -2277,3 +2277,19 @@ msgstr "首装不可用或安装凭据无效。"
 #: app/ui/pages/setup.py app/services/user_service.py
 msgid "Initial setup is already complete."
 msgstr "首次安装已完成。"
+
+#: app/ui/components/dialog.py
+msgid "Retry search"
+msgstr "重试搜索"
+
+#: app/ui/components/dialog.py
+msgid "Searching…"
+msgstr "正在搜索…"
+
+#: app/ui/components/dialog.py
+msgid "No matching results"
+msgstr "没有匹配的结果"
+
+#: app/ui/components/dialog.py
+msgid "Search failed. Retry to continue."
+msgstr "搜索失败，请重试以继续。"

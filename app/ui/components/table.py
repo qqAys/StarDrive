@@ -916,7 +916,11 @@ class FileBrowserTable:
 
     @require_user
     async def handle_search_button_click(self):
-        select_result = await SearchDialog(self.file_manager, self.current_path).open()
+        search_dialog = SearchDialog(self.file_manager, self.current_path)
+        try:
+            select_result = await search_dialog.open()
+        finally:
+            search_dialog.dispose()
 
         if not select_result:
             return
