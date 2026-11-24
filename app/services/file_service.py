@@ -40,7 +40,7 @@ from app.services.local_db_service import get_db_context
 from app.storage.base import StorageBackend
 from app.storage.aliyun_oss_storage import AliyunOSSStorage
 from app.storage.local_storage import LocalStorage
-from app.storage.providers import provider
+from app.storage.providers import get_provider
 from app.services.storage_config_service import storage_config
 from app.ui.components.notify import notify
 from app.utils.size import bytes_to_human_readable
@@ -480,19 +480,22 @@ def create_user_storage_manager(user_id: str) -> StorageManager:
     # remain remote rather than accidentally acquiring a local mirror.
     root_path = (
         STORAGE_DIR
-        if storage_config.current_backend == AliyunOSSStorage.name
+        if storage_config.current_backend in {AliyunOSSStorage.name, "S3"}
         else get_user_storage_root(user_id)
     )
     manager = StorageManager(root_path=root_path)
     manager.user_id = user_id
     if (
-        storage_config.current_backend == AliyunOSSStorage.name
+        storage_config.current_backend in {AliyunOSSStorage.name, "S3"}
         and storage_config.oss_config
     ):
         manager.register_backend(
-            AliyunOSSStorage.name, provider.build(storage_config.oss_config, user_id)
+            storage_config.current_backend,
+            get_provider(storage_config.current_backend).build(
+                storage_config.oss_config, user_id
+            ),
         )
-        manager.set_current_backend(AliyunOSSStorage.name)
+        manager.set_current_backend(storage_config.current_backend)
     else:
         manager.set_current_backend(LocalStorage.name)
     return manager

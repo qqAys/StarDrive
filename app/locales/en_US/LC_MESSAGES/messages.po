@@ -2627,3 +2627,23 @@ msgstr "No matching results"
 #: app/ui/components/dialog.py
 msgid "Search failed. Retry to continue."
 msgstr "Search failed. Retry to continue."
+
+#: app/ui/pages/console.py
+msgid "Bucket"
+msgstr "Bucket"
+
+#: app/ui/pages/console.py
+msgid "Endpoint"
+msgstr "Endpoint"
+
+#: app/ui/pages/console.py
+msgid "Region"
+msgstr "Region"
+
+#: app/ui/pages/console.py
+msgid "S3 compatible"
+msgstr "S3 compatible"
+
+#: app/ui/pages/console.py
+msgid "S3 tests write and delete a unique object under .stardrive-probes. Private HTTP/HTTPS endpoints are allowed; use only trusted destinations."
+msgstr "S3 tests write and delete a unique object under .stardrive-probes. Private HTTP/HTTPS endpoints are allowed; use only trusted destinations."

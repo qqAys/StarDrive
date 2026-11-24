@@ -1,4 +1,4 @@
-"""Explicit-construction S3 backend; intentionally absent from profile activation."""
+"""S3 backend shared by explicit construction and persisted administrator profiles."""
 
 import asyncio
 from dataclasses import dataclass, field

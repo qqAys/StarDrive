@@ -2293,3 +2293,23 @@ msgstr "没有匹配的结果"
 #: app/ui/components/dialog.py
 msgid "Search failed. Retry to continue."
 msgstr "搜索失败，请重试以继续。"
+
+#: app/ui/pages/console.py
+msgid "Bucket"
+msgstr "存储桶"
+
+#: app/ui/pages/console.py
+msgid "Endpoint"
+msgstr "端点"
+
+#: app/ui/pages/console.py
+msgid "Region"
+msgstr "区域"
+
+#: app/ui/pages/console.py
+msgid "S3 compatible"
+msgstr "S3 兼容存储"
+
+#: app/ui/pages/console.py
+msgid "S3 tests write and delete a unique object under .stardrive-probes. Private HTTP/HTTPS endpoints are allowed; use only trusted destinations."
+msgstr "S3 测试会在 .stardrive-probes 下写入并删除唯一对象。支持私有 HTTP/HTTPS 端点，请仅使用可信目的地。"
