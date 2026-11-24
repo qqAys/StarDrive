@@ -223,3 +223,144 @@ def test_provider_build_keeps_user_prefix_and_stream_bytes(monkeypatch):
     assert b"".join(owner.download_file_with_stream("old.txt")) == b"old OSS bytes"
     assert requests[0].key == "old-prefix/users/owner/old.txt"
     assert requests[0].bucket == PUBLIC["bucket"]
+
+
+def test_s3_persisted_encryption_restart_and_local_restore(tmp_path, monkeypatch):
+    import io
+    import tarfile
+    from test_s3_storage import Client, chunks
+    from app.storage import s3_storage
+
+    client = Client()
+    client.meta = SimpleNamespace(events=SimpleNamespace(register=lambda *args: None))
+    monkeypatch.setattr(s3_storage.boto3, "client", lambda *args, **kwargs: client)
+    monkeypatch.setattr(file_service, "USER_STORAGE_DIR", tmp_path / "users")
+
+    async def manifest(manager):
+        data = b"".join(
+            [
+                chunk
+                async for chunk in manager.download_file_with_compressed_stream(
+                    ["资料", "zero"], "."
+                )
+            ]
+        )
+        with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as archive:
+            return {
+                member.name: (
+                    None if member.isdir() else archive.extractfile(member).read()
+                )
+                for member in archive.getmembers()
+            }
+
+    async def populate(manager, data):
+        manager.create_directory("资料/空目录")
+        await manager.upload_file(chunks(data), "资料/é.txt")
+        await manager.upload_file(chunks(b""), "zero")
+        assert b"".join(manager.download_file_with_stream("资料/é.txt")) == data
+        assert (
+            b"".join(manager.download_file_with_stream("资料/é.txt", 1, 3)) == data[1:4]
+        )
+
+    async def scenario():
+        engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 's3.sqlite'}")
+        sessions = async_sessionmaker(engine, expire_on_commit=False)
+
+        @asynccontextmanager
+        async def context():
+            async with sessions() as session:
+                yield session
+
+        monkeypatch.setattr(service_module, "get_db_context", context)
+        monkeypatch.setattr(
+            providers.s3_provider, "connection_test", lambda config: (True, "verified")
+        )
+        try:
+            async with engine.begin() as connection:
+                await connection.run_sync(
+                    lambda conn: SQLModel.metadata.create_all(
+                        conn, tables=[StorageProfile.__table__]
+                    )
+                )
+            service = StorageConfigService()
+            local = await service.create_or_update_profile(
+                StorageProfileDraft("Local", providers.LOCAL_STORAGE, {})
+            )
+            await service.activate_profile(local.id)
+            monkeypatch.setattr(file_service, "storage_config", service)
+            local_owner = file_service.create_user_storage_manager("owner")
+            await populate(local_owner, b"original local bytes")
+            original_manifest = await manifest(local_owner)
+            public = dict(
+                endpoint="http://127.0.0.1:9000",
+                region="test",
+                bucket="synthetic",
+                prefix="root",
+            )
+            remote = await service.create_or_update_profile(
+                StorageProfileDraft(
+                    "S3",
+                    providers.S3,
+                    public,
+                    dict(
+                        access_key_id="synthetic-id",
+                        access_key_secret="synthetic-secret",
+                    ),
+                )
+            )
+            async with sessions() as session:
+                stored = await StorageProfileCRUD.get(session, remote.id)
+                assert stored.public_config == public
+                assert all(
+                    "synthetic" not in value
+                    for value in stored.encrypted_secrets.values()
+                )
+            await service.test_profile(remote.id)
+            await service.activate_profile(remote.id)
+            await engine.dispose()
+            restarted = StorageConfigService()
+            await restarted.load()
+            assert restarted.current_backend == providers.S3
+            assert restarted.oss_config.access_key_secret == "synthetic-secret"
+            monkeypatch.setattr(file_service, "storage_config", restarted)
+            owner = file_service.create_user_storage_manager("owner")
+            other = file_service.create_user_storage_manager("other")
+            assert owner.backend_name == other.backend_name == providers.S3
+            await populate(owner, b"remote owner bytes")
+            assert other.list_files(".") == []
+            await populate(other, b"remote other bytes")
+            assert (
+                b"".join(owner.download_file_with_stream("资料/é.txt"))
+                == b"remote owner bytes"
+            )
+            assert (
+                b"".join(other.download_file_with_stream("资料/é.txt"))
+                == b"remote other bytes"
+            )
+            assert (await manifest(owner))["资料/é.txt"] == b"remote owner bytes"
+            assert (await manifest(other))["资料/é.txt"] == b"remote other bytes"
+            assert set(client.objects) == {
+                f"root/users/{user}/{path}"
+                for user in ("owner", "other")
+                for path in ("资料/空目录/", "资料/é.txt", "zero")
+            }
+            await restarted.activate_profile(local.id)
+            await engine.dispose()
+            restored = StorageConfigService()
+            await restored.load()
+            assert restored.current_backend == providers.LOCAL_STORAGE
+            monkeypatch.setattr(file_service, "storage_config", restored)
+            restored_owner = file_service.create_user_storage_manager("owner")
+            assert restored_owner.backend_name == providers.LOCAL_STORAGE
+            assert (
+                b"".join(restored_owner.download_file_with_stream("资料/é.txt"))
+                == b"original local bytes"
+            )
+            assert await manifest(restored_owner) == original_manifest
+            assert (
+                file_service.create_user_storage_manager("other").list_files(".") == []
+            )
+        finally:
+            await engine.dispose()
+
+    asyncio.run(scenario())

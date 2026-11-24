@@ -7,9 +7,9 @@
   </a>
 </p>
 
-StarDrive 是面向个人和小团队的自托管文件管理应用。通过浏览器上传、整理、预览和分享文件，管理员可在本地磁盘与阿里云 OSS 档案间切换。
+StarDrive 是面向个人和小团队的自托管文件管理应用。通过浏览器上传、整理、预览和分享文件，管理员可在本地磁盘、阿里云 OSS 与 S3 兼容存储档案间切换。
 
-StarDrive is a self-hosted web file manager for individuals and small teams, with local disk and Alibaba Cloud OSS backends.
+StarDrive is a self-hosted web file manager for individuals and small teams, with local disk, Alibaba Cloud OSS and S3-compatible backends.
 
 > [!WARNING]
 > **本项目仍在开发中，尚未发布正式版本。**
@@ -78,7 +78,7 @@ StarDrive 采用了现代化的 Python 技术栈：
 
 ## 版本与 Docker 发布 (Versioning and Docker releases)
 
-StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.11.23`**，格式为
+StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.11.24`**，格式为
 `YYYY.M.D`；同一天的补发版本在末尾增加序号，例如 `2026.6.23.1`。版本仅在
 `pyproject.toml` 中维护；已安装的发行包会从包元数据读取，源码运行时则读取同一份
 `pyproject.toml` 元数据。
@@ -166,9 +166,8 @@ OSS 目录删除和移动会核对逐项删除确认。失败后请按运维指�
 
 从文件列表的搜索按钮进入，在当前目录及其子目录按名称查找，每页 30 条。修改或清空关键词会清除旧结果，关闭弹窗会停止查询。搜索失败时点击“重试搜索”，继续读取当前页，保留此前结果；点击结果沿用原有的所在目录导航。无匹配、加载中和结果结束分别反馈。短暂断线时保留搜索结果，重连后自动从当前页恢复。
 
-### S3 驱动（隔离开发阶段）
+### S3 兼容存储
 
-`app/storage/s3_storage.py` 提供显式构造的 `S3Config` / `S3Storage`，使用 boto3，
-对象位于 `prefix/users/{user_id}/`。尚未开放档案创建、管理台激活或已有文件接入；
-Local/OSS 配置与存储布局保持兼容。真实 S3 兼容服务尚未验证。
-限制与恢复说明见 [运维指南](docs/OPERATIONS.md#s3-独立驱动)。
+管理员可在 Console → Storage backend 创建 S3 compatible 档案，填写 endpoint、region、bucket、可选前缀及凭据。保存后对该档案执行测试，成功后方可激活；草稿测试不能代替已保存档案测试。凭据均加密保存，留空保留原值。修改配置会清除测试结果；编辑活跃 S3 档案前先切回另一档案。
+
+测试会在 `prefix/.stardrive-probes/<随机标识>` 创建、读取并删除唯一合成对象。支持可信的私有 HTTP/HTTPS 端点，HTTP 会明文传输；仅填写部署者信任的目的地。对象按 `prefix/users/{user_id}/` 隔离，切换不会迁移文件或接入任意已有目录。当前仍是全局单活档案；统一挂载是后续独立目标。真实 S3 兼容服务尚未验证，故障和降级步骤见 [运维指南](docs/OPERATIONS.md#s3-管理台与恢复)。

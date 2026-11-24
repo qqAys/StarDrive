@@ -4,11 +4,13 @@ Secrets never enter NiceGUI storage. They are encrypted in the application DB
 and kept in memory only while a backend profile is active.
 """
 
+import asyncio
 import base64
 import hashlib
 import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
+from functools import wraps
 
 try:
     from cryptography.fernet import Fernet, InvalidToken
@@ -27,6 +29,8 @@ CURRENT_BACKEND_KEY = "storage.current_backend"
 OSS_CONFIG_KEY = "storage.oss.config"
 from app.storage.providers import (
     OSSConfig,
+    S3,
+    get_provider,
     LOCAL_STORAGE,
     ALIYUN_OSS,
     SUPPORTED_BACKENDS,
@@ -62,8 +66,18 @@ class StorageProfileTestResult:
     message: str
 
 
+def serialized_profile_change(method):
+    @wraps(method)
+    async def wrapped(self, *args, **kwargs):
+        async with self._profile_lock:
+            return await method(self, *args, **kwargs)
+
+    return wrapped
+
+
 class StorageConfigService:
     def __init__(self):
+        self._profile_lock = asyncio.Lock()
         self.current_backend = LOCAL_STORAGE
         self.current_profile: StorageProfileView | None = None
         self.oss_config: OSSConfig | None = None
@@ -180,24 +194,38 @@ class StorageConfigService:
         self.current_profile = self._profile_view(profile)
         self.current_backend = profile.backend_type
         self.oss_config = None
-        if profile.backend_type == ALIYUN_OSS:
+        if profile.backend_type in {ALIYUN_OSS, S3}:
             self.oss_config = self._oss_config_from_profile(profile)
             if self.oss_config is None:
                 self.current_backend = LOCAL_STORAGE
 
     def _activation_error(self, profile: StorageProfile) -> str | None:
         oss_config = self._oss_config_from_profile(profile)
-        if profile.backend_type == ALIYUN_OSS and (
-            oss_config is None or not oss_config.access_key_secret
+        if profile.backend_type in {ALIYUN_OSS, S3} and (
+            oss_config is None
+            or not oss_config.access_key_secret
+            or not oss_config.access_key_id
         ):
-            return "OSS is not configured"
+            return (
+                "OSS is not configured"
+                if profile.backend_type == ALIYUN_OSS
+                else "S3 credentials are not configured"
+            )
+        if profile.backend_type == S3 and profile.last_test_success is not True:
+            return "Test the saved S3 profile successfully before activation"
         return None
 
     def _oss_config_from_profile(self, profile: StorageProfile) -> OSSConfig | None:
         try:
             config = dict(profile.public_config or {})
             secrets = self._decrypt_secrets(profile.encrypted_secrets)
-            return provider.decode(config, secrets)
+            selected = get_provider(profile.backend_type)
+            result = selected.decode(config, secrets)
+            if profile.backend_type == S3:
+                from app.storage.providers import validate_s3
+
+                validate_s3(result)
+            return result
         except (InvalidToken, TypeError, ValueError):
             return None
 
@@ -225,6 +253,7 @@ class StorageConfigService:
         )
         return local or (candidates[0] if candidates else None)
 
+    @serialized_profile_change
     async def create_or_update_profile(
         self,
         draft: StorageProfileDraft,
@@ -236,8 +265,20 @@ class StorageConfigService:
                 profile = await StorageProfileCRUD.get(session, draft.profile_id)
                 if not profile:
                     raise ValueError("Storage profile does not exist")
-                if not encrypted_secrets:
-                    encrypted_secrets = dict(profile.encrypted_secrets or {})
+                if profile.backend_type != draft.backend_type:
+                    raise ValueError("Cannot change storage backend type")
+                if profile.backend_type == S3:
+                    if profile.is_active:
+                        raise ValueError(
+                            "Switch to another profile before editing active S3 settings"
+                        )
+                    profile.last_test_success = None
+                    profile.last_tested_at = None
+                    profile.last_test_message = None
+                encrypted_secrets = {
+                    **(profile.encrypted_secrets or {}),
+                    **encrypted_secrets,
+                }
                 profile = await StorageProfileCRUD.update(
                     session,
                     profile,
@@ -258,11 +299,12 @@ class StorageConfigService:
             return self._profile_view(profile)
 
     def _validate_draft(self, draft):
-        provider.validate(draft)
+        get_provider(draft.backend_type).validate(draft)
 
     def _normalized_public_config(self, draft):
-        return provider.public_config(draft)
+        return get_provider(draft.backend_type).public_config(draft)
 
+    @serialized_profile_change
     async def test_profile(
         self,
         profile_id: str | None = None,
@@ -292,10 +334,14 @@ class StorageConfigService:
         if draft.backend_type == LOCAL_STORAGE:
             return StorageProfileTestResult(True, "Local storage is available")
         encrypted = self._encrypt_secrets(draft.secrets)
-        if not encrypted and draft.profile_id:
+        if draft.profile_id:
             async with get_db_context() as session:
                 profile = await StorageProfileCRUD.get(session, draft.profile_id)
-                encrypted = dict(profile.encrypted_secrets or {}) if profile else {}
+                if not profile or profile.backend_type != draft.backend_type:
+                    raise ValueError(
+                        "Storage profile does not exist or backend differs"
+                    )
+                encrypted = {**(profile.encrypted_secrets or {}), **encrypted}
         profile = StorageProfile(
             name=draft.name,
             backend_type=draft.backend_type,
@@ -311,9 +357,34 @@ class StorageConfigService:
             return StorageProfileTestResult(True, "Local storage is available")
         config = self._oss_config_from_profile(profile)
         if config is None or not config.access_key_secret:
-            return StorageProfileTestResult(False, "OSS secret is not configured")
-        return StorageProfileTestResult(*provider.connection_test(config))
+            return StorageProfileTestResult(False, "Storage secret is not configured")
+        try:
+            probe = asyncio.create_task(
+                asyncio.to_thread(
+                    get_provider(profile.backend_type).connection_test, config
+                )
+            )
+            try:
+                result = await asyncio.shield(probe)
+            except asyncio.CancelledError:
+                # Cancelling the page task cannot stop a blocking SDK request.
+                # Keep the profile lock until the probe has finished its cleanup.
+                while not probe.done():
+                    try:
+                        await asyncio.shield(probe)
+                    except asyncio.CancelledError:
+                        continue
+                    except Exception:
+                        break
+                # Retrieve a worker failure without replacing cancellation.
+                if not probe.cancelled():
+                    probe.exception()
+                raise
+        except Exception:
+            result = (False, "Storage connection check failed")
+        return StorageProfileTestResult(*result)
 
+    @serialized_profile_change
     async def activate_profile(self, profile_id: str) -> StorageProfileView:
         async with get_db_context() as session:
             profile = await StorageProfileCRUD.get(session, profile_id)
@@ -326,6 +397,7 @@ class StorageConfigService:
         self._set_active_profile(profile)
         return self._profile_view(profile)
 
+    @serialized_profile_change
     async def delete_profile(self, profile_id: str) -> StorageProfileView | None:
         async with get_db_context() as session:
             profiles = await StorageProfileCRUD.list(session)
@@ -384,7 +456,7 @@ class StorageConfigService:
     def public_oss_config(self) -> dict[str, str | bool]:
         return (
             self.oss_config.public()
-            if self.oss_config
+            if isinstance(self.oss_config, OSSConfig)
             else {
                 "region": "",
                 "endpoint": "",

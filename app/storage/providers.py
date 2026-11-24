@@ -10,7 +10,8 @@ except ImportError:  # LocalStorage remains usable before OSS dependencies are s
 
 LOCAL_STORAGE = "LocalStorage"
 ALIYUN_OSS = "AliyunOSS"
-SUPPORTED_BACKENDS = {LOCAL_STORAGE, ALIYUN_OSS}
+S3 = "S3"
+SUPPORTED_BACKENDS = {LOCAL_STORAGE, ALIYUN_OSS, S3}
 
 
 @dataclass(slots=True)
@@ -99,3 +100,130 @@ class StorageProvider:
 
 
 provider = StorageProvider()
+
+
+def validate_s3(config):
+    from urllib.parse import urlsplit
+    import re
+
+    try:
+        endpoint = urlsplit(config.endpoint)
+        endpoint.port  # Validate numeric port syntax.
+        valid = (
+            endpoint.scheme in {"http", "https"}
+            and endpoint.hostname
+            and not endpoint.username
+            and not endpoint.password
+            and not endpoint.query
+            and not endpoint.fragment
+            and endpoint.path in {"", "/"}
+            and not any(c.isspace() for c in config.endpoint)
+        )
+    except ValueError:
+        valid = False
+    if not valid:
+        raise ValueError("Invalid S3 endpoint")
+    if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9.-]{0,62}", config.bucket):
+        raise ValueError("Invalid S3 bucket")
+    if "\\" in config.prefix or any(p in {".", ".."} for p in config.prefix.split("/")):
+        raise ValueError("Invalid S3 prefix")
+    if not config.region:
+        raise ValueError("S3 region is required")
+
+
+class S3Provider(StorageProvider):
+    # Both credential fields are encrypted; neither is returned in public views.
+    public_fields = ("region", "endpoint", "bucket", "prefix")
+    secret_fields = ("access_key_id", "access_key_secret")
+
+    def decode(self, config, secrets):
+        from app.storage.s3_storage import S3Config
+
+        return S3Config(
+            **{f: str(config.get(f) or "").strip() for f in self.public_fields},
+            **{f: str(secrets.get(f) or "").strip() for f in self.secret_fields},
+        )
+
+    def validate(self, draft):
+        if not draft.name.strip():
+            raise ValueError("Profile name is required")
+        validate_s3(self.decode(draft.public_config, draft.secrets or {}))
+
+    def public_config(self, draft):
+        return {
+            f: str(draft.public_config.get(f) or "").strip() for f in self.public_fields
+        }
+
+    def build(self, config, user_id):
+        from app.storage.s3_storage import S3Storage
+
+        validate_s3(config)
+        storage = S3Storage(config, user_id)
+        from urllib.parse import urlsplit
+
+        expected = urlsplit(config.endpoint)
+
+        def check_destination(request, **kwargs):
+            actual = urlsplit(request.url)
+            if (actual.scheme, actual.hostname, actual.port) != (
+                expected.scheme,
+                expected.hostname,
+                expected.port,
+            ):
+                raise ValueError("S3 destination changed; redirects are not allowed")
+
+        storage.client.meta.events.register("before-send.s3", check_destination)
+        return storage
+
+    def connection_test(self, config):
+        from uuid import uuid4
+
+        key = "/".join(
+            filter(None, [config.prefix.strip("/"), ".stardrive-probes", uuid4().hex])
+        )
+        storage = self.build(config, "connection-test")
+        payload = b"StarDrive connection probe"
+        success = False
+        try:
+            storage._call("put_object", Key=key, Body=payload, IfNoneMatch="*")
+            body = storage._call("get_object", Key=key)["Body"]
+            try:
+                success = body.read(len(payload) + 1) == payload
+            finally:
+                body.close()
+        except Exception:
+            pass
+        finally:
+            cleanup_failed = False
+            try:
+                storage._call("delete_object", Key=key)
+            except Exception:
+                cleanup_failed = True
+            finally:
+                client = getattr(storage, "client", None)
+                if client is not None:
+                    client.close()
+            if cleanup_failed:
+                return (
+                    False,
+                    "S3 probe cleanup failed; inspect .stardrive-probes before retrying",
+                )
+        return (
+            (True, "Storage profile connection verified")
+            if success
+            else (
+                False,
+                "S3 probe failed; check endpoint, credentials and object permissions",
+            )
+        )
+
+
+s3_provider = S3Provider()
+
+
+def get_provider(backend):
+    if backend == S3:
+        return s3_provider
+    if backend in {LOCAL_STORAGE, ALIYUN_OSS}:
+        return provider
+    raise ValueError("Unsupported storage backend")
