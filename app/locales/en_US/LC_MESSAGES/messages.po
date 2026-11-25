@@ -2570,6 +2570,18 @@ msgstr "Matching items"
 msgid "No items match the filters. Reset filters to show all items."
 msgstr "No items match the filters. Reset filters to show all items."
 
+msgid "Minimum size (MiB)"
+msgstr "Minimum size (MiB)"
+
+msgid "Maximum size (MiB)"
+msgstr "Maximum size (MiB)"
+
+msgid "Minimum size must not exceed maximum size."
+msgstr "Minimum size must not exceed maximum size."
+
+msgid "Enter a finite, non-negative size in MiB."
+msgstr "Enter a finite, non-negative size in MiB."
+
 msgid "OSS deletion could not be fully confirmed. Check the remaining files before retrying."
 msgstr "OSS deletion could not be fully confirmed. Check the remaining files before retrying."
 

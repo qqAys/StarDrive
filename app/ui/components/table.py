@@ -23,7 +23,7 @@ from app.services.file_service import (
     get_user_last_path,
 )
 from app.services.user_service import get_user_timezone
-from app.ui.components.browser_filters import matches_entry
+from app.ui.components.browser_filters import matches_entry, parse_size_range
 from app.ui.components.button import custom_button
 from app.ui.components.clipboard import copy_to_clipboard
 from app.ui.components.dialog import (
@@ -76,6 +76,9 @@ def key_event_debounce(wait_time: float):
 
 class FileBrowserTable:
     type_filter = "all"
+    size_bounds = (None, None)
+    minimum_size_text = ""
+    maximum_size_text = ""
 
     def __init__(
         self,
@@ -322,6 +325,17 @@ class FileBrowserTable:
                         .props("dense")
                         .classes("min-w-32")
                     )
+                    self.minimum_size_input = ui.input(
+                        _("Minimum size (MiB)"),
+                        value=self.minimum_size_text,
+                        on_change=self.handle_size_filter_change,
+                    ).props("clearable dense")
+                    self.maximum_size_input = ui.input(
+                        _("Maximum size (MiB)"),
+                        value=self.maximum_size_text,
+                        on_change=self.handle_size_filter_change,
+                    ).props("clearable dense")
+                    self.validate_size_inputs()
                     ui.button(_("Reset filters"), on_click=self.reset_filters).props(
                         "flat dense"
                     )
@@ -433,6 +447,7 @@ class FileBrowserTable:
                     "path": p.path,
                     "size": bytes_to_human_readable(p.size) if p.size else "-",
                     "raw_size": p.size if p.size else -1,
+                    "metadata_size": p.size,
                     "created_at": (
                         timestamp_to_human_readable(p.created_at, self.user_timezone)
                     ),
@@ -487,6 +502,9 @@ class FileBrowserTable:
             self._current_path = new_path
             self.name_filter = ""
             self.type_filter = "all"
+            self.size_bounds = (None, None)
+            self.minimum_size_text = ""
+            self.maximum_size_text = ""
             set_user_last_path(new_path)
 
     def filtered_rows(self) -> list[dict]:
@@ -498,6 +516,8 @@ class FileBrowserTable:
                 row["type"],
                 self.name_filter,
                 self.type_filter,
+                row.get("metadata_size"),
+                *self.size_bounds,
             )
         ]
 
@@ -525,12 +545,52 @@ class FileBrowserTable:
         self.browser_table.selected = []
         self.apply_filters()
 
+    async def handle_size_filter_change(self, e):
+        minimum = self.minimum_size_input.value
+        maximum = self.maximum_size_input.value
+        self.minimum_size_text = minimum or ""
+        self.maximum_size_text = maximum or ""
+        bounds = self.validate_size_inputs()
+        if bounds is None:
+            return
+        self.size_bounds = bounds
+        self.browser_table.selected = []
+        self.apply_filters()
+
+    def validate_size_inputs(self):
+        """Restore feedback without changing the last valid filter or selection."""
+        error = None
+        bounds = None
+        try:
+            bounds = parse_size_range(
+                self.minimum_size_input.value, self.maximum_size_input.value
+            )
+        except ValueError as exc:
+            error = (
+                _("Minimum size must not exceed maximum size.")
+                if str(exc) == "reversed_range"
+                else _("Enter a finite, non-negative size in MiB.")
+            )
+        for control in (self.minimum_size_input, self.maximum_size_input):
+            control.error = error
+        return bounds
+
     async def reset_filters(self):
         self.name_filter = ""
         self.type_filter = "all"
         self.browser_table.selected = []
         self.search_input.set_value("")
         self.type_filter_input.set_value("all")
+        self.size_bounds = (None, None)
+        self.minimum_size_text = ""
+        self.maximum_size_text = ""
+        for control in (
+            getattr(self, "minimum_size_input", None),
+            getattr(self, "maximum_size_input", None),
+        ):
+            if control is not None:
+                control.set_value("")
+                control.error = None
         self.apply_filters()
 
     async def refresh(self):
