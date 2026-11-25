@@ -335,6 +335,7 @@ class FileBrowserTable:
                         value=self.maximum_size_text,
                         on_change=self.handle_size_filter_change,
                     ).props("clearable dense")
+                    self.validate_size_inputs()
                     ui.button(_("Reset filters"), on_click=self.reset_filters).props(
                         "flat dense"
                     )
@@ -549,9 +550,21 @@ class FileBrowserTable:
         maximum = self.maximum_size_input.value
         self.minimum_size_text = minimum or ""
         self.maximum_size_text = maximum or ""
+        bounds = self.validate_size_inputs()
+        if bounds is None:
+            return
+        self.size_bounds = bounds
+        self.browser_table.selected = []
+        self.apply_filters()
+
+    def validate_size_inputs(self):
+        """Restore feedback without changing the last valid filter or selection."""
         error = None
+        bounds = None
         try:
-            bounds = parse_size_range(minimum, maximum)
+            bounds = parse_size_range(
+                self.minimum_size_input.value, self.maximum_size_input.value
+            )
         except ValueError as exc:
             error = (
                 _("Minimum size must not exceed maximum size.")
@@ -560,11 +573,7 @@ class FileBrowserTable:
             )
         for control in (self.minimum_size_input, self.maximum_size_input):
             control.error = error
-        if error:
-            return
-        self.size_bounds = bounds
-        self.browser_table.selected = []
-        self.apply_filters()
+        return bounds
 
     async def reset_filters(self):
         self.name_filter = ""

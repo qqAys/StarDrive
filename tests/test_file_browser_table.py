@@ -546,3 +546,75 @@ def test_size_error_correction_applies_new_bounds(size_filter_table):
 
     asyncio.run(run_test())
     assert table.file_manager.mock_calls == []
+
+
+@pytest.mark.parametrize("lower,upper", [("", "abc"), ("2", "1"), ("-1", "")])
+def test_size_error_survives_real_control_refresh(monkeypatch, lower, upper):
+    from zoneinfo import ZoneInfo
+
+    from nicegui import Client, ui
+
+    monkeypatch.setattr("app.ui.components.table.require_user", lambda func: func)
+    monkeypatch.setattr(
+        "app.ui.components.table.get_user_timezone", lambda: ZoneInfo("UTC")
+    )
+    monkeypatch.setattr("app.ui.components.table.get_user_last_path", lambda: ".")
+    monkeypatch.setattr("app.ui.components.table.set_user_last_path", Mock())
+    manager = Mock()
+    manager.list_files.return_value = [
+        FileMetadata(name="zero.txt", path="zero.txt", size=0),
+        FileMetadata(name="large.txt", path="large.txt", size=2097152),
+        DirMetadata(name="folder", path="folder"),
+    ]
+
+    async def run_test():
+        monkeypatch.setattr("nicegui.core.loop", asyncio.get_running_loop())
+        with Client(ui.page("/size-filter-refresh-test")) as client:
+            try:
+                await check_refresh()
+            finally:
+                client.delete()
+
+    async def check_refresh():
+        with ui.element() as container:
+            monkeypatch.setattr(
+                "app.ui.components.table.app",
+                SimpleNamespace(storage=SimpleNamespace(client=ui.context.client)),
+            )
+            table = FileBrowserTable(
+                manager,
+                Mock(),
+                upload_component=ui.upload(),
+                upload_dialog_close_button=ui.button(),
+                footer_container=ui.row(),
+            )
+            table.handle_row_click = AsyncMock()
+            await table.refresh()
+            table.maximum_size_input.set_value("1")
+            await table.handle_size_filter_change(None)
+            table.minimum_size_input.set_value(lower)
+            table.maximum_size_input.set_value(upper)
+            await table.handle_size_filter_change(None)
+            error = table.maximum_size_input.error
+            old_control = table.maximum_size_input
+
+            await table.refresh()
+            assert table.maximum_size_input is not old_control
+            assert table.minimum_size_input.value == lower
+            assert table.maximum_size_input.value == upper
+            assert table.minimum_size_input.error == error
+            assert table.maximum_size_input.error == error
+            assert error
+            assert table.maximum_size_input._props["error"] is True
+            assert table.maximum_size_input._props["error-message"] == error
+            assert table.size_bounds == (None, 1048576)
+            assert [row["raw_name"] for row in table.browser_table.rows] == ["zero.txt"]
+
+            await table.reset_filters()
+            await table.refresh()
+            assert table.maximum_size_input.error is None
+            assert table.minimum_size_input.error is None
+            assert len(table.browser_table.rows) == 3
+        container.delete()
+
+    asyncio.run(run_test())
