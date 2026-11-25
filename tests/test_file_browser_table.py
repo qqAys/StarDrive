@@ -427,3 +427,95 @@ def test_invalid_type_selection_restores_all(filter_table):
     asyncio.run(filter_table.handle_type_filter_change(SimpleNamespace(value=None)))
     assert filter_table.type_filter == "all"
     assert filter_table.browser_table.rows == filter_table.directory_rows
+
+
+@pytest.fixture
+def size_filter_table(filter_table):
+    filter_table.minimum_size_input = SimpleNamespace(
+        value="", error=None, set_value=Mock()
+    )
+    filter_table.maximum_size_input = SimpleNamespace(
+        value="", error=None, set_value=Mock()
+    )
+    filter_table.search_input = Mock()
+    filter_table.type_filter_input = Mock()
+    filter_table.file_manager = Mock()
+    for row, size in zip(filter_table.directory_rows, [0, 0, 1048576]):
+        row["metadata_size"] = size
+        row["raw_size"] = size or -1
+    return filter_table
+
+
+def test_size_callback_zero_clear_and_combinations(size_filter_table):
+    table = size_filter_table
+
+    async def run_test():
+        table.maximum_size_input.value = "0"
+        await table.handle_size_filter_change(None)
+        assert table.browser_table.rows == [table.directory_rows[0]]
+        assert table.browser_table.selected == []
+        assert table.browser_table.pagination["page"] == 1
+        await table.handle_type_filter_change(SimpleNamespace(value="dir"))
+        assert table.browser_table.rows == []
+        table.maximum_size_input.value = ""
+        await table.handle_size_filter_change(None)
+        assert table.browser_table.rows == [table.directory_rows[1]]
+        await table.handle_type_filter_change(SimpleNamespace(value="file"))
+        await table.handle_name_filter_change(SimpleNamespace(value="[1]%"))
+        table.minimum_size_input.value = "1"
+        table.maximum_size_input.value = "1"
+        await table.handle_size_filter_change(None)
+        assert table.browser_table.rows == [table.directory_rows[2]]
+
+    asyncio.run(run_test())
+    assert table.file_manager.mock_calls == []
+
+
+@pytest.mark.parametrize(
+    "lower,upper",
+    [("-1", ""), ("nan", ""), ("", "inf"), ("2", "1"), ("abc", "")],
+)
+def test_size_invalid_input_keeps_last_result(size_filter_table, lower, upper):
+    table = size_filter_table
+
+    async def run_test():
+        table.maximum_size_input.value = "0"
+        await table.handle_size_filter_change(None)
+        rows = table.browser_table.rows
+        table.browser_table.selected = list(rows)
+        table.browser_table.pagination["page"] = 3
+        table.browser_table.update.reset_mock()
+        table.minimum_size_input.value = lower
+        table.maximum_size_input.value = upper
+        await table.handle_size_filter_change(None)
+        assert table.size_bounds == (None, 0)
+        assert table.browser_table.rows is rows
+        assert table.browser_table.selected == rows
+        assert table.browser_table.pagination["page"] == 3
+        assert table.minimum_size_input.error
+        assert table.maximum_size_input.error
+        table.browser_table.update.assert_not_called()
+        await table.reset_filters()
+        assert table.size_bounds == (None, None)
+        assert table.browser_table.rows == table.directory_rows
+        assert table.minimum_size_input.error is None
+        assert table.maximum_size_input.error is None
+
+    asyncio.run(run_test())
+    assert table.file_manager.mock_calls == []
+
+
+def test_size_navigation_resets_only_on_directory_change(
+    size_filter_table, monkeypatch
+):
+    table = size_filter_table
+    monkeypatch.setattr("app.ui.components.table.set_user_last_path", Mock())
+    table._current_path = Path("docs")
+    table.size_bounds = (0, 1048576)
+    table.minimum_size_text = "0"
+    table.maximum_size_text = "1"
+    table.current_path = Path("docs")
+    assert table.size_bounds == (0, 1048576)
+    table.current_path = Path("other")
+    assert table.size_bounds == (None, None)
+    assert table.minimum_size_text == table.maximum_size_text == ""

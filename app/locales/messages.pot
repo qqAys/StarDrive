@@ -2034,3 +2034,15 @@ msgstr ""
 
 msgid "No items match the filters. Reset filters to show all items."
 msgstr ""
+
+msgid "Minimum size (MiB)"
+msgstr ""
+
+msgid "Maximum size (MiB)"
+msgstr ""
+
+msgid "Minimum size must not exceed maximum size."
+msgstr ""
+
+msgid "Enter a finite, non-negative size in MiB."
+msgstr ""

@@ -2235,3 +2235,15 @@ msgstr "匹配条目"
 
 msgid "No items match the filters. Reset filters to show all items."
 msgstr "没有符合筛选条件的条目。重置筛选以显示全部条目。"
+
+msgid "Minimum size (MiB)"
+msgstr "最小大小（MiB）"
+
+msgid "Maximum size (MiB)"
+msgstr "最大大小（MiB）"
+
+msgid "Minimum size must not exceed maximum size."
+msgstr "最小大小不能超过最大大小。"
+
+msgid "Enter a finite, non-negative size in MiB."
+msgstr "请输入以 MiB 为单位的有限非负大小。"
