@@ -519,3 +519,30 @@ def test_size_navigation_resets_only_on_directory_change(
     table.current_path = Path("other")
     assert table.size_bounds == (None, None)
     assert table.minimum_size_text == table.maximum_size_text == ""
+
+
+def test_size_error_correction_applies_new_bounds(size_filter_table):
+    table = size_filter_table
+
+    async def run_test():
+        table.minimum_size_input.value = "2"
+        table.maximum_size_input.value = "1"
+        await table.handle_size_filter_change(None)
+        assert table.browser_table.rows == table.directory_rows
+        assert table.minimum_size_input.error
+
+        table.minimum_size_input.value = "1"
+        await table.handle_size_filter_change(None)
+        assert table.browser_table.rows == [table.directory_rows[2]]
+        assert table.size_bounds == (1048576, 1048576)
+        assert table.minimum_size_input.error is None
+        assert table.maximum_size_input.error is None
+        assert table.browser_table.selected == []
+        assert table.browser_table.pagination == {
+            "page": 1,
+            "rowsPerPage": 15,
+            "sortBy": "raw_name",
+        }
+
+    asyncio.run(run_test())
+    assert table.file_manager.mock_calls == []

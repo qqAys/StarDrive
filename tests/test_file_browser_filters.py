@@ -83,5 +83,10 @@ def test_size_matching_inclusive_file_bounds(size, lower, upper, expected):
         "Report.txt", "file", "missing", size=size, minimum=lower, maximum=upper
     )
     assert not matches_entry(
-        "Report.txt", "file", entry_filter="dir", size=size, minimum=lower, maximum=upper
+        "Report.txt",
+        "file",
+        entry_filter="dir",
+        size=size,
+        minimum=lower,
+        maximum=upper,
     )

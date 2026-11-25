@@ -51,6 +51,7 @@ class Config(BaseSettings):
 
     APP_DEFAULT_LANGUAGE: str = "en-US"
 
+    APP_SETUP_TOKEN: SecretStr | None = None
     APP_INIT_USER: EmailStr = "admin@stardrive.abc"
     APP_ALLOW_REGISTRATION: bool = True
     APP_DEFAULT_USER_QUOTA_BYTES: int = 1024 * 1024 * 1024 * 10

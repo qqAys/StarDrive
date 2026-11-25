@@ -2046,3 +2046,81 @@ msgstr ""
 
 msgid "Enter a finite, non-negative size in MiB."
 msgstr ""
+
+msgid "OSS deletion could not be fully confirmed. Check the remaining files before retrying."
+msgstr ""
+
+msgid "Operation may be partially complete. Check remaining source items and destination copies before retrying."
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Create the first administrator"
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup credential"
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Create administrator"
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Use at least 8 characters with uppercase, lowercase, a digit and a special character; at most 72 UTF-8 bytes."
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Set STARDRIVE_APP_SETUP_TOKEN to a random credential of at least 32 characters in the deployment environment, then restart. Setup remains closed until configured."
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup request rejected. Reload and try again."
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup could not be saved. Reload and try again."
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup is unavailable or the setup credential is invalid."
+msgstr ""
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Initial setup is already complete."
+msgstr ""
+
+#: app/ui/components/dialog.py
+msgid "Retry search"
+msgstr ""
+
+#: app/ui/components/dialog.py
+msgid "Searching…"
+msgstr ""
+
+#: app/ui/components/dialog.py
+msgid "No matching results"
+msgstr ""
+
+#: app/ui/components/dialog.py
+msgid "Search failed. Retry to continue."
+msgstr ""
+
+#: app/ui/pages/console.py
+msgid "Bucket"
+msgstr ""
+
+#: app/ui/pages/console.py
+msgid "Endpoint"
+msgstr ""
+
+#: app/ui/pages/console.py
+msgid "Region"
+msgstr ""
+
+#: app/ui/pages/console.py
+msgid "S3 compatible"
+msgstr ""
+
+#: app/ui/pages/console.py
+msgid "S3 tests write and delete a unique object under .stardrive-probes. Private HTTP/HTTPS endpoints are allowed; use only trusted destinations."
+msgstr ""

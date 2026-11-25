@@ -7,9 +7,9 @@
   </a>
 </p>
 
-StarDrive 是面向个人和小团队的自托管文件管理应用。通过浏览器上传、整理、预览和分享文件，管理员可在本地磁盘与阿里云 OSS 档案间切换。
+StarDrive 是面向个人和小团队的自托管文件管理应用。通过浏览器上传、整理、预览和分享文件，管理员可在本地磁盘、阿里云 OSS 与 S3 兼容存储档案间切换。
 
-StarDrive is a self-hosted web file manager for individuals and small teams, with local disk and Alibaba Cloud OSS backends.
+StarDrive is a self-hosted web file manager for individuals and small teams, with local disk, Alibaba Cloud OSS and S3-compatible backends.
 
 > [!WARNING]
 > **本项目仍在开发中，尚未发布正式版本。**
@@ -51,15 +51,20 @@ StarDrive 采用了现代化的 Python 技术栈：
     STARDRIVE_APP_HOST=127.0.0.1 uv run --locked -m app.main
     ```
 
-首次安装请在部署者专用的交互终端启动。空库创建管理员时，终端只显示一次邮箱和临时密码。
-打开 `http://127.0.0.1:8080/login/`，按页面要求修改密码，再用新密码登录。
-在 Console → Overview 配置完整的 `Service URL`，再用小文件验证上传、下载和分享。
-无交互终端的部署和临时密码丢失时，按本机恢复流程获取临时密码，详见 [运维指南](docs/OPERATIONS.md#首次管理员登录)。
+首次安装前另行生成随机安装凭据（例如 `openssl rand -hex 32`），以
+`STARDRIVE_APP_SETUP_TOKEN` 注入部署环境或 `.env`，不要复用应用密钥。打开
+`http://127.0.0.1:8080/login/`，在首装页输入安装凭据、自选邮箱、密码和确认密码，
+成功后使用新账号正常登录，无需再次改密。未配置或凭据不足 32 字符时保持首装关闭，页面提供配置指引。
+支持无 TTY 的服务和容器；完成后移除安装凭据并重启，首装不会重新开放。
+上传后即可验证站内单文件、目录和多选下载，无需配置 `Service URL`。创建对外分享前，在 Console → Overview 配置收件人可访问的完整 `Service URL`。
+已有实例继续正常登录，旧临时密码仍须改密。忘记管理员密码时使用 [本机恢复流程](docs/OPERATIONS.md#首次管理员登录)。
 
 容器同样要求设置稳定的 `STARDRIVE_APP_SECRET`。开发时可将其写入未提交的 `.env`，
 然后运行 `docker compose -f docker-compose.build.yml up --build`。该配置只映射本机回环地址。
 `GET /api/healthz` 检查 HTTP 存活。请另行验证登录和初始化。
 更多配置、反代要求与排障见 [运维指南](docs/OPERATIONS.md)。
+
+本地上传在完整接收并关闭暂存文件后替换目标，失败或取消保留原文件。覆盖需要额外磁盘空间，故障恢复及限制见 [本地上传](docs/OPERATIONS.md#本地上传与故障恢复)。
 
 ### 数据库升级与备份
 
@@ -73,7 +78,7 @@ StarDrive 采用了现代化的 Python 技术栈：
 
 ## 版本与 Docker 发布 (Versioning and Docker releases)
 
-StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.6.23`**，格式为
+StarDrive 使用日历版本号（CalVer）。当前版本为 **`2026.11.25`**，格式为
 `YYYY.M.D`；同一天的补发版本在末尾增加序号，例如 `2026.6.23.1`。版本仅在
 `pyproject.toml` 中维护；已安装的发行包会从包元数据读取，源码运行时则读取同一份
 `pyproject.toml` 元数据。
@@ -101,6 +106,8 @@ Docker 镜像会内置 LibreOffice 和 Noto CJK 字体，以支持中文等 CJK 
 请安装可用的中文字体。
 
 ## 阿里云 OSS 后端
+
+本地与 OSS 的配置契约集中在 `app/storage/providers.py`；档案持久化与秘密加密仍由配置服务负责。此调整不迁移文件或改变已有档案格式。
 
 超级管理员可在“Console”中录入 OSS Region、endpoint、Bucket、AccessKey ID/Secret 和可选对象前缀，先执行连接校验，再切换当前存储后端。后端使用官方 `alibabacloud-oss-v2` SDK；SDK V2 默认采用 V4 签名，因此 Region 必填。凭据以应用的 `APP_SECRET` 派生密钥加密保存于本地数据库，生产环境必须设置足够强且稳定的 `APP_SECRET`。
 
@@ -148,3 +155,23 @@ Whether it's fixing bugs, adding features, or improving docs, your help is appre
 ### 当前目录大小筛选
 
 在筛选区输入可选的最小、最大大小，单位为 MiB（1 MiB = 1,048,576 字节），上下界均包含端点。空值表示无该边界，两项都空时关闭大小筛选。启用时仅匹配文件，可与类型和名称组合；零字节文件可用 0 到 0 匹配。无效值或反向范围会在输入框显示错误，列表保留最近有效大小条件。有效条件变化清空选择并回到首页，重置或切换目录清除条件。
+
+### 多选下载
+
+在文件列表选择文件或文件夹后点击下载，确认后生成一个 `tar.gz` 归档，保留相对当前目录的路径和空目录。下载链接仅供创建者登录后使用。源在开始前缺失会拒绝下载，生成中读取失败会中断传输，应重新下载并确认归档完整性。
+
+本地与 OSS 使用相同归档规则。相同规范化路径只写入一次，选择目录及其子项时保留完整目录树，各条目以首次遍历到的位置为准。Unicode 名称和空目录保留。归档使用生成时读取到的内容，不提供文件快照；生成期间请避免修改源，下载失败后重新生成。
+
+多选记录采用带版本号的载荷，已有单文件和目录下载记录继续可用。降级前先备份数据库并隔离 `file_downloads.type = MIXED` 的新增记录，旧版本无法读取该格式。详见运维指南。
+
+OSS 目录删除和移动会核对逐项删除确认。失败后请按运维指南核对剩余文件及目标副本。
+
+### 递归搜索
+
+从文件列表的搜索按钮进入，在当前目录及其子目录按名称查找，每页 30 条。修改或清空关键词会清除旧结果，关闭弹窗会停止查询。搜索失败时点击“重试搜索”，继续读取当前页，保留此前结果；点击结果沿用原有的所在目录导航。无匹配、加载中和结果结束分别反馈。短暂断线时保留搜索结果，重连后自动从当前页恢复。
+
+### S3 兼容存储
+
+管理员可在 Console → Storage backend 创建 S3 compatible 档案，填写 endpoint、region、bucket、可选前缀及凭据。保存后对该档案执行测试，成功后方可激活；草稿测试不能代替已保存档案测试。凭据均加密保存，留空保留原值。修改配置会清除测试结果；编辑活跃 S3 档案前先切回另一档案。
+
+测试会在 `prefix/.stardrive-probes/<随机标识>` 创建、读取并删除唯一合成对象。支持可信的私有 HTTP/HTTPS 端点，HTTP 会明文传输；仅填写部署者信任的目的地。对象按 `prefix/users/{user_id}/` 隔离，切换不会迁移文件或接入任意已有目录。当前仍是全局单活档案；统一挂载是后续独立目标。真实 S3 兼容服务尚未验证，故障和降级步骤见 [运维指南](docs/OPERATIONS.md#s3-管理台与恢复)。

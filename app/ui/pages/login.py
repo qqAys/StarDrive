@@ -39,6 +39,10 @@ async def login_page(redirect_to: str | None = None):
     ):
         user_manager = globals.get_user_manager()
 
+        if await user_manager.setup_required():
+            ui.navigate.to("/login/setup/")
+            return
+
         def redirect():
             """Redirect the user after successful login."""
             ui.timer(

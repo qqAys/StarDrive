@@ -2247,3 +2247,81 @@ msgstr "最小大小不能超过最大大小。"
 
 msgid "Enter a finite, non-negative size in MiB."
 msgstr "请输入以 MiB 为单位的有限非负大小。"
+
+msgid "OSS deletion could not be fully confirmed. Check the remaining files before retrying."
+msgstr "OSS 删除未能全部确认。请核对剩余文件后重试。"
+
+msgid "Operation may be partially complete. Check remaining source items and destination copies before retrying."
+msgstr "操作可能已部分完成。重试前请核对源位置的剩余条目和目标位置的副本。"
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Create the first administrator"
+msgstr "创建首任管理员"
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup credential"
+msgstr "安装凭据"
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Create administrator"
+msgstr "创建管理员"
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Use at least 8 characters with uppercase, lowercase, a digit and a special character; at most 72 UTF-8 bytes."
+msgstr "密码至少 8 个字符，须含大写字母、小写字母、数字及特殊字符，最多 72 个 UTF-8 字节。"
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Set STARDRIVE_APP_SETUP_TOKEN to a random credential of at least 32 characters in the deployment environment, then restart. Setup remains closed until configured."
+msgstr "请在部署环境中将 STARDRIVE_APP_SETUP_TOKEN 设置为至少 32 字符的随机凭据，然后重启。配置前首装保持关闭。"
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup request rejected. Reload and try again."
+msgstr "安装请求被拒绝，请重新载入页面后重试。"
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup could not be saved. Reload and try again."
+msgstr "无法保存安装结果，请重新载入页面后重试。"
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup is unavailable or the setup credential is invalid."
+msgstr "首装不可用或安装凭据无效。"
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Initial setup is already complete."
+msgstr "首次安装已完成。"
+
+#: app/ui/components/dialog.py
+msgid "Retry search"
+msgstr "重试搜索"
+
+#: app/ui/components/dialog.py
+msgid "Searching…"
+msgstr "正在搜索…"
+
+#: app/ui/components/dialog.py
+msgid "No matching results"
+msgstr "没有匹配的结果"
+
+#: app/ui/components/dialog.py
+msgid "Search failed. Retry to continue."
+msgstr "搜索失败，请重试以继续。"
+
+#: app/ui/pages/console.py
+msgid "Bucket"
+msgstr "存储桶"
+
+#: app/ui/pages/console.py
+msgid "Endpoint"
+msgstr "端点"
+
+#: app/ui/pages/console.py
+msgid "Region"
+msgstr "区域"
+
+#: app/ui/pages/console.py
+msgid "S3 compatible"
+msgstr "S3 兼容存储"
+
+#: app/ui/pages/console.py
+msgid "S3 tests write and delete a unique object under .stardrive-probes. Private HTTP/HTTPS endpoints are allowed; use only trusted destinations."
+msgstr "S3 测试会在 .stardrive-probes 下写入并删除唯一对象。支持私有 HTTP/HTTPS 端点，请仅使用可信目的地。"

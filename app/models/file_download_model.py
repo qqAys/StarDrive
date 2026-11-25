@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 
 from sqlalchemy import Column, DateTime, Enum
@@ -85,6 +86,23 @@ class FileDownloadInfo(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), index=True),
         description="UTC timestamp when this download record was created.",
     )
+
+    @property
+    def archive_paths(self) -> list[str]:
+        """Decode only explicitly tagged batch records. Legacy paths stay literal."""
+        if self.type != FileType.MIXED:
+            return [self.path]
+        payload = json.loads(self.path)
+        if not isinstance(payload, dict) or payload.get("version") != 1:
+            raise ValueError("Unsupported archive record")
+        paths = payload.get("paths")
+        if (
+            not isinstance(paths, list)
+            or not paths
+            or any(not isinstance(path, str) or not path for path in paths)
+        ):
+            raise ValueError("Invalid archive record")
+        return paths
 
     @property
     def expires_at_utc(self) -> datetime:

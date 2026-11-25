@@ -14,6 +14,7 @@ from app import globals
 from app.services.file_service import get_user_storage_usage
 from app.services.storage_config_service import (
     ALIYUN_OSS,
+    S3,
     LOCAL_STORAGE,
     StorageProfileDraft,
     storage_config,
@@ -150,7 +151,8 @@ async def console_page(request: Request, client: Client):
 
         with ui.row().classes("w-full min-h-[calc(100vh-160px)] gap-0"):
             with ui.column().classes(
-                "w-56 shrink-0 border-r border-gray-200 pr-3 gap-1"
+                "w-full md:w-56 shrink-0 border-b md:border-b-0 md:border-r "
+                "border-gray-200 pb-3 md:pb-0 md:pr-3 gap-1"
             ):
                 ui.label(_("Console")).classes("text-xl font-bold mb-2")
                 nav_buttons = {}
@@ -168,7 +170,9 @@ async def console_page(request: Request, client: Client):
                         .classes("w-full justify-start")
                     )
 
-            with ui.column().classes("flex-1 min-w-0 pl-6 gap-5"):
+            with ui.column().classes(
+                "w-full md:w-auto md:flex-1 min-w-0 md:pl-6 gap-5"
+            ):
                 sections = {
                     "overview": ui.column().classes("w-full gap-4"),
                     "appearance": ui.column().classes("w-full gap-4"),
@@ -345,6 +349,10 @@ async def _render_appearance_section():
 
 
 async def _render_storage_section():
+    @require_user(superuser=True)
+    async def action_allowed():
+        return True
+
     ui.label(_("Storage backend")).classes("text-2xl font-bold")
     ui.label(
         _(
@@ -398,6 +406,7 @@ async def _render_storage_section():
         profile_table.selected = []
         profile_table.update()
 
+    @require_user(superuser=True)
     async def open_profile_editor(row: dict | None = None):
         is_edit = row is not None
         public_config = dict(row["public_config"] or {}) if row else {}
@@ -413,7 +422,11 @@ async def _render_storage_section():
             )
             backend_type = (
                 ui.select(
-                    {LOCAL_STORAGE: _("Local storage"), ALIYUN_OSS: _("Aliyun OSS")},
+                    {
+                        LOCAL_STORAGE: _("Local storage"),
+                        ALIYUN_OSS: _("Aliyun OSS"),
+                        S3: _("S3 compatible"),
+                    },
                     value=row["backend_type"] if row else ALIYUN_OSS,
                     label=_("Backend type"),
                 )
@@ -432,19 +445,21 @@ async def _render_storage_section():
                 ).classes("w-full")
 
             with ui.column().classes("w-full gap-3") as oss_form:
-                with ui.grid(columns=2).classes("w-full gap-3"):
+                with ui.grid().classes("w-full grid-cols-1 sm:grid-cols-2 gap-3"):
                     oss_region = ui.input(
-                        _("OSS region"), value=public_config.get("region", "")
+                        _("Region"), value=public_config.get("region", "")
                     ).props("dense")
                     oss_endpoint = ui.input(
-                        _("OSS endpoint"), value=public_config.get("endpoint", "")
+                        _("Endpoint"), value=public_config.get("endpoint", "")
                     ).props("dense")
                     oss_bucket = ui.input(
-                        _("OSS bucket"), value=public_config.get("bucket", "")
+                        _("Bucket"), value=public_config.get("bucket", "")
                     ).props("dense")
                     oss_access_key = ui.input(
                         _("AccessKey ID"),
                         value=public_config.get("access_key_id", ""),
+                        password=True,
+                        password_toggle_button=True,
                     ).props("dense")
                     oss_secret = ui.input(
                         _("AccessKey Secret"),
@@ -455,9 +470,16 @@ async def _render_storage_section():
                         _("Object prefix"), value=public_config.get("prefix", "")
                     ).props("dense")
 
+            s3_notice = ui.label(
+                _(
+                    "S3 tests write and delete a unique object under .stardrive-probes. Private HTTP/HTTPS endpoints are allowed; use only trusted destinations."
+                )
+            ).classes("text-sm")
+
             def update_backend_form():
                 local_form.visible = backend_type.value == LOCAL_STORAGE
-                oss_form.visible = backend_type.value == ALIYUN_OSS
+                oss_form.visible = backend_type.value in {ALIYUN_OSS, S3}
+                s3_notice.visible = backend_type.value == S3
                 local_form.update()
                 oss_form.update()
 
@@ -476,9 +498,21 @@ async def _render_storage_section():
                         "access_key_id": oss_access_key.value or "",
                         "prefix": oss_prefix.value or "",
                     },
-                    secrets=secrets,
+                    secrets=(
+                        {
+                            **secrets,
+                            **(
+                                {"access_key_id": str(oss_access_key.value).strip()}
+                                if oss_access_key.value
+                                else {}
+                            ),
+                        }
+                        if backend_type.value == S3
+                        else secrets
+                    ),
                 )
 
+            @require_user(superuser=True)
             async def test_draft():
                 try:
                     result = await storage_config.test_profile(
@@ -492,6 +526,7 @@ async def _render_storage_section():
                 else:
                     notify.error(result.message)
 
+            @require_user(superuser=True)
             async def save_profile():
                 try:
                     await storage_config.create_or_update_profile(build_draft())
@@ -513,6 +548,7 @@ async def _render_storage_section():
         if saved:
             await refresh_profiles()
 
+    @require_user(superuser=True)
     async def test_profile(row: dict):
         result = await storage_config.test_profile(profile_id=row["id"])
         if result.success:
@@ -521,6 +557,7 @@ async def _render_storage_section():
             notify.error(result.message)
         await refresh_profiles()
 
+    @require_user(superuser=True)
     async def activate_profile(row: dict):
         if row["is_active"]:
             notify.info(_("This profile is already active."))
@@ -532,7 +569,7 @@ async def _render_storage_section():
             ),
             warning=True,
         ).open()
-        if not confirm:
+        if not confirm or not await action_allowed():
             return
         try:
             await storage_config.activate_profile(row["id"])
@@ -542,6 +579,7 @@ async def _render_storage_section():
         notify.success(_("Storage profile activated."))
         await refresh_profiles()
 
+    @require_user(superuser=True)
     async def delete_profile(row: dict):
         replacement = _replacement_storage_profile_row(profile_table.rows, row["id"])
         if row["is_active"]:
@@ -563,7 +601,7 @@ async def _render_storage_section():
             message,
             warning=True,
         ).open()
-        if not confirm:
+        if not confirm or not await action_allowed():
             return
         try:
             await storage_config.delete_profile(row["id"])
@@ -573,6 +611,7 @@ async def _render_storage_section():
         notify.success(_("Storage profile deleted."))
         await refresh_profiles()
 
+    @require_user(superuser=True)
     async def open_profile_dialog(row: dict):
         with ui.dialog() as profile_dialog, ui.card().classes("w-full max-w-3xl"):
             with ui.row().classes("w-full justify-between items-center"):
@@ -628,7 +667,7 @@ async def _render_storage_section():
                 await delete_profile(row)
                 profile_dialog.submit(None)
 
-            with ui.grid(columns=4).classes("w-full gap-2"):
+            with ui.grid().classes("w-full grid-cols-2 sm:grid-cols-4 gap-2"):
                 ui.button(_("Edit"), icon="edit", on_click=on_edit)
                 ui.button(_("Test"), icon="fact_check", on_click=on_test)
                 ui.button(

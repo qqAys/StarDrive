@@ -1,11 +1,11 @@
 import asyncio
 import os
 import shutil
+import stat
+import uuid
 from collections import deque
 from pathlib import Path
 from typing import AsyncIterator, NamedTuple, Optional, Iterator
-
-import aiofiles
 
 from app.config import settings
 from app.core.i18n import _
@@ -149,20 +149,64 @@ class LocalStorage(StorageBackend):
             )
         return full_path
 
-    async def upload_file(self, file_object: AsyncIterator[bytes], remote_path: str):
-        """
-        Upload a file by writing chunks from an async iterator to the specified remote path.
+    @staticmethod
+    async def _finish_io(operation, *args):
+        """Do not close/unlink a file while its worker is still using it."""
+        worker = asyncio.create_task(asyncio.to_thread(operation, *args))
+        cancelled = False
+        while not worker.done():
+            try:
+                await asyncio.shield(worker)
+            except asyncio.CancelledError:
+                cancelled = True
+            except Exception:
+                break
+        if cancelled:
+            # Retrieve any worker failure, but preserve the caller's cancellation.
+            if not worker.cancelled():
+                worker.exception()
+            raise asyncio.CancelledError
+        return worker.result()
 
-        Creates parent directories if they don't exist.
+    async def upload_file(self, file_object: AsyncIterator[bytes], remote_path: str):
+        """Stream into a sibling file, publishing only a complete, closed upload.
+
+        Replacement is atomic, not a guarantee of power-loss durability. Concurrent
+        uploads use separate temporary files; the last successful replace wins.
         """
-        full_path: Path = self._get_full_path(remote_path)
+        full_path = self._get_full_path(remote_path)
+        temporary_path = None
+        dest_file = None
         try:
-            await asyncio.to_thread(full_path.parent.mkdir, parents=True, exist_ok=True)
-            async with aiofiles.open(full_path, mode="wb") as dest_file:
-                async for chunk in file_object:
-                    if not chunk:
-                        continue
-                    await dest_file.write(chunk)
+            # Keep ownership-changing syscalls together without cancellation points.
+            full_path.parent.mkdir(parents=True, exist_ok=True)
+            mode = None
+            if full_path.exists():
+                # Preserve the previous write-permission check without truncating.
+                fd = os.open(full_path, os.O_WRONLY)
+                try:
+                    mode = stat.S_IMODE(os.fstat(fd).st_mode)
+                finally:
+                    os.close(fd)
+            candidate = full_path.parent / f".stardrive-upload-{uuid.uuid4().hex}.tmp"
+            fd = os.open(
+                candidate,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                (mode & 0o777) if mode is not None else 0o666,
+            )
+            temporary_path = candidate
+            try:
+                dest_file = os.fdopen(fd, "wb")
+            except BaseException:
+                os.close(fd)
+                raise
+            async for chunk in file_object:
+                if chunk:
+                    await self._finish_io(dest_file.write, chunk)
+            await self._finish_io(dest_file.close)
+            if mode is not None:
+                os.chmod(temporary_path, mode)
+            os.replace(temporary_path, full_path)
         except PermissionError as e:
             raise StoragePermissionError(
                 _("Permission denied when writing to: {path}").format(path=full_path)
@@ -171,6 +215,13 @@ class LocalStorage(StorageBackend):
             raise StorageError(
                 _("Failed to write file to: {path}").format(path=full_path)
             ) from e
+        finally:
+            try:
+                if dest_file is not None and not dest_file.closed:
+                    await self._finish_io(dest_file.close)
+            finally:
+                if temporary_path is not None:
+                    temporary_path.unlink(missing_ok=True)
 
     def download_file(self, remote_path: str) -> Path:
         """

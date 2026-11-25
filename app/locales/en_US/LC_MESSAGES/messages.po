@@ -2581,3 +2581,81 @@ msgstr "Minimum size must not exceed maximum size."
 
 msgid "Enter a finite, non-negative size in MiB."
 msgstr "Enter a finite, non-negative size in MiB."
+
+msgid "OSS deletion could not be fully confirmed. Check the remaining files before retrying."
+msgstr "OSS deletion could not be fully confirmed. Check the remaining files before retrying."
+
+msgid "Operation may be partially complete. Check remaining source items and destination copies before retrying."
+msgstr "Operation may be partially complete. Check remaining source items and destination copies before retrying."
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Create the first administrator"
+msgstr "Create the first administrator"
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup credential"
+msgstr "Setup credential"
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Create administrator"
+msgstr "Create administrator"
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Use at least 8 characters with uppercase, lowercase, a digit and a special character; at most 72 UTF-8 bytes."
+msgstr "Use at least 8 characters with uppercase, lowercase, a digit and a special character; at most 72 UTF-8 bytes."
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Set STARDRIVE_APP_SETUP_TOKEN to a random credential of at least 32 characters in the deployment environment, then restart. Setup remains closed until configured."
+msgstr "Set STARDRIVE_APP_SETUP_TOKEN to a random credential of at least 32 characters in the deployment environment, then restart. Setup remains closed until configured."
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup request rejected. Reload and try again."
+msgstr "Setup request rejected. Reload and try again."
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup could not be saved. Reload and try again."
+msgstr "Setup could not be saved. Reload and try again."
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Setup is unavailable or the setup credential is invalid."
+msgstr "Setup is unavailable or the setup credential is invalid."
+
+#: app/ui/pages/setup.py app/services/user_service.py
+msgid "Initial setup is already complete."
+msgstr "Initial setup is already complete."
+
+#: app/ui/components/dialog.py
+msgid "Retry search"
+msgstr "Retry search"
+
+#: app/ui/components/dialog.py
+msgid "Searching…"
+msgstr "Searching…"
+
+#: app/ui/components/dialog.py
+msgid "No matching results"
+msgstr "No matching results"
+
+#: app/ui/components/dialog.py
+msgid "Search failed. Retry to continue."
+msgstr "Search failed. Retry to continue."
+
+#: app/ui/pages/console.py
+msgid "Bucket"
+msgstr "Bucket"
+
+#: app/ui/pages/console.py
+msgid "Endpoint"
+msgstr "Endpoint"
+
+#: app/ui/pages/console.py
+msgid "Region"
+msgstr "Region"
+
+#: app/ui/pages/console.py
+msgid "S3 compatible"
+msgstr "S3 compatible"
+
+#: app/ui/pages/console.py
+msgid "S3 tests write and delete a unique object under .stardrive-probes. Private HTTP/HTTPS endpoints are allowed; use only trusted destinations."
+msgstr "S3 tests write and delete a unique object under .stardrive-probes. Private HTTP/HTTPS endpoints are allowed; use only trusted destinations."
